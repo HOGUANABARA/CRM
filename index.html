@@ -7,220 +7,251 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2B3C; font-size: 14px; }
-
-  /* LOGIN */
-  #login-screen {
-    height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: #0D2137;
-  }
-  .login-box {
-    background: #fff; border-radius: 12px; padding: 40px; width: 360px;
-  }
-  .login-box h1 { font-size: 20px; color: #0D2137; margin-bottom: 4px; }
-  .login-box .sub { font-size: 12px; color: #6B7E90; margin-bottom: 24px; }
-  .login-box input {
-    width: 100%; padding: 10px 12px; margin-bottom: 12px;
-    border: 1px solid #DDE3EB; border-radius: 6px; font-size: 13px;
-  }
-  .login-box button {
-    width: 100%; padding: 10px; background: #2B9BE8; color: #fff;
-    border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .login-box button:hover { background: #1A7FBF; }
-  #login-error { color: #E63946; font-size: 12px; margin-top: 10px; min-height: 16px; }
-
-  /* APP LAYOUT */
-  #app-screen { display: none; height: 100vh; }
-  .app-layout { display: flex; height: 100vh; }
-
-  .sidebar {
-    width: 210px; min-width: 210px; background: #0D2137; color: #fff;
-    display: flex; flex-direction: column;
-  }
-  .sidebar-logo { padding: 20px; border-bottom: 1px solid #1A3A56; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2B3C; display: flex; height: 100vh; overflow: hidden; font-size: 13px; }
+  .sidebar { width: 220px; min-width: 220px; background: #0D2137; display: flex; flex-direction: column; color: #fff; overflow-y: auto; }
+  .sidebar-logo { padding: 16px 20px 12px; border-bottom: 1px solid #1A3A56; }
   .sidebar-logo .name { font-size: 16px; font-weight: 700; }
-  .sidebar-logo .sub { font-size: 10px; color: #5A8EB5; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-  .nav-item {
-    padding: 11px 20px; cursor: pointer; color: #8BAFC9; font-size: 13px;
-    border-left: 3px solid transparent;
-  }
+  .sidebar-logo .sub { font-size: 10px; color: #5A8EB5; text-transform: uppercase; letter-spacing: 1px; }
+  .sidebar-section { padding: 11px 12px 3px; font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: #3E6B8A; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; cursor: pointer; color: #8BAFC9; font-size: 12px; border-left: 3px solid transparent; }
   .nav-item:hover { background: #1A3A56; color: #fff; }
   .nav-item.active { background: #1A3A56; color: #fff; border-left-color: #2B9BE8; }
-  .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid #1A3A56; font-size: 11px; color: #8BAFC9; }
-  .sidebar-footer .papel { color: #5A8EB5; text-transform: uppercase; font-size: 10px; margin-top: 2px; }
-  .sidebar-footer button {
-    margin-top: 10px; background: transparent; border: 1px solid #3E6B8A; color: #8BAFC9;
-    padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; width: 100%;
-  }
-
-  .main { flex: 1; overflow-y: auto; }
-  .topbar { background: #fff; border-bottom: 1px solid #DDE3EB; padding: 14px 24px; }
-  .topbar h1 { font-size: 16px; color: #0D2137; }
-  .content { padding: 20px 24px; }
-
+  .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid #1A3A56; color: #5A8EB5; font-size: 11px; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: #fff; border-bottom: 1px solid #DDE3EB; padding: 10px 24px; display: flex; align-items: center; gap: 14px; }
+  .topbar h1 { font-size: 15px; font-weight: 600; color: #0D2137; }
+  .global-search { flex: 1; max-width: 420px; }
+  .global-search input { width: 100%; padding: 8px 12px; border: 1px solid #DDE3EB; border-radius: 8px; font-size: 12px; background: #F5F7FA; }
+  .content { flex: 1; overflow-y: auto; padding: 18px 24px; }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
-
-  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-  .kpi { background: #fff; border: 1px solid #DDE3EB; border-radius: 8px; padding: 16px; }
-  .kpi .label { font-size: 10px; text-transform: uppercase; color: #6B7E90; margin-bottom: 6px; }
-  .kpi .value { font-size: 26px; font-weight: 700; color: #0D2137; }
-
-  .panel { background: #fff; border: 1px solid #DDE3EB; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-  .panel h2 { font-size: 14px; margin-bottom: 14px; color: #0D2137; }
-
-  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
-  .form-row label { font-size: 11px; color: #6B7E90; display: block; margin-bottom: 4px; }
-  .form-row input, .form-row select {
-    width: 100%; padding: 8px 10px; border: 1px solid #DDE3EB; border-radius: 6px; font-size: 12px;
-  }
-  .btn { padding: 8px 16px; background: #2B9BE8; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .btn:hover { background: #1A7FBF; }
-  .btn-sm { padding: 5px 10px; font-size: 11px; }
-  .btn-outline { background: #fff; color: #2B9BE8; border: 1px solid #2B9BE8; }
-
+  .panel { background: #fff; border: 1px solid #DDE3EB; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+  .panel h2 { font-size: 13px; margin-bottom: 12px; color: #0D2137; }
+  .hint { color: #6B7E90; font-size: 11.5px; margin-bottom: 10px; }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #F5F7FA; padding: 9px 12px; text-align: left; font-size: 10px; text-transform: uppercase; color: #6B7E90; border-bottom: 1px solid #DDE3EB; }
-  td { padding: 9px 12px; border-bottom: 1px solid #EEF1F5; font-size: 12px; }
-
-  .tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+  th { background: #F5F7FA; padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase; color: #6B7E90; border-bottom: 1px solid #DDE3EB; }
+  td { padding: 8px 12px; border-bottom: 1px solid #EEF1F5; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  .tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; display: inline-block; }
   .tag-gray { background: #EEF1F5; color: #4A5E70; }
   .tag-blue { background: #DCF0FD; color: #0A5E96; }
   .tag-green { background: #D4F7E1; color: #0F6A30; }
   .tag-red { background: #FDDDE0; color: #C0122A; }
-
+  .tag-amber { background: #FEF0DC; color: #9A5700; }
+  .tag-purple { background: #EDE3FB; color: #5B2C9E; }
+  .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; }
+  .btn-primary { background: #2B9BE8; color: #fff; }
+  .btn-outline { background: #fff; color: #2B9BE8; border: 1px solid #2B9BE8; }
+  .btn-green { background: #1A9E4A; color: #fff; }
+  .btn-red { background: #E63946; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .form-grid label { font-size: 10.5px; color: #6B7E90; display: block; margin-bottom: 4px; text-transform: uppercase; }
+  .form-grid input, .form-grid select, .form-grid textarea { width: 100%; padding: 8px 10px; border: 1px solid #DDE3EB; border-radius: 6px; font-size: 12px; }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 18px; }
+  .kpi { background: #fff; border: 1px solid #DDE3EB; border-radius: 8px; padding: 14px; text-align: center; }
+  .kpi .l { font-size: 10px; text-transform: uppercase; color: #6B7E90; margin-bottom: 6px; }
+  .kpi .v { font-size: 26px; font-weight: 700; color: #0D2137; }
+  .kpi .s { font-size: 10px; color: #6B7E90; }
+  .kpi.destaque { border: 2px solid #2B9BE8; }
+  .kpi.destaque .v { color: #2B9BE8; }
+  .filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .filter-input { padding: 7px 12px; border: 1px solid #DDE3EB; border-radius: 6px; font-size: 12px; background: #fff; }
+  .funil-cols { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+  .funil-col { min-width: 175px; flex: 1; background: #F5F7FA; border-radius: 8px; padding: 10px; }
+  .funil-col h3 { font-size: 10px; text-transform: uppercase; color: #6B7E90; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .funil-card { background: #fff; border: 1px solid #DDE3EB; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 11px; cursor: pointer; }
+  .funil-card:hover { border-color: #2B9BE8; }
+  .funil-card .fname { font-weight: 600; color: #0D2137; font-size: 11.5px; margin-bottom: 3px; }
+  .funil-card .fmeta { color: #6B7E90; font-size: 10px; }
+  .funil-card.sla { border-color: #E63946; }
+  .lio-check { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #DDE3EB; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+  .lio-check .price { margin-left: auto; font-weight: 600; }
   #msg-box { position: fixed; top: 16px; right: 16px; z-index: 999; }
   .toast { background: #0D2137; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 12px; margin-bottom: 8px; }
   .toast.error { background: #E63946; }
   .toast.success { background: #1A9E4A; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(13,33,55,0.55); z-index: 100; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 30px 16px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 22px; width: 100%; max-width: 760px; }
+  .modal h2 { font-size: 14px; margin-bottom: 4px; }
 </style>
 </head>
 <body>
 
 <div id="msg-box"></div>
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-box">
-    <h1>HOG — CRM Comercial</h1>
-    <div class="sub">Entre com seu e-mail e senha cadastrados</div>
-    <input type="email" id="login-email" placeholder="E-mail">
-    <input type="password" id="login-password" placeholder="Senha">
-    <button onclick="fazerLogin()">Entrar</button>
-    <div id="login-error"></div>
-  </div>
+<div class="sidebar">
+  <div class="sidebar-logo"><div class="name">👁 HOG</div><div class="sub">CRM Comercial</div></div>
+  <div class="sidebar-section">Principal</div>
+  <div class="nav-item active" data-tab="dashboard">⊞ Dashboard</div>
+  <div class="sidebar-section">Agendas</div>
+  <div class="nav-item" data-tab="agenda-consulta">📋 Agenda de Consulta</div>
+  <div class="nav-item" data-tab="agenda-bio">🔬 Agenda de Biometria</div>
+  <div class="sidebar-section">Funil Catarata</div>
+  <div class="nav-item" data-tab="funil">🎯 Funil de Vendas</div>
+  <div class="sidebar-section">Cadastros rápidos</div>
+  <div class="nav-item" data-tab="pacientes">👥 Pacientes</div>
+  <div class="nav-item" data-tab="cadastros">🗂️ Médicos & Lentes</div>
+  <div class="sidebar-footer">Modo de validação<br><span style="font-size:10px;">Bloco 1 — próximo: Caixa e Agendas Cirúrgicas</span></div>
 </div>
 
-<!-- APP -->
-<div id="app-screen">
-  <div class="app-layout">
-    <div class="sidebar">
-      <div class="sidebar-logo">
-        <div class="name">👁 HOG</div>
-        <div class="sub">CRM Comercial</div>
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div class="global-search"><input id="busca-global" placeholder="🔍 Buscar paciente..." oninput="buscaGlobal(this.value)"></div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="filters">
+        <select class="filter-input" id="dash-medico" onchange="carregarDashboard()"><option value="">Todos os médicos</option></select>
+        <span style="font-size:11px; color:#6B7E90;">Período:</span>
+        <input type="date" class="filter-input" id="dash-ini" onchange="carregarDashboard()">
+        <input type="date" class="filter-input" id="dash-fim" onchange="carregarDashboard()">
       </div>
-      <div class="nav-item active" onclick="mostrarAba('dashboard')">⊞ Dashboard</div>
-      <div class="nav-item" onclick="mostrarAba('pacientes')">👥 Pacientes</div>
-      <div class="nav-item" onclick="mostrarAba('agenda')">📋 Agenda</div>
-      <div class="nav-item" onclick="mostrarAba('procedimentos')">👁️ Procedimentos</div>
-      <div class="sidebar-footer">
-        <div id="user-nome">Modo de validação</div>
-        <div class="papel" id="user-papel">sem login ativo</div>
+      <div class="kpis">
+        <div class="kpi"><div class="l">Passou em consulta</div><div class="v" id="kpi-consultas">—</div><div class="s">no período</div></div>
+        <div class="kpi"><div class="l">Já operou</div><div class="v" id="kpi-operou" style="color:#1A9E4A;">—</div><div class="s">ganho total</div></div>
+        <div class="kpi"><div class="l">Virou convênio</div><div class="v" id="kpi-convenio" style="color:#E63946;">—</div><div class="s">perdas</div></div>
+        <div class="kpi"><div class="l">Venda bruta</div><div class="v" id="kpi-venda" style="font-size:20px;">—</div><div class="s">LIOs vendidas</div></div>
+        <div class="kpi destaque"><div class="l">Prospectos abertos</div><div class="v" id="kpi-prospectos">—</div><div class="s" id="kpi-prospectos-valor">venda futura</div></div>
+      </div>
+      <div class="panel">
+        <h2>Alertas de tratativa</h2>
+        <div id="alertas-box"><span class="hint">Carregando...</span></div>
       </div>
     </div>
 
-    <div class="main">
-      <div class="topbar"><h1 id="page-title">Dashboard</h1></div>
-      <div class="content">
-
-        <!-- DASHBOARD -->
-        <div class="tab-content active" id="tab-dashboard">
-          <div class="kpi-row">
-            <div class="kpi"><div class="label">Pacientes cadastrados</div><div class="value" id="kpi-pacientes">—</div></div>
-            <div class="kpi"><div class="label">Compromissos hoje</div><div class="value" id="kpi-compromissos-hoje">—</div></div>
-            <div class="kpi"><div class="label">Procedimentos em negociação</div><div class="value" id="kpi-em-negociacao">—</div></div>
-            <div class="kpi"><div class="label">Total de procedimentos</div><div class="value" id="kpi-procedimentos">—</div></div>
-          </div>
+    <!-- AGENDA CONSULTA -->
+    <div class="tab-content" id="tab-agenda-consulta">
+      <div class="panel">
+        <h2>Novo Compromisso</h2>
+        <div class="form-grid">
+          <div><label>Paciente</label><select id="cp-paciente"></select></div>
+          <div><label>Médico</label><select id="cp-medico"></select></div>
+          <div><label>Tipo</label><select id="cp-tipo">
+            <option value="catarata">Catarata</option><option value="plastica">Plástica</option>
+            <option value="retina">Retina</option><option value="pos_operatorio">Pós-operatório</option>
+            <option value="retorno">Retorno</option><option value="outro">Outro</option>
+          </select></div>
+          <div><label>Data e hora</label><input type="datetime-local" id="cp-data"></div>
         </div>
-
-        <!-- PACIENTES -->
-        <div class="tab-content" id="tab-pacientes">
-          <div class="panel">
-            <h2>Novo Paciente</h2>
-            <div class="form-row">
-              <div><label>Nome</label><input id="pac-nome"></div>
-              <div><label>CPF</label><input id="pac-cpf"></div>
-              <div><label>Telefone</label><input id="pac-telefone"></div>
-              <div><label>E-mail</label><input id="pac-email"></div>
-            </div>
-            <button class="btn" onclick="criarPaciente()">Salvar Paciente</button>
-          </div>
-          <div class="panel">
-            <h2>Pacientes cadastrados</h2>
-            <table>
-              <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>E-mail</th></tr></thead>
-              <tbody id="tbl-pacientes"><tr><td colspan="4">Carregando...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- AGENDA -->
-        <div class="tab-content" id="tab-agenda">
-          <div class="panel">
-            <h2>Novo Compromisso</h2>
-            <div class="form-row">
-              <div><label>Paciente</label><select id="cp-paciente"></select></div>
-              <div><label>Médico</label><select id="cp-medico"></select></div>
-              <div><label>Tipo</label>
-                <select id="cp-tipo">
-                  <option value="catarata">Catarata</option>
-                  <option value="plastica">Plástica</option>
-                  <option value="retina">Retina</option>
-                  <option value="pos_operatorio">Pós-operatório</option>
-                  <option value="retorno">Retorno</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-              <div><label>Data e hora</label><input type="datetime-local" id="cp-data"></div>
-            </div>
-            <button class="btn" onclick="criarCompromisso()">Salvar Compromisso</button>
-          </div>
-          <div class="panel">
-            <h2>Compromissos</h2>
-            <table>
-              <thead><tr><th>Paciente</th><th>Médico</th><th>Tipo</th><th>Data</th><th>Presença</th><th></th></tr></thead>
-              <tbody id="tbl-agenda"><tr><td colspan="6">Carregando...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- PROCEDIMENTOS -->
-        <div class="tab-content" id="tab-procedimentos">
-          <div class="panel">
-            <h2>Novo Procedimento (por olho)</h2>
-            <div class="form-row">
-              <div><label>Paciente</label><select id="pr-paciente"></select></div>
-              <div><label>Médico</label><select id="pr-medico"></select></div>
-              <div><label>Número do olho</label>
-                <select id="pr-numero-olho"><option value="1">1º olho</option><option value="2">2º olho</option></select>
-              </div>
-              <div><label>Lateralidade</label>
-                <select id="pr-lateralidade"><option value="OD">Direito (OD)</option><option value="OE">Esquerdo (OE)</option><option value="unico">Olho único</option></select>
-              </div>
-            </div>
-            <button class="btn" onclick="criarProcedimento()">Salvar Procedimento</button>
-          </div>
-          <div class="panel">
-            <h2>Procedimentos</h2>
-            <table>
-              <thead><tr><th>Paciente</th><th>Olho</th><th>Lateralidade</th><th>Status Comercial</th><th>Status Cirúrgico</th></tr></thead>
-              <tbody id="tbl-procedimentos"><tr><td colspan="5">Carregando...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
+        <button class="btn btn-primary btn-sm" onclick="criarCompromisso()">Salvar</button>
       </div>
+      <div class="panel">
+        <div class="filters">
+          <input type="date" class="filter-input" id="ag-data" onchange="carregarAgenda()">
+          <select class="filter-input" id="ag-medico" onchange="carregarAgenda()"><option value="">Todos os médicos</option></select>
+        </div>
+        <table>
+          <thead><tr><th>Horário</th><th>Paciente</th><th>Convênio</th><th>Médico</th><th>Tipo</th><th>Presença</th><th></th></tr></thead>
+          <tbody id="tbl-agenda"><tr><td colspan="7">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AGENDA BIO -->
+    <div class="tab-content" id="tab-agenda-bio">
+      <div class="panel">
+        <h2>Agenda de Biometria</h2>
+        <table>
+          <thead><tr><th>Data/Hora</th><th>Paciente</th><th>Status</th><th>Validade</th><th></th></tr></thead>
+          <tbody id="tbl-bio"><tr><td colspan="5">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FUNIL -->
+    <div class="tab-content" id="tab-funil">
+      <div class="filters">
+        <select class="filter-input" id="funil-medico" onchange="carregarFunil()"><option value="">Todos os médicos</option></select>
+        <span class="hint" style="margin:0;">Clique num card para abrir o atendimento. Ganho parcial/total são movidos pelo Caixa e pela baixa cirúrgica.</span>
+      </div>
+      <div class="funil-cols" id="funil-cols">Carregando...</div>
+    </div>
+
+    <!-- PACIENTES -->
+    <div class="tab-content" id="tab-pacientes">
+      <div class="panel">
+        <h2>Novo Paciente</h2>
+        <div class="form-grid">
+          <div><label>Nome</label><input id="pac-nome"></div>
+          <div><label>Nascimento</label><input type="date" id="pac-nasc"></div>
+          <div><label>CPF</label><input id="pac-cpf"></div>
+          <div><label>Telefone</label><input id="pac-telefone"></div>
+          <div><label>Convênio</label><select id="pac-convenio"></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="criarPaciente()">Salvar</button>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Nome</th><th>Nascimento</th><th>Telefone</th><th>Convênio</th></tr></thead>
+          <tbody id="tbl-pacientes"><tr><td colspan="4">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CADASTROS RÁPIDOS -->
+    <div class="tab-content" id="tab-cadastros">
+      <div class="panel">
+        <h2>Médicos</h2>
+        <div class="form-grid">
+          <div><label>Nome</label><input id="med-nome"></div>
+          <div><label>CRM</label><input id="med-crm"></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary btn-sm" onclick="criarMedico()">Adicionar médico</button></div>
+        </div>
+        <table><thead><tr><th>Nome</th><th>CRM</th></tr></thead><tbody id="tbl-medicos"></tbody></table>
+      </div>
+      <div class="panel">
+        <h2>Lentes (LIO)</h2>
+        <div class="form-grid">
+          <div><label>Nome</label><input id="len-nome"></div>
+          <div><label>Valor de venda</label><input id="len-valor" type="number" step="0.01"></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary btn-sm" onclick="criarLente()">Adicionar lente</button></div>
+        </div>
+        <table><thead><tr><th>Nome</th><th>Valor</th></tr></thead><tbody id="tbl-lentes"></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: TELA DE ATENDIMENTO -->
+<div class="modal-bg" id="modal-atendimento">
+  <div class="modal">
+    <h2 id="at-titulo">Atendimento</h2>
+    <div class="hint" id="at-sub"></div>
+    <div class="form-grid">
+      <div><label>Lateralidade</label><select id="at-lateralidade">
+        <option value="OD">OD — direito</option><option value="OE">OE — esquerdo</option><option value="unico">Olho único</option>
+      </select></div>
+      <div><label>Nº do olho</label><select id="at-olho"><option value="1">1º olho</option><option value="2">2º olho</option></select></div>
+      <div><label>Temperatura</label><select id="at-temp">
+        <option value="">—</option><option value="quente">🔥 Quente</option><option value="morno">🌡 Morno</option><option value="frio">❄ Frio</option>
+      </select></div>
+      <div><label>Data pretendida cirurgia</label><input id="at-pretendida" placeholder="Ex: Setembro/2026"></div>
+      <div><label>Agendar biometria</label><input type="datetime-local" id="at-bio"></div>
+      <div><label>Data de retorno combinada</label><input type="date" id="at-retorno"></div>
+    </div>
+    <label style="font-size:10.5px; color:#6B7E90; text-transform:uppercase;">Opções de LIO apresentadas (orçamento)</label>
+    <div id="at-lios" style="margin:6px 0 12px;"></div>
+    <div style="border-top:2px dashed #DDE3EB; padding-top:12px; margin-bottom:12px;">
+      <label style="font-size:10.5px; color:#0F6A30; text-transform:uppercase; font-weight:700;">✅ Decisão da LIO (com dioptria)</label>
+      <div class="form-grid" style="margin-top:8px;">
+        <div><label>LIO vendida</label><select id="at-lio-vendida"><option value="">— ainda não decidiu —</option></select></div>
+        <div><label>Dioptria</label><input id="at-dioptria" placeholder="+21,5"></div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div style="grid-column: 1 / -1;"><label>Histórico do atendimento (obrigatório)</label><textarea id="at-notas" rows="2"></textarea></div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="salvarAtendimento(false)">💾 Salvar atendimento</button>
+      <button class="btn btn-green btn-sm" onclick="salvarAtendimento(true)">✅ Salvar + confirmar decisão da LIO</button>
+      <button class="btn btn-red btn-sm" onclick="marcarPerda()">Perda — Convênio</button>
+      <button class="btn btn-outline btn-sm" onclick="fecharModal()">Fechar</button>
     </div>
   </div>
 </div>
@@ -230,240 +261,357 @@
   const SUPABASE_KEY = 'sb_publishable_MTZcLLkg-RIHwEiF3mVT-Q__8CHqNrY';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let usuarioAtual = null;
+  let medicos = [], lentes = [], convenios = [], pacientes = [];
+  let atendimentoAtual = null; // { procedimentoId, pacienteId, compromissoId }
 
   function toast(msg, tipo) {
-    const box = document.getElementById('msg-box');
     const el = document.createElement('div');
     el.className = 'toast' + (tipo ? ' ' + tipo : '');
     el.textContent = msg;
-    box.appendChild(el);
+    document.getElementById('msg-box').appendChild(el);
     setTimeout(() => el.remove(), 4000);
   }
 
-  // ---------- AUTENTICAÇÃO ----------
-  async function fazerLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errBox = document.getElementById('login-error');
-    errBox.textContent = '';
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      errBox.textContent = 'Erro ao entrar: ' + error.message;
-      return;
-    }
-
-    const { data: userRow, error: userErr } = await sb
-      .from('usuarios')
-      .select('*')
-      .eq('auth_user_id', data.user.id)
-      .maybeSingle();
-
-    if (userErr || !userRow) {
-      errBox.textContent = 'Login OK, mas não encontrei seu cadastro na tabela usuarios. Peça para o admin vincular seu auth_user_id.';
-      return;
-    }
-
-    usuarioAtual = userRow;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    document.getElementById('user-nome').textContent = userRow.nome;
-    document.getElementById('user-papel').textContent = userRow.papel;
-    carregarTudo();
-  }
-
-  async function fazerLogout() {
-    await sb.auth.signOut();
-    location.reload();
-  }
-
-  // ---------- NAVEGAÇÃO ----------
-  const titulos = { dashboard: 'Dashboard', pacientes: 'Pacientes', agenda: 'Agenda', procedimentos: 'Procedimentos' };
-  function mostrarAba(id) {
+  // NAVEGAÇÃO
+  document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('tab-' + id).classList.add('active');
-    event.target.classList.add('active');
-    document.getElementById('page-title').textContent = titulos[id];
-  }
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    n.classList.add('active');
+    document.getElementById('tab-' + n.dataset.tab).classList.add('active');
+    document.getElementById('page-title').textContent = n.textContent.trim();
+  });
 
-  // ---------- CARREGAMENTO GERAL ----------
-  async function carregarTudo() {
-    await Promise.all([
-      carregarDashboard(),
-      carregarPacientes(),
-      carregarMedicos(),
-      carregarAgenda(),
-      carregarProcedimentos()
+  // ---------- BASE ----------
+  async function carregarBase() {
+    const [m, l, c, p] = await Promise.all([
+      sb.from('medicos').select('*').order('nome'),
+      sb.from('lentes').select('*').eq('ativo', true).order('valor_venda'),
+      sb.from('convenios').select('*').eq('ativo', true).order('nome'),
+      sb.from('pacientes').select('*, convenios(nome)').order('nome')
     ]);
+    medicos = m.data || []; lentes = l.data || []; convenios = c.data || []; pacientes = p.data || [];
+
+    const medOpts = '<option value="">Todos os médicos</option>' + medicos.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+    ['dash-medico','ag-medico','funil-medico'].forEach(id => document.getElementById(id).innerHTML = medOpts);
+    document.getElementById('cp-medico').innerHTML = medicos.map(x => `<option value="${x.id}">${x.nome}</option>`).join('') || '<option value="">cadastre um médico</option>';
+    document.getElementById('cp-paciente').innerHTML = pacientes.map(x => `<option value="${x.id}">${x.nome}</option>`).join('') || '<option value="">cadastre um paciente</option>';
+    document.getElementById('pac-convenio').innerHTML = '<option value="">— sem convênio —</option>' + convenios.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+    document.getElementById('tbl-medicos').innerHTML = medicos.map(x => `<tr><td>${x.nome}</td><td>${x.crm ?? '-'}</td></tr>`).join('');
+    document.getElementById('tbl-lentes').innerHTML = lentes.map(x => `<tr><td>${x.nome}</td><td>R$ ${Number(x.valor_venda||0).toLocaleString('pt-BR')}</td></tr>`).join('');
+    document.getElementById('tbl-pacientes').innerHTML = pacientes.map(x => `<tr><td>${x.nome}</td><td>${x.data_nascimento ? new Date(x.data_nascimento+'T00:00').toLocaleDateString('pt-BR') : '-'}</td><td>${x.telefone ?? '-'}</td><td>${x.convenios?.nome ?? '-'}</td></tr>`).join('') || '<tr><td colspan="4">Nenhum paciente.</td></tr>';
   }
 
   // ---------- DASHBOARD ----------
   async function carregarDashboard() {
-    const { count: totalPacientes } = await sb.from('pacientes').select('*', { count: 'exact', head: true });
-    document.getElementById('kpi-pacientes').textContent = totalPacientes ?? 0;
+    const ini = document.getElementById('dash-ini').value;
+    const fim = document.getElementById('dash-fim').value;
+    const med = document.getElementById('dash-medico').value;
 
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
-    const { count: compHoje } = await sb.from('compromissos').select('*', { count: 'exact', head: true })
-      .gte('data_hora', hoje.toISOString()).lt('data_hora', amanha.toISOString());
-    document.getElementById('kpi-compromissos-hoje').textContent = compHoje ?? 0;
+    let qC = sb.from('compromissos').select('*', { count: 'exact', head: true }).eq('presenca','compareceu');
+    if (ini) qC = qC.gte('data_hora', ini);
+    if (fim) qC = qC.lte('data_hora', fim + 'T23:59:59');
+    if (med) qC = qC.eq('medico_id', med);
+    const { count: consultas } = await qC;
+    document.getElementById('kpi-consultas').textContent = consultas ?? 0;
 
-    const { count: emNeg } = await sb.from('procedimentos').select('*', { count: 'exact', head: true })
-      .eq('status_comercial', 'em_negociacao');
-    document.getElementById('kpi-em-negociacao').textContent = emNeg ?? 0;
+    let qBase = () => { let q = sb.from('procedimentos').select('*'); if (med) q = q.eq('medico_id', med); return q; };
+    const { data: procs } = await qBase();
+    const lst = procs || [];
+    document.getElementById('kpi-operou').textContent = lst.filter(p => p.etapa_funil === 'ganho_total').length;
+    document.getElementById('kpi-convenio').textContent = lst.filter(p => p.etapa_funil === 'perda').length;
+    const venda = lst.filter(p => ['decidiu_lio','ganho_parcial','ganho_total'].includes(p.etapa_funil)).reduce((s,p) => s + Number(p.valor_fechado || 0), 0);
+    document.getElementById('kpi-venda').textContent = 'R$ ' + venda.toLocaleString('pt-BR');
+    const abertos = lst.filter(p => !['ganho_total','perda'].includes(p.etapa_funil));
+    document.getElementById('kpi-prospectos').textContent = abertos.length;
+    const valProv = abertos.reduce((s,p) => s + Number(p.valor_fechado || 0), 0);
+    document.getElementById('kpi-prospectos-valor').textContent = 'venda futura · R$ ' + valProv.toLocaleString('pt-BR') + ' prováveis';
 
-    const { count: totalProc } = await sb.from('procedimentos').select('*', { count: 'exact', head: true });
-    document.getElementById('kpi-procedimentos').textContent = totalProc ?? 0;
+    // Alertas
+    const { data: semHist } = await sb.from('v_procedimentos_sem_historico').select('*');
+    const { data: sla } = await sb.from('v_funil_sla_estourado').select('*');
+    let html = '';
+    if (semHist?.length) html += `<div style="border-left:4px solid #E63946; background:#FFF2F3; padding:10px 14px; border-radius:0 6px 6px 0; margin-bottom:8px;"><strong>${semHist.length} paciente(s) sem histórico registrado</strong> — ${semHist.map(x=>x.nome).join(', ')}</div>`;
+    if (sla?.length) html += `<div style="border-left:4px solid #F4A261; background:#FFF8F0; padding:10px 14px; border-radius:0 6px 6px 0; margin-bottom:8px;"><strong>${sla.length} paciente(s) com SLA estourado</strong> — ${sla.map(x=>`${x.nome} (${x.etapa_funil}, ${Math.floor(x.dias_parado)}d)`).join(', ')}</div>`;
+    document.getElementById('alertas-box').innerHTML = html || '<span class="hint">Nenhum alerta ativo. 🎉</span>';
   }
 
-  // ---------- PACIENTES ----------
-  let listaPacientes = [];
-  async function carregarPacientes() {
-    const { data, error } = await sb.from('pacientes').select('*').order('nome');
-    if (error) { toast('Erro ao carregar pacientes: ' + error.message, 'error'); return; }
-    listaPacientes = data;
-
-    const tbl = document.getElementById('tbl-pacientes');
-    tbl.innerHTML = data.length ? data.map(p => `
-      <tr><td>${p.nome}</td><td>${p.cpf ?? '-'}</td><td>${p.telefone ?? '-'}</td><td>${p.email ?? '-'}</td></tr>
-    `).join('') : '<tr><td colspan="4">Nenhum paciente cadastrado ainda.</td></tr>';
-
-    ['cp-paciente', 'pr-paciente'].forEach(id => {
-      const sel = document.getElementById(id);
-      sel.innerHTML = data.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
-    });
-  }
-
-  async function criarPaciente() {
-    const nome = document.getElementById('pac-nome').value.trim();
-    if (!nome) { toast('Informe o nome do paciente', 'error'); return; }
-    const payload = {
-      nome,
-      cpf: document.getElementById('pac-cpf').value.trim() || null,
-      telefone: document.getElementById('pac-telefone').value.trim() || null,
-      email: document.getElementById('pac-email').value.trim() || null
-    };
-    const { error } = await sb.from('pacientes').insert(payload);
-    if (error) { toast('Erro ao salvar: ' + error.message, 'error'); return; }
-    toast('Paciente salvo!', 'success');
-    ['pac-nome','pac-cpf','pac-telefone','pac-email'].forEach(id => document.getElementById(id).value = '');
-    carregarPacientes();
-  }
-
-  // ---------- MÉDICOS ----------
-  async function carregarMedicos() {
-    const { data, error } = await sb.from('medicos').select('*').order('nome');
-    if (error) { toast('Erro ao carregar médicos: ' + error.message, 'error'); return; }
-    ['cp-medico', 'pr-medico'].forEach(id => {
-      const sel = document.getElementById(id);
-      sel.innerHTML = (data && data.length)
-        ? data.map(m => `<option value="${m.id}">${m.nome}</option>`).join('')
-        : '<option value="">Nenhum médico cadastrado</option>';
-    });
-  }
-
-  // ---------- AGENDA / COMPROMISSOS ----------
+  // ---------- AGENDA CONSULTA ----------
   async function carregarAgenda() {
-    const { data, error } = await sb
-      .from('compromissos')
-      .select('*, pacientes(nome), medicos(nome)')
-      .order('data_hora', { ascending: false })
-      .limit(100);
-    if (error) { toast('Erro ao carregar agenda: ' + error.message, 'error'); return; }
-
-    const tbl = document.getElementById('tbl-agenda');
-    tbl.innerHTML = data.length ? data.map(c => `
+    const dt = document.getElementById('ag-data').value;
+    const med = document.getElementById('ag-medico').value;
+    let q = sb.from('compromissos').select('*, pacientes(id, nome, convenios(nome)), medicos(nome)').order('data_hora');
+    if (dt) q = q.gte('data_hora', dt).lte('data_hora', dt + 'T23:59:59');
+    if (med) q = q.eq('medico_id', med);
+    const { data, error } = await q.limit(200);
+    if (error) { toast(error.message, 'error'); return; }
+    document.getElementById('tbl-agenda').innerHTML = (data?.length) ? data.map(c => `
       <tr>
-        <td>${c.pacientes?.nome ?? '-'}</td>
+        <td>${new Date(c.data_hora).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+        <td><strong>${c.pacientes?.nome ?? '-'}</strong></td>
+        <td>${c.pacientes?.convenios?.nome ? `<span class="tag tag-purple">${c.pacientes.convenios.nome}</span>` : '-'}</td>
         <td>${c.medicos?.nome ?? '-'}</td>
-        <td>${c.tipo_procedimento}</td>
-        <td>${new Date(c.data_hora).toLocaleString('pt-BR')}</td>
-        <td>${presencaTag(c.presenca)}</td>
+        <td><span class="tag tag-blue">${c.tipo_procedimento}</span></td>
+        <td>${c.presenca === 'compareceu' ? '<span class="tag tag-green">Compareceu</span>' : c.presenca === 'faltou' ? '<span class="tag tag-red">Faltou</span>' : '<span class="tag tag-gray">Agendado</span>'}</td>
         <td>
-          ${c.presenca === 'agendado' ? `
-            <button class="btn btn-sm" onclick="marcarPresenca('${c.id}','compareceu')">Compareceu</button>
-            <button class="btn btn-sm btn-outline" onclick="marcarPresenca('${c.id}','faltou')">Faltou</button>
-          ` : ''}
+          ${c.presenca === 'agendado' ? `<button class="btn btn-sm btn-outline" onclick="setPresenca('${c.id}','compareceu')">Compareceu</button> <button class="btn btn-sm btn-outline" onclick="setPresenca('${c.id}','faltou')">Faltou</button>` : ''}
+          ${c.presenca === 'compareceu' && c.tipo_procedimento === 'catarata' ? `<button class="btn btn-sm btn-primary" onclick="iniciarAtendimento('${c.id}','${c.pacientes?.id}','${(c.pacientes?.nome||'').replace(/'/g,"\\'")}','${c.medico_id||''}')">Iniciar atendimento</button>` : ''}
         </td>
-      </tr>
-    `).join('') : '<tr><td colspan="6">Nenhum compromisso cadastrado ainda.</td></tr>';
+      </tr>`).join('') : '<tr><td colspan="7">Nenhum compromisso.</td></tr>';
   }
 
-  function presencaTag(p) {
-    if (p === 'compareceu') return '<span class="tag tag-green">Compareceu</span>';
-    if (p === 'faltou') return '<span class="tag tag-red">Faltou</span>';
-    return '<span class="tag tag-gray">Agendado</span>';
+  async function setPresenca(id, st) {
+    const { error } = await sb.from('compromissos').update({ presenca: st }).eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Atualizado', 'success');
+    carregarAgenda();
   }
 
   async function criarCompromisso() {
     const paciente_id = document.getElementById('cp-paciente').value;
-    const medico_id = document.getElementById('cp-medico').value;
-    const tipo_procedimento = document.getElementById('cp-tipo').value;
     const data_hora = document.getElementById('cp-data').value;
-    if (!paciente_id || !data_hora) { toast('Selecione paciente e data', 'error'); return; }
-
+    if (!paciente_id || !data_hora) { toast('Paciente e data são obrigatórios', 'error'); return; }
     const { error } = await sb.from('compromissos').insert({
-      paciente_id, medico_id: medico_id || null, tipo_procedimento,
-      data_hora: new Date(data_hora).toISOString(), presenca: 'agendado'
+      paciente_id,
+      medico_id: document.getElementById('cp-medico').value || null,
+      tipo_procedimento: document.getElementById('cp-tipo').value,
+      data_hora: new Date(data_hora).toISOString()
     });
-    if (error) { toast('Erro ao salvar: ' + error.message, 'error'); return; }
-    toast('Compromisso criado!', 'success');
-    carregarAgenda();
-    carregarDashboard();
-  }
-
-  async function marcarPresenca(id, status) {
-    const { error } = await sb.from('compromissos').update({ presenca: status }).eq('id', id);
-    if (error) { toast('Erro: ' + error.message, 'error'); return; }
-    toast('Atualizado!', 'success');
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Compromisso criado', 'success');
     carregarAgenda();
   }
 
-  // ---------- PROCEDIMENTOS ----------
-  async function carregarProcedimentos() {
-    const { data, error } = await sb
-      .from('procedimentos')
-      .select('*, pacientes(nome)')
-      .order('criado_em', { ascending: false })
-      .limit(100);
-    if (error) { toast('Erro ao carregar procedimentos: ' + error.message, 'error'); return; }
+  // ---------- TELA DE ATENDIMENTO ----------
+  async function iniciarAtendimento(compId, pacId, pacNome, medicoId) {
+    // procura procedimento aberto desse paciente ou cria
+    let { data: procs } = await sb.from('procedimentos').select('*').eq('paciente_id', pacId).not('etapa_funil','in','("ganho_total","perda")').order('criado_em', { ascending: false }).limit(1);
+    let proc = procs?.[0];
+    if (!proc) {
+      const { data: novo, error } = await sb.from('procedimentos').insert({
+        paciente_id: pacId, medico_id: medicoId || null, compromisso_origem_id: compId,
+        numero_olho: 1, etapa_funil: 'consulta_feita', modalidade: null
+      }).select().single();
+      if (error) { toast(error.message, 'error'); return; }
+      proc = novo;
+    }
+    atendimentoAtual = { procedimentoId: proc.id, pacienteId: pacId };
+    document.getElementById('at-titulo').textContent = 'Atendimento — ' + pacNome;
+    document.getElementById('at-sub').textContent = 'Etapa atual: ' + proc.etapa_funil;
+    document.getElementById('at-lateralidade').value = proc.lateralidade || 'OD';
+    document.getElementById('at-olho').value = proc.numero_olho || 1;
+    document.getElementById('at-temp').value = proc.temperatura || '';
+    document.getElementById('at-pretendida').value = proc.data_pretendida_cirurgia || '';
+    document.getElementById('at-retorno').value = proc.data_retorno_combinada || '';
+    document.getElementById('at-dioptria').value = proc.dioptria || '';
+    document.getElementById('at-lios').innerHTML = lentes.map(l =>
+      `<div class="lio-check"><input type="checkbox" class="lio-op" value="${l.id}"> ${l.nome} <span class="price">R$ ${Number(l.valor_venda||0).toLocaleString('pt-BR')}</span></div>`).join('') || '<span class="hint">Cadastre lentes primeiro.</span>';
+    document.getElementById('at-lio-vendida').innerHTML = '<option value="">— ainda não decidiu —</option>' + lentes.map(l => `<option value="${l.id}" ${proc.lente_id===l.id?'selected':''}>${l.nome} — R$ ${Number(l.valor_venda||0).toLocaleString('pt-BR')}</option>`).join('');
+    document.getElementById('at-notas').value = '';
+    document.getElementById('modal-atendimento').classList.add('open');
+  }
 
-    const tbl = document.getElementById('tbl-procedimentos');
-    tbl.innerHTML = data.length ? data.map(p => `
+  function fecharModal() { document.getElementById('modal-atendimento').classList.remove('open'); }
+
+  async function salvarAtendimento(confirmarLio) {
+    if (!atendimentoAtual) return;
+    const notas = document.getElementById('at-notas').value.trim();
+    if (!notas) { toast('O histórico do atendimento é obrigatório', 'error'); return; }
+    const opcoes = [...document.querySelectorAll('.lio-op:checked')].map(cb => {
+      const l = lentes.find(x => x.id === cb.value);
+      return { lente_id: l.id, nome: l.nome, valor: l.valor_venda };
+    });
+
+    // grava atendimento no histórico
+    const { error: e1 } = await sb.from('atendimentos').insert({
+      especialidade: 'catarata',
+      procedimento_id: atendimentoAtual.procedimentoId,
+      canal: 'presencial', notas,
+      opcoes_apresentadas: opcoes.length ? opcoes : null,
+      proposta_gerada: opcoes.length > 0
+    });
+    if (e1) { toast(e1.message, 'error'); return; }
+
+    // atualiza procedimento
+    const lioVendida = document.getElementById('at-lio-vendida').value;
+    const upd = {
+      lateralidade: document.getElementById('at-lateralidade').value,
+      numero_olho: parseInt(document.getElementById('at-olho').value),
+      temperatura: document.getElementById('at-temp').value || null,
+      data_pretendida_cirurgia: document.getElementById('at-pretendida').value || null,
+      data_retorno_combinada: document.getElementById('at-retorno').value || null
+    };
+    // progressão de etapa
+    const bio = document.getElementById('at-bio').value;
+    if (confirmarLio && lioVendida) {
+      const l = lentes.find(x => x.id === lioVendida);
+      upd.lente_id = lioVendida;
+      upd.dioptria = parseFloat((document.getElementById('at-dioptria').value || '').replace(',', '.')) || null;
+      upd.valor_fechado = l?.valor_venda || null;
+      upd.modalidade = 'particular';
+      upd.etapa_funil = 'decidiu_lio';
+      upd.etapa_desde = new Date().toISOString();
+    } else if (bio) {
+      upd.etapa_funil = 'bio_agendada';
+      upd.etapa_desde = new Date().toISOString();
+    } else if (opcoes.length) {
+      upd.etapa_funil = 'orcamento';
+      upd.etapa_desde = new Date().toISOString();
+    }
+    const { error: e2 } = await sb.from('procedimentos').update(upd).eq('id', atendimentoAtual.procedimentoId);
+    if (e2) { toast(e2.message, 'error'); return; }
+
+    if (bio) {
+      await sb.from('agenda_biometria').insert({ procedimento_id: atendimentoAtual.procedimentoId, data_hora: new Date(bio).toISOString() });
+    }
+    toast(confirmarLio ? 'Decisão da LIO confirmada — enviado ao Caixa' : 'Atendimento salvo', 'success');
+    fecharModal();
+    carregarFunil(); carregarDashboard(); carregarBio();
+  }
+
+  async function marcarPerda() {
+    if (!atendimentoAtual) return;
+    const { error } = await sb.from('procedimentos').update({ etapa_funil: 'perda', modalidade: 'convenio', etapa_desde: new Date().toISOString() }).eq('id', atendimentoAtual.procedimentoId);
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Marcado como perda (convênio)', 'success');
+    fecharModal();
+    carregarFunil(); carregarDashboard();
+  }
+
+  // ---------- AGENDA BIO ----------
+  async function carregarBio() {
+    const { data, error } = await sb.from('agenda_biometria').select('*, procedimentos(paciente_id, pacientes(nome))').order('data_hora');
+    if (error) { toast(error.message, 'error'); return; }
+    document.getElementById('tbl-bio').innerHTML = (data?.length) ? data.map(b => `
       <tr>
-        <td>${p.pacientes?.nome ?? '-'}</td>
-        <td>${p.numero_olho ?? '-'}</td>
-        <td>${p.lateralidade ?? '-'}</td>
-        <td><span class="tag tag-blue">${p.status_comercial}</span></td>
-        <td><span class="tag tag-gray">${p.status_cirurgico}</span></td>
-      </tr>
-    `).join('') : '<tr><td colspan="5">Nenhum procedimento cadastrado ainda.</td></tr>';
+        <td>${new Date(b.data_hora).toLocaleString('pt-BR')}</td>
+        <td>${b.procedimentos?.pacientes?.nome ?? '-'}</td>
+        <td>${b.status === 'realizada' ? '<span class="tag tag-green">Realizada</span>' : b.status === 'faltou' ? '<span class="tag tag-red">Faltou</span>' : '<span class="tag tag-gray">Agendada</span>'}</td>
+        <td>${b.status === 'realizada' ? new Date(new Date(b.data_hora).getTime() + 180*24*3600*1000).toLocaleDateString('pt-BR') : '—'}</td>
+        <td>${b.status === 'agendada' ? `<button class="btn btn-sm btn-outline" onclick="setBio('${b.id}','realizada','${b.procedimento_id}')">Realizada</button> <button class="btn btn-sm btn-outline" onclick="setBio('${b.id}','faltou','${b.procedimento_id}')">Faltou</button>` : ''}</td>
+      </tr>`).join('') : '<tr><td colspan="5">Nenhuma biometria agendada.</td></tr>';
   }
 
-  async function criarProcedimento() {
-    const paciente_id = document.getElementById('pr-paciente').value;
-    const medico_id = document.getElementById('pr-medico').value;
-    const numero_olho = parseInt(document.getElementById('pr-numero-olho').value);
-    const lateralidade = document.getElementById('pr-lateralidade').value;
-    if (!paciente_id) { toast('Selecione o paciente', 'error'); return; }
+  async function setBio(id, st, procId) {
+    const { error } = await sb.from('agenda_biometria').update({ status: st }).eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    if (st === 'realizada') {
+      await sb.from('procedimentos').update({ biometria_data: new Date().toISOString().slice(0,10) }).eq('id', procId);
+    }
+    toast('Atualizado', 'success');
+    carregarBio();
+  }
 
-    const { error } = await sb.from('procedimentos').insert({
-      paciente_id, medico_id: medico_id || null, numero_olho, lateralidade,
-      status_comercial: 'sem_status', status_cirurgico: 'sem_data'
+  // ---------- FUNIL ----------
+  const ETAPAS = [
+    { k: 'consulta_feita', t: 'Consulta feita', sla: '⏱ máx 3 dias' },
+    { k: 'bio_agendada', t: 'Bio agendada', sla: '⏱ alerta se passou' },
+    { k: 'orcamento', t: 'Orçamento', sla: '📅 retorno combinado' },
+    { k: 'decidiu_lio', t: 'Decidiu LIO', sla: '💵 baixa é do Caixa' },
+    { k: 'ganho_parcial', t: 'Ganho parcial', sla: 'pagou' },
+    { k: 'ganho_total', t: 'Ganho total', sla: 'operou' },
+    { k: 'perda', t: 'Perda', sla: 'convênio' }
+  ];
+
+  async function carregarFunil() {
+    const med = document.getElementById('funil-medico').value;
+    let q = sb.from('procedimentos').select('*, pacientes(nome), lentes(nome), medicos(nome)');
+    if (med) q = q.eq('medico_id', med);
+    const { data, error } = await q;
+    if (error) { toast(error.message, 'error'); return; }
+    const lst = data || [];
+    document.getElementById('funil-cols').innerHTML = ETAPAS.map(et => {
+      const cards = lst.filter(p => p.etapa_funil === et.k);
+      return `<div class="funil-col"><h3>${et.t} <span>${cards.length}</span></h3>
+        <div style="font-size:9.5px; color:#6B7E90; margin-bottom:6px;">${et.sla}</div>
+        ${cards.map(p => {
+          const dias = Math.floor((Date.now() - new Date(p.etapa_desde||p.criado_em).getTime()) / 86400000);
+          const estourou = (et.k === 'consulta_feita' && dias > 3) || (et.k === 'orcamento' && p.data_retorno_combinada && p.data_retorno_combinada < new Date().toISOString().slice(0,10));
+          return `<div class="funil-card ${estourou ? 'sla' : ''}" onclick="abrirDoFunil('${p.id}')">
+            <div class="fname">${p.pacientes?.nome ?? '-'} · ${p.lateralidade ?? '?'} ${p.numero_olho ?? ''}</div>
+            <div class="fmeta">${p.temperatura === 'quente' ? '🔥 ' : p.temperatura === 'morno' ? '🌡 ' : p.temperatura === 'frio' ? '❄ ' : ''}${p.lentes?.nome ?? ''} ${p.valor_fechado ? 'R$ ' + Number(p.valor_fechado).toLocaleString('pt-BR') : ''} ${estourou ? '· ⚠️ ' + dias + 'd' : ''}</div>
+          </div>`;
+        }).join('') || '<div style="font-size:10px; color:#C4CDD6; text-align:center; padding:8px;">vazio</div>'}
+      </div>`;
+    }).join('');
+  }
+
+  async function abrirDoFunil(procId) {
+    const { data: p } = await sb.from('procedimentos').select('*, pacientes(id, nome)').eq('id', procId).single();
+    if (!p) return;
+    atendimentoAtual = { procedimentoId: p.id, pacienteId: p.pacientes.id };
+    iniciarAtendimentoExistente(p);
+  }
+
+  function iniciarAtendimentoExistente(proc) {
+    document.getElementById('at-titulo').textContent = 'Atendimento — ' + proc.pacientes.nome;
+    document.getElementById('at-sub').textContent = 'Etapa atual: ' + proc.etapa_funil;
+    document.getElementById('at-lateralidade').value = proc.lateralidade || 'OD';
+    document.getElementById('at-olho').value = proc.numero_olho || 1;
+    document.getElementById('at-temp').value = proc.temperatura || '';
+    document.getElementById('at-pretendida').value = proc.data_pretendida_cirurgia || '';
+    document.getElementById('at-retorno').value = proc.data_retorno_combinada || '';
+    document.getElementById('at-dioptria').value = proc.dioptria || '';
+    document.getElementById('at-lios').innerHTML = lentes.map(l =>
+      `<div class="lio-check"><input type="checkbox" class="lio-op" value="${l.id}"> ${l.nome} <span class="price">R$ ${Number(l.valor_venda||0).toLocaleString('pt-BR')}</span></div>`).join('');
+    document.getElementById('at-lio-vendida').innerHTML = '<option value="">— ainda não decidiu —</option>' + lentes.map(l => `<option value="${l.id}" ${proc.lente_id===l.id?'selected':''}>${l.nome} — R$ ${Number(l.valor_venda||0).toLocaleString('pt-BR')}</option>`).join('');
+    document.getElementById('at-notas').value = '';
+    document.getElementById('modal-atendimento').classList.add('open');
+  }
+
+  // ---------- BUSCA GLOBAL ----------
+  let buscaTimer;
+  function buscaGlobal(termo) {
+    clearTimeout(buscaTimer);
+    if (!termo || termo.length < 3) return;
+    buscaTimer = setTimeout(async () => {
+      const { data } = await sb.from('pacientes').select('nome, telefone').ilike('nome', '%' + termo + '%').limit(5);
+      if (data?.length) toast('Encontrado: ' + data.map(p => p.nome).join(' · '));
+    }, 500);
+  }
+
+  // ---------- CADASTROS ----------
+  async function criarPaciente() {
+    const nome = document.getElementById('pac-nome').value.trim();
+    if (!nome) { toast('Nome obrigatório', 'error'); return; }
+    const { error } = await sb.from('pacientes').insert({
+      nome,
+      data_nascimento: document.getElementById('pac-nasc').value || null,
+      cpf: document.getElementById('pac-cpf').value.trim() || null,
+      telefone: document.getElementById('pac-telefone').value.trim() || null,
+      convenio_id: document.getElementById('pac-convenio').value || null
     });
-    if (error) { toast('Erro ao salvar: ' + error.message, 'error'); return; }
-    toast('Procedimento criado!', 'success');
-    carregarProcedimentos();
-    carregarDashboard();
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Paciente salvo', 'success');
+    carregarBase();
   }
 
-  // ---------- MODO DE VALIDAÇÃO (login desativado temporariamente) ----------
+  async function criarMedico() {
+    const nome = document.getElementById('med-nome').value.trim();
+    if (!nome) { toast('Nome obrigatório', 'error'); return; }
+    const { error } = await sb.from('medicos').insert({ nome, crm: document.getElementById('med-crm').value.trim() || null });
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Médico salvo', 'success');
+    carregarBase();
+  }
+
+  async function criarLente() {
+    const nome = document.getElementById('len-nome').value.trim();
+    if (!nome) { toast('Nome obrigatório', 'error'); return; }
+    const { error } = await sb.from('lentes').insert({ nome, valor_venda: parseFloat(document.getElementById('len-valor').value) || null });
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Lente salva', 'success');
+    carregarBase();
+  }
+
+  // ---------- INIT ----------
   (async () => {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    carregarTudo();
+    const hoje = new Date().toISOString().slice(0,10);
+    document.getElementById('ag-data').value = hoje;
+    const primeiroDia = hoje.slice(0,8) + '01';
+    document.getElementById('dash-ini').value = primeiroDia;
+    document.getElementById('dash-fim').value = hoje;
+    await carregarBase();
+    carregarDashboard(); carregarAgenda(); carregarBio(); carregarFunil();
   })();
 </script>
 
