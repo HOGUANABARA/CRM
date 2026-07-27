@@ -125,9 +125,8 @@
       <div class="nav-item" onclick="mostrarAba('agenda')">📋 Agenda</div>
       <div class="nav-item" onclick="mostrarAba('procedimentos')">👁️ Procedimentos</div>
       <div class="sidebar-footer">
-        <div id="user-nome">—</div>
-        <div class="papel" id="user-papel">—</div>
-        <button onclick="fazerLogout()">Sair</button>
+        <div id="user-nome">Modo de validação</div>
+        <div class="papel" id="user-papel">sem login ativo</div>
       </div>
     </div>
 
@@ -460,20 +459,11 @@
     carregarDashboard();
   }
 
-  // ---------- SESSÃO EXISTENTE ----------
+  // ---------- MODO DE VALIDAÇÃO (login desativado temporariamente) ----------
   (async () => {
-    const { data } = await sb.auth.getSession();
-    if (data.session) {
-      const { data: userRow } = await sb.from('usuarios').select('*').eq('auth_user_id', data.session.user.id).maybeSingle();
-      if (userRow) {
-        usuarioAtual = userRow;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-screen').style.display = 'block';
-        document.getElementById('user-nome').textContent = userRow.nome;
-        document.getElementById('user-papel').textContent = userRow.papel;
-        carregarTudo();
-      }
-    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    carregarTudo();
   })();
 </script>
 
