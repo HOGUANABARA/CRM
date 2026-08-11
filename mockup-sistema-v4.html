@@ -315,7 +315,7 @@
               <label><input type="checkbox" checked> Atendimentos Gerais</label>
             </div>
           </details>
-          <select><option>Todas as agendas</option><option>Ni Cat (Catarata Nilson)</option><option>Lu Cat (Catarata Lucas)</option><option>Cat Convênio (Pietro)</option><option>Refração Dra. Carol</option><option>EDU Retina</option><option>Glaucoma (Guilherme)</option><option>MR NI</option><option>Angio</option><option>YAG</option></select>
+          <select><option>Todas as agendas</option><option>Ni Cat (Catarata Nilson)</option><option>Lu Cat (Catarata Lucas)</option><option>Cat Convênio (Pietro)</option><option>Refração Dra. Carol</option><option>EDU Retina</option><option>Glaucoma (Guilherme)</option><option>MR NI</option><option>Angio</option><option>YAG</option><option>Fotocoagulação</option></select>
           <select style="margin-left:auto;"><option>Agrupar por: Turno</option><option>Agrupar por: Médico</option><option>Agrupar por: Especialidade</option><option>Agrupar por: Sala</option><option>Agrupar por: Agenda lógica</option></select>
           <div class="view-toggle"><button class="vbtn">Dia</button><button class="vbtn active">Semana</button><button class="vbtn">Mês</button></div>
         </div>
@@ -957,9 +957,10 @@
             <tr><td><strong>Refração Dra. Carol</strong></td><td>Dra. Ana Carolina <span class="tag tag-gray">"Carol"</span></td><td>Refração / Plástica</td><td>HOG</td><td>livre · bloco · 12/per · 20min</td><td>Todos</td></tr>
             <tr><td><strong>Rotina</strong></td><td>Dra. Mª Carolina Andolpho</td><td>Rotina</td><td>HOG</td><td>bloco</td><td>Todos</td></tr>
             <tr><td><strong>EDU Retina</strong></td><td>Dr. Eduardo Takano</td><td>Retina</td><td>HOG</td><td>plantão · exames prévios</td><td>Maioria convênio</td></tr>
-            <tr><td><strong>MR NI</strong></td><td>Dr. Nilson</td><td>Mapeamento de retina</td><td>Sala exames</td><td>bloco</td><td>Todos</td></tr>
-            <tr><td><strong>Angio</strong></td><td>—</td><td>Angiografia</td><td>Térreo</td><td>plantão · contraste/jejum</td><td>Todos</td></tr>
-            <tr><td><strong>YAG</strong></td><td>—</td><td>YAG (laser)</td><td>Sala exames</td><td>plantão</td><td>Todos</td></tr>
+            <tr><td><strong>MR NI</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Nilson</td><td>Mapeamento de retina</td><td>Sala de exames</td><td>bloco · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>Angio</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Nilson (+ enferm./técnico)</td><td>Angiografia</td><td>Térreo</td><td>plantão · contraste/jejum · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>YAG</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Lucas</td><td>YAG (laser)</td><td>Consultório 2</td><td>plantão · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>Fotocoagulação</strong> <span class="tag tag-blue">exame médico</span></td><td>Dra. Ana Carolina</td><td>Fotocoagulação (laser)</td><td>Consultório 4</td><td>plantão · <b>reserva sala</b></td><td>Todos</td></tr>
             <tr><td><strong>Monte Mor · Dra. Georgiana</strong></td><td>Dra. Georgiana</td><td>Catarata</td><td><span class="tag tag-amber">Externo</span></td><td>—</td><td>Convênio</td></tr>
           </tbody>
         </table>
@@ -1010,7 +1011,7 @@
             <optgroup label="Externo (Monte Mor)"><option>Dra. Georgiana</option></optgroup>
             <optgroup label="Anestesia"><option>Dr. João Lian Jr</option><option>Dra. Marília</option></optgroup>
           </select></div>
-          <div><label>Padrão do médico (agenda lógica)</label><select><option>Ni Cat — Catarata Nilson</option><option>Lu Cat — Catarata Lucas</option><option>Refração Dra. Carol</option><option>EDU Retina</option><option>MR NI</option><option>+ novo padrão…</option></select></div>
+          <div><label>Padrão do médico (agenda lógica)</label><select><optgroup label="Consultas / cirúrgico"><option>Ni Cat — Catarata Nilson</option><option>Lu Cat — Catarata Lucas</option><option>Refração Dra. Carol</option><option>EDU Retina</option></optgroup><optgroup label="Exames por médico (reservam sala)"><option>MR NI — Mapeamento retina</option><option>YAG — Cons. 2</option><option>Angio — Térreo</option><option>Fotocoagulação — Cons. 4</option></optgroup><option>+ novo padrão…</option></select></div>
           <div><label>Turno</label><select><option>Manhã</option><option>Tarde</option><option>Cirúrgico</option></select></div>
           <div><label>Modo de contagem</label><select><option>Encaixe (vários no horário)</option><option>Bloco (grupo no horário)</option><option>Plantão (por hora)</option></select></div>
           <div><label>Recorrência</label><select><option>Recorrente</option><option>Eventual</option><option>Extra (hora extra)</option></select></div>
