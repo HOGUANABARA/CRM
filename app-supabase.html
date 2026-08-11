@@ -3,119 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOG — App conectado (Supabase)</title>
+<title>HOG — CRM Demo (funcional · Supabase)</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;font-size:13px;}
-  header{background:#0D2137;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  header .logo{font-size:16px;font-weight:700;}
-  header .sub{font-size:10px;color:#5A8EB5;text-transform:uppercase;letter-spacing:1px;}
-  #status{margin-left:auto;font-size:12px;padding:4px 12px;border-radius:12px;font-weight:600;}
-  .st-ok{background:#134f2c;color:#7bf0a8;} .st-err{background:#5a1a1f;color:#ffb3b8;} .st-load{background:#3a3f18;color:#f4e08a;}
-  nav{background:#fff;border-bottom:1px solid #DDE3EB;padding:0 14px;display:flex;gap:2px;overflow-x:auto;}
-  nav button{border:none;background:none;padding:12px 14px;font-size:13px;font-weight:600;color:#6B7E90;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
-  nav button.on{color:#2B9BE8;border-bottom-color:#2B9BE8;}
-  main{padding:18px 22px;max-width:1200px;margin:0 auto;}
-  h1{font-size:17px;color:#0D2137;margin-bottom:4px;}
-  .hint{color:#6B7E90;font-size:12px;margin-bottom:14px;}
-  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
-  .tile{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:14px 16px;}
-  .tile .n{font-size:26px;font-weight:700;color:#0D2137;}
-  .tile .k{font-size:11px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
-  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:16px;margin-bottom:16px;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;display:flex;height:100vh;overflow:hidden;font-size:13px;}
+  .sidebar{width:210px;min-width:210px;background:#0D2137;color:#fff;display:flex;flex-direction:column;overflow-y:auto;}
+  .logo{padding:16px 18px 12px;border-bottom:1px solid #1A3A56;}
+  .logo .n{font-size:16px;font-weight:700;} .logo .s{font-size:9px;color:#5A8EB5;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .nav{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;color:#8BAFC9;font-size:12.5px;border-left:3px solid transparent;}
+  .nav:hover{background:#1A3A56;color:#fff;} .nav.on{background:#1A3A56;color:#fff;border-left-color:#2B9BE8;}
+  .foot{margin-top:auto;padding:12px 16px;border-top:1px solid #1A3A56;font-size:10px;color:#5A8EB5;line-height:1.5;}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:11px 22px;display:flex;align-items:center;gap:12px;}
+  .top h1{font-size:15px;color:#0D2137;}
+  #status{margin-left:auto;font-size:11.5px;padding:4px 12px;border-radius:12px;font-weight:600;}
+  .st-ok{background:#E4F7EC;color:#0F6A30;} .st-err{background:#FDE7E9;color:#C0122A;} .st-load{background:#FEF3D6;color:#9A5700;}
+  .content{flex:1;overflow-y:auto;padding:18px 22px;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:16px 18px;margin-bottom:16px;}
+  .panel h2{font-size:13px;color:#0D2137;margin-bottom:12px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+  label{font-size:10.5px;color:#6B7E90;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;}
+  input,select{width:100%;padding:8px 10px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;background:#fff;}
+  .btn{padding:8px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-x{background:#FDE7E9;color:#C0122A;padding:4px 9px;font-size:11px;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#6B7E90;font-size:10.5px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;}
-  td{padding:8px 10px;border-bottom:1px solid #EEF1F5;}
+  th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#6B7E90;font-size:10px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;}
+  td{padding:7px 10px;border-bottom:1px solid #EEF1F5;}
   tr:last-child td{border-bottom:none;}
-  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600;background:#DCF0FD;color:#0A5E96;}
-  .empty{padding:20px;text-align:center;color:#9AAAB8;font-style:italic;}
-  code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:11px;}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .tile{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:14px 16px;}
+  .tile .n{font-size:26px;font-weight:700;color:#0D2137;} .tile .k{font-size:11px;color:#6B7E90;text-transform:uppercase;margin-top:3px;}
+  .msg{padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:10px;display:none;}
+  .msg.ok{display:block;background:#E4F7EC;color:#0F6A30;} .msg.err{display:block;background:#FDE7E9;color:#C0122A;}
+  .empty{padding:16px;text-align:center;color:#9AAAB8;font-style:italic;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#DCF0FD;color:#0A5E96;}
 </style>
 </head>
 <body>
-<header>
-  <div><span class="logo">👁 HOG</span> <span class="sub">App conectado · Supabase</span></div>
-  <span id="status" class="st-load">conectando…</span>
-</header>
-<nav id="nav"></nav>
-<main id="main"><p class="hint">Carregando…</p></main>
+<div class="sidebar">
+  <div class="logo"><div class="n">👁 HOG</div><div class="s">CRM Demo · Supabase</div></div>
+  <div class="nav on" data-t="painel">⊞ Painel</div>
+  <div class="nav" data-t="medicos">🩺 Médicos</div>
+  <div class="nav" data-t="pacientes">🧑 Pacientes</div>
+  <div class="nav" data-t="agendamentos">📅 Agendamentos</div>
+  <div class="foot">Demo funcional conectado ao Supabase.<br>Cadastre e veja salvar no banco de verdade.</div>
+</div>
+<div class="main">
+  <div class="top"><h1 id="title">Painel</h1><span id="status" class="st-load">conectando…</span></div>
+  <div class="content" id="content"></div>
+</div>
 
 <script>
-const SB_URL='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
-const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
+const SB='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
+const HEAD={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
 
-async function sb(path){
-  const r=await fetch(SB_URL+'/'+path,{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
-  if(!r.ok) throw new Error(r.status+': '+await r.text());
-  return r.json();
-}
-function status(cls,txt){const s=document.getElementById('status');s.className=cls;s.textContent=txt;}
-function tbl(rows,cols){
-  if(!rows.length) return '<div class="empty">Nenhum registro — rode o seed (supabase-schema.sql) para popular.</div>';
-  let h='<table><thead><tr>'+cols.map(c=>'<th>'+c.t+'</th>').join('')+'</tr></thead><tbody>';
-  h+=rows.map(r=>'<tr>'+cols.map(c=>'<td>'+(c.f?c.f(r[c.k],r):(r[c.k]??'—'))+'</td>').join('')+'</tr>').join('');
-  return h+'</tbody></table>';
-}
+async function get(p){const r=await fetch(SB+'/'+p,{headers:HEAD});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function post(t,o){const r=await fetch(SB+'/'+t,{method:'POST',headers:{...HEAD,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function del(t,q){const r=await fetch(SB+'/'+t+'?'+q,{method:'DELETE',headers:HEAD});if(!r.ok)throw new Error(await r.text());}
+function stat(c,t){const s=document.getElementById('status');s.className=c;s.textContent=t;}
+function esc(s){return (s??'').toString().replace(/[<>&]/g,x=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[x]));}
+function msg(el,cls,txt){el.className='msg '+cls;el.textContent=txt;}
 
-const TABS={
-  dashboard:{label:'Painel',render:async()=>{
-    const [med,exa,sal,fun,esp,pac,lio,con]=await Promise.all(
-      ['medicos','exames','salas','funil_catarata','espera_cirurgica','pacientes','lios','convenios'].map(t=>sb(t+'?select=id')));
-    const tiles=[['Médicos',med.length],['Exames (catálogo)',exa.length],['Salas',sal.length],['LIO',lio.length],
-      ['Convênios',con.length],['Funil catarata',fun.length],['Espera cirúrgica',esp.length],['Pacientes',pac.length]];
-    return '<h1>Painel</h1><div class="hint">Dados lidos ao vivo do Supabase (projeto hfjudertusjeinnzwfeu).</div><div class="tiles">'+
-      tiles.map(t=>'<div class="tile"><div class="n">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join('')+'</div>';
-  }},
-  medicos:{label:'Médicos',render:async()=>{
-    const rows=await sb('medicos?select=*&order=nome');
-    return '<h1>Médicos</h1><div class="hint">Cadastro real (medId canônico).</div><div class="panel">'+
-      tbl(rows,[{k:'nome',t:'Médico'},{k:'especialidade',t:'Especialidade'},{k:'crm',t:'CRM'},{k:'id',t:'medId',f:v=>'<code>'+v+'</code>'},{k:'papel',t:'Papel'}])+'</div>';
-  }},
-  agendas:{label:'Agendas lógicas',render:async()=>{
-    const rows=await sb('agendas_logicas?select=*,medicos(nome)&order=id');
-    return '<h1>Agendas lógicas (padrões)</h1><div class="hint">Médico × tipo × local, com regras da camada 4.</div><div class="panel">'+
-      tbl(rows,[{k:'nome',t:'Agenda'},{k:'medicos',t:'Médico',f:v=>v?v.nome:'—'},{k:'tipo',t:'Tipo'},{k:'local',t:'Local'},{k:'regras',t:'Regras',f:v=>'<code>'+JSON.stringify(v)+'</code>'}])+'</div>';
-  }},
-  exames:{label:'Exames',render:async()=>{
-    const rows=await sb('exames?select=*&order=ordem');
-    return '<h1>Catálogo de Exames</h1><div class="hint">Agenda contínua: duração por exame, ordem clínica, dilatação, preparo.</div><div class="panel">'+
-      tbl(rows,[{k:'sigla',t:'Sigla'},{k:'nome',t:'Exame'},{k:'equipamento',t:'Equipamento'},{k:'duracao_min',t:'Min',f:v=>v+' min'},{k:'ordem',t:'Ordem'},{k:'dilata',t:'Dilata?',f:v=>v?'<b>Sim</b>':'Não'},{k:'preparo',t:'Preparo'}])+'</div>';
-  }},
-  lios:{label:'LIO',render:async()=>{
-    const rows=await sb('lios?select=*&order=valor_venda.desc');
-    return '<h1>Catálogo de LIO</h1><div class="panel">'+
-      tbl(rows,[{k:'nome',t:'LIO'},{k:'categoria',t:'Categoria'},{k:'valor_venda',t:'Valor venda',f:v=>'R$ '+Number(v).toLocaleString('pt-BR')},{k:'custo',t:'Custo',f:v=>'R$ '+Number(v).toLocaleString('pt-BR')}])+'</div>';
-  }},
-  funil:{label:'Funil catarata',render:async()=>{
-    const rows=await sb('funil_catarata?select=*,pacientes(nome),lios(nome),ma:medicos!funil_catarata_medico_atendeu_fkey(nome),mo:medicos!funil_catarata_medico_opera_fkey(nome)');
-    return '<h1>Funil de Catarata</h1><div class="hint">Cada olho é um prospecto. Status LIO: Import / Convênio / Particular.</div><div class="panel">'+
-      tbl(rows,[{k:'pacientes',t:'Paciente',f:v=>v?v.nome:'—'},{k:'olho',t:'Olho'},{k:'etapa',t:'Etapa'},{k:'status_lio',t:'Status LIO',f:v=>'<span class="tag">'+(v||'—')+'</span>'},{k:'lios',t:'LIO',f:v=>v?v.nome:'—'},{k:'valor',t:'Valor',f:v=>v?'R$ '+Number(v).toLocaleString('pt-BR'):'—'},{k:'previsao',t:'Previsão'},{k:'observacao',t:'Observação'}])+'</div>';
-  }},
-  espera:{label:'Espera cirúrgica',render:async()=>{
-    const rows=await sb('espera_cirurgica?select=*,pacientes(nome),medicos(nome)&order=entrou_em');
-    return '<h1>Espera Cirúrgica</h1><div class="panel">'+
-      tbl(rows,[{k:'pacientes',t:'Paciente',f:v=>v?v.nome:'—'},{k:'tipo',t:'Tipo'},{k:'procedimento',t:'Procedimento'},{k:'medicos',t:'Médico',f:v=>v?v.nome:'—'},{k:'entrou_em',t:'Entrou em'},{k:'prioridade',t:'Prioridade'}])+'</div>';
-  }},
-  pacientes:{label:'Pacientes',render:async()=>{
-    const rows=await sb('pacientes?select=*,convenios(nome)&order=nome');
-    return '<h1>Pacientes</h1><div class="panel">'+
-      tbl(rows,[{k:'nome',t:'Nome'},{k:'nascimento',t:'Nascimento'},{k:'telefone',t:'Telefone'},{k:'convenios',t:'Convênio',f:v=>v?v.nome:'—'},{k:'nao_sobe_escada',t:'Não sobe escada',f:v=>v?'Sim':'—'}])+'</div>';
-  }}
+let opts={convenios:[],salas:[],agendas:[],pacientes:[],medicos:[]};
+async function loadOpts(){
+  [opts.convenios,opts.salas,opts.agendas,opts.pacientes,opts.medicos]=await Promise.all([
+    get('convenios?select=id,nome&order=nome'),get('salas?select=id,nome&order=nome'),
+    get('agendas_logicas?select=id,nome&order=nome'),get('pacientes?select=id,nome&order=nome'),
+    get('medicos?select=id,nome&order=nome')]);
+}
+const sel=(arr,ph)=>'<option value="">'+ph+'</option>'+arr.map(o=>'<option value="'+o.id+'">'+esc(o.nome)+'</option>').join('');
+
+const VIEWS={
+ painel:{title:'Painel',render:async()=>{
+   const c=await Promise.all(['medicos','pacientes','agendamentos','funil_catarata','exames','salas','convenios','lios']
+     .map(t=>get(t+'?select=id').then(r=>r.length).catch(()=>0)));
+   const L=['Médicos','Pacientes','Agendamentos','Funil catarata','Exames','Salas','Convênios','LIO'];
+   return '<div class="panel"><h2>Resumo ao vivo (Supabase)</h2><div class="tiles">'+
+     L.map((l,i)=>'<div class="tile"><div class="n">'+c[i]+'</div><div class="k">'+l+'</div></div>').join('')+'</div></div>';
+ }},
+ medicos:{title:'Médicos',render:async()=>{
+   const rows=await get('medicos?select=*&order=nome');
+   return `<div class="panel"><h2>Cadastrar médico</h2><div class="msg" id="m-msg"></div>
+     <div class="grid">
+       <div><label>ID (medId)</label><input id="m-id" placeholder="ex: joao"></div>
+       <div><label>Nome</label><input id="m-nome" placeholder="Dr. João..."></div>
+       <div><label>Especialidade</label><input id="m-esp" placeholder="Catarata"></div>
+       <div><label>CRM</label><input id="m-crm" placeholder="000.000/SP"></div>
+     </div><button class="btn btn-g" onclick="addMedico()">+ Salvar médico</button></div>
+     <div class="panel"><h2>Médicos cadastrados (${rows.length})</h2>${tblMed(rows)}</div>`;
+ }},
+ pacientes:{title:'Pacientes',render:async()=>{
+   await loadOpts(); const rows=await get('pacientes?select=*,convenios(nome)&order=nome');
+   return `<div class="panel"><h2>Cadastrar paciente</h2><div class="msg" id="p-msg"></div>
+     <div class="grid">
+       <div><label>Nome</label><input id="p-nome" placeholder="Nome completo"></div>
+       <div><label>Nascimento</label><input id="p-nasc" type="date"></div>
+       <div><label>Telefone</label><input id="p-tel" placeholder="(19) ..."></div>
+       <div><label>Convênio</label><select id="p-conv">${sel(opts.convenios,'—')}</select></div>
+       <div><label>Não sobe escada?</label><select id="p-escada"><option value="false">Não</option><option value="true">Sim</option></select></div>
+     </div><button class="btn btn-g" onclick="addPaciente()">+ Salvar paciente</button></div>
+     <div class="panel"><h2>Pacientes cadastrados (${rows.length})</h2>${tblPac(rows)}</div>`;
+ }},
+ agendamentos:{title:'Agendamentos',render:async()=>{
+   await loadOpts(); const rows=await get('agendamentos?select=*,pacientes(nome),agendas_logicas(nome),salas(nome)&order=data.desc,hora');
+   return `<div class="panel"><h2>Novo agendamento</h2><div class="msg" id="a-msg"></div>
+     <div class="grid">
+       <div><label>Paciente</label><select id="a-pac">${sel(opts.pacientes,'—')}</select></div>
+       <div><label>Agenda (médico × tipo)</label><select id="a-ag">${sel(opts.agendas,'—')}</select></div>
+       <div><label>Tipo</label><select id="a-tipo"><option>consulta</option><option>exame</option><option>bio</option><option>cirurgia</option><option>pos_op</option></select></div>
+       <div><label>Data</label><input id="a-data" type="date"></div>
+       <div><label>Hora</label><input id="a-hora" type="time"></div>
+       <div><label>Sala</label><select id="a-sala">${sel(opts.salas,'—')}</select></div>
+       <div style="grid-column:span 2;"><label>Observação</label><input id="a-obs" placeholder="obs..."></div>
+     </div><button class="btn btn-g" onclick="addAgendamento()">+ Agendar</button></div>
+     <div class="panel"><h2>Agendamentos (${rows.length})</h2>${tblAg(rows)}</div>`;
+ }}
 };
 
-let current='dashboard';
-function buildNav(){
-  document.getElementById('nav').innerHTML=Object.entries(TABS).map(([k,v])=>
-    '<button data-t="'+k+'" class="'+(k===current?'on':'')+'">'+v.label+'</button>').join('');
-  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{current=b.dataset.t;buildNav();load();});
+function tblMed(r){if(!r.length)return '<div class="empty">Nenhum médico ainda.</div>';
+ return '<table><thead><tr><th>ID</th><th>Nome</th><th>Especialidade</th><th>CRM</th><th></th></tr></thead><tbody>'+
+  r.map(m=>`<tr><td><code>${esc(m.id)}</code></td><td>${esc(m.nome)}</td><td>${esc(m.especialidade)}</td><td>${esc(m.crm)}</td>
+   <td><button class="btn btn-x" onclick="delRow('medicos','id=eq.${encodeURIComponent(m.id)}')">excluir</button></td></tr>`).join('')+'</tbody></table>';}
+function tblPac(r){if(!r.length)return '<div class="empty">Nenhum paciente ainda.</div>';
+ return '<table><thead><tr><th>Nome</th><th>Nascimento</th><th>Telefone</th><th>Convênio</th><th>Escada</th><th></th></tr></thead><tbody>'+
+  r.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(p.nascimento)}</td><td>${esc(p.telefone)}</td><td>${p.convenios?esc(p.convenios.nome):'—'}</td>
+   <td>${p.nao_sobe_escada?'<span class="tag">não sobe</span>':'—'}</td>
+   <td><button class="btn btn-x" onclick="delRow('pacientes','id=eq.${p.id}')">excluir</button></td></tr>`).join('')+'</tbody></table>';}
+function tblAg(r){if(!r.length)return '<div class="empty">Nenhum agendamento ainda.</div>';
+ return '<table><thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Agenda</th><th>Tipo</th><th>Sala</th><th>Obs</th><th></th></tr></thead><tbody>'+
+  r.map(a=>`<tr><td>${esc(a.data)}</td><td>${esc(a.hora)}</td><td>${a.pacientes?esc(a.pacientes.nome):'—'}</td>
+   <td>${a.agendas_logicas?esc(a.agendas_logicas.nome):'—'}</td><td>${esc(a.tipo)}</td><td>${a.salas?esc(a.salas.nome):'—'}</td><td>${esc(a.observacao)}</td>
+   <td><button class="btn btn-x" onclick="delRow('agendamentos','id=eq.${a.id}')">excluir</button></td></tr>`).join('')+'</tbody></table>';}
+
+async function addMedico(){const el=document.getElementById('m-msg');try{
+  const id=v('m-id'),nome=v('m-nome'); if(!id||!nome)return msg(el,'err','ID e Nome são obrigatórios.');
+  await post('medicos',{id:id,nome:nome,especialidade:v('m-esp'),crm:v('m-crm'),papel:'medico'});
+  msg(el,'ok','Médico salvo! ✔'); render();
+ }catch(e){msg(el,'err',friendly(e))}}
+async function addPaciente(){const el=document.getElementById('p-msg');try{
+  const nome=v('p-nome'); if(!nome)return msg(el,'err','Nome é obrigatório.');
+  await post('pacientes',{nome:nome,nascimento:v('p-nasc')||null,telefone:v('p-tel'),convenio_id:v('p-conv')||null,nao_sobe_escada:v('p-escada')==='true'});
+  msg(el,'ok','Paciente salvo! ✔'); render();
+ }catch(e){msg(el,'err',friendly(e))}}
+async function addAgendamento(){const el=document.getElementById('a-msg');try{
+  const pac=v('a-pac'); if(!pac)return msg(el,'err','Escolha o paciente.');
+  await post('agendamentos',{paciente_id:pac,agenda_logica_id:v('a-ag')||null,tipo:v('a-tipo'),data:v('a-data')||null,hora:v('a-hora')||null,sala_id:v('a-sala')||null,observacao:v('a-obs'),status:'agendado'});
+  msg(el,'ok','Agendamento criado! ✔'); render();
+ }catch(e){msg(el,'err',friendly(e))}}
+async function delRow(t,q){if(!confirm('Excluir este registro?'))return;try{await del(t,q);render();}catch(e){alert(friendly(e))}}
+function v(id){return document.getElementById(id).value.trim();}
+function friendly(e){const m=e.message||''; if(m.includes('permission')||m.includes('row-level')||m.includes('42501'))
+  return 'Sem permissão de escrita no banco — rode o SQL de permissões (te enviei) no Supabase.'; return 'Erro: '+m;}
+
+let cur='painel';
+async function render(){
+  const c=document.getElementById('content'); document.getElementById('title').textContent=VIEWS[cur].title;
+  c.innerHTML='<p class="empty">Carregando…</p>';
+  try{c.innerHTML=await VIEWS[cur].render(); stat('st-ok','● conectado');}
+  catch(e){c.innerHTML='<div class="panel"><h2>Erro de conexão / permissão</h2><div class="msg err" style="display:block">'+friendly(e)+'</div></div>'; stat('st-err','● erro');}
 }
-async function load(){
-  const m=document.getElementById('main');
-  m.innerHTML='<p class="hint">Carregando…</p>';
-  try{ m.innerHTML=await TABS[current].render(); status('st-ok','● conectado'); }
-  catch(e){ m.innerHTML='<div class="panel"><h1>Erro ao ler o Supabase</h1><div class="hint">'+e.message+'</div></div>'; status('st-err','● erro de conexão'); }
-}
-buildNav(); load();
+document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on');cur=n.dataset.t;render();});
+render();
 </script>
 </body>
 </html>
