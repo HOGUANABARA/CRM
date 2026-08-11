@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fechamento de Repasses Médicos — HOG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --azul:#1F4E79; --azul2:#2E6DA4; --fundo:#F4F6F9; --card:#FFFFFF; --borda:#D9DFE7;
+    --txt:#1C2733; --txt2:#5A6B7C; --ok:#1E7A46; --okbg:#E3F3EA; --warn:#8A6100; --warnbg:#FFF3D6;
+    --azulbg:#E8F0F9; --roxo:#5B4B8A; --roxobg:#EDEAF6; --verde2:#0F6B5C; --verde2bg:#E0F2EF;
+    --cinza:#6B7A89; --cinzabg:#ECF0F4; --vermbg:#FBE9E7; --verm:#B3402A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Segoe UI', Arial, sans-serif; background:var(--fundo); color:var(--txt); font-size:14px;}
+  header{background:var(--azul); color:#fff; padding:14px 22px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  header h1{font-size:17px; font-weight:600;}
+  header .comp{background:rgba(255,255,255,.15); border-radius:6px; padding:5px 12px; font-size:13px;}
+  .btn{background:var(--azul2); color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600;}
+  .btn:hover{filter:brightness(1.1);}
+  .btn.sec{background:#fff; color:var(--azul); border:1px solid var(--azul2);}
+  .btn.mini{padding:3px 9px; font-size:12px;}
+  .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.5);}
+  #layout{display:flex; min-height:calc(100vh - 60px);}
+  aside{width:300px; background:var(--card); border-right:1px solid var(--borda); padding:14px 10px; overflow-y:auto;}
+  aside h3{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--txt2); margin:12px 8px 6px;}
+  .medcard{padding:8px 10px; border-radius:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:2px;}
+  .medcard:hover{background:var(--azulbg);}
+  .medcard.sel{background:var(--azulbg); outline:2px solid var(--azul2);}
+  .medcard .nome{font-weight:600; font-size:13px;}
+  .medcard .valor{font-size:12px; color:var(--txt2); white-space:nowrap;}
+  .pill{font-size:10.5px; font-weight:700; border-radius:20px; padding:2px 8px; white-space:nowrap;}
+  main{flex:1; padding:20px 26px; overflow-y:auto;}
+  .card{background:var(--card); border:1px solid var(--borda); border-radius:10px; padding:18px 20px; margin-bottom:16px;}
+  .card h2{font-size:16px; color:var(--azul); margin-bottom:4px;}
+  .sub{color:var(--txt2); font-size:12.5px; margin-bottom:12px;}
+  table{border-collapse:collapse; width:100%;}
+  th{background:var(--azulbg); color:var(--azul); text-align:left; font-size:12px; padding:7px 9px; border:1px solid var(--borda);}
+  td{padding:6px 9px; border:1px solid var(--borda); font-size:13px;}
+  td.num, th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tr.total td{font-weight:700; background:#F0F4F9;}
+  tr.grupo td{font-weight:700; background:var(--azulbg); color:var(--azul);}
+  input[type=number], input[type=text], input[type=date], select{border:1px solid var(--borda); border-radius:5px; padding:5px 7px; font-size:13px; width:100%; font-family:inherit;}
+  input.qtd{width:70px; text-align:right;}
+  input.val{width:100px; text-align:right;}
+  .statusbar{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0;}
+  .step{padding:5px 11px; border-radius:20px; font-size:12px; font-weight:600; background:var(--cinzabg); color:var(--cinza); border:1px solid var(--borda); cursor:pointer;}
+  .step.done{background:var(--okbg); color:var(--ok); border-color:var(--ok);}
+  .step.cur{background:var(--azul); color:#fff; border-color:var(--azul);}
+  .aviso{background:var(--warnbg); border:1px solid #E4C665; color:var(--warn); border-radius:8px; padding:9px 13px; font-size:12.5px; margin:10px 0;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .drop{border:2px dashed var(--azul2); border-radius:12px; background:var(--azulbg); padding:38px; text-align:center; color:var(--azul); font-size:15px; cursor:pointer;}
+  .kpis{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+  .kpi{background:var(--card); border:1px solid var(--borda); border-radius:10px; padding:12px 18px; min-width:150px;}
+  .kpi .n{font-size:22px; font-weight:700; color:var(--azul);}
+  .kpi .l{font-size:11.5px; color:var(--txt2); text-transform:uppercase; letter-spacing:.4px;}
+  .tag{font-size:11px; background:var(--cinzabg); color:var(--cinza); padding:2px 7px; border-radius:4px; margin-left:6px;}
+  .obsrow{color:var(--txt2); font-size:12px;}
+  .periodo-box{display:flex; gap:12px; align-items:end; flex-wrap:wrap;}
+  .periodo-box label{font-size:12px; color:var(--txt2); display:block; margin-bottom:3px;}
+  .periodo-box input[type=date]{width:170px;}
+  #print-area{display:none;}
+  @media print{
+    body *{visibility:hidden;} #print-area, #print-area *{visibility:visible;}
+    #print-area{display:block; position:absolute; top:0; left:0; width:100%; padding:30px; font-size:13px;}
+    #print-area h1{font-size:18px; margin-bottom:2px;} #print-area .ph{color:#333; margin-bottom:14px; font-size:12px;}
+    #print-area table{width:100%; border-collapse:collapse; margin:10px 0;}
+    #print-area th, #print-area td{border:1px solid #999; padding:6px 8px; font-size:12px;}
+    #print-area .assin{margin-top:60px; display:flex; justify-content:space-between;}
+    #print-area .assin div{border-top:1px solid #333; width:40%; text-align:center; padding-top:6px; font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fechamento de Repasses Médicos — HOG</h1>
+  <span class="comp" id="hdr-comp">Nenhuma base carregada</span>
+  <button class="btn ghost" id="btn-trocar" style="display:none" onclick="telaPeriodo()">🔄 Trocar período</button>
+  <span style="flex:1"></span>
+  <button class="btn ghost" onclick="document.getElementById('file-base').click()">📤 Carregar base</button>
+  <button class="btn ghost" onclick="document.getElementById('file-estado').click()">📂 Abrir fechamento salvo</button>
+  <button class="btn ghost" onclick="salvarEstado()">💾 Salvar fechamento</button>
+  <button class="btn" onclick="exportarCCF()">⬇️ Exportar CCF (.xlsx)</button>
+</header>
+<input type="file" id="file-base" accept=".xlsx,.xls" style="display:none">
+<input type="file" id="file-estado" accept=".json" style="display:none">
+
+<div id="layout">
+  <aside id="sidebar"></aside>
+  <main id="main">
+    <div class="drop" onclick="document.getElementById('file-base').click()">
+      <b>Clique aqui (ou use o botão acima) para carregar a base de produção</b><br>
+      <span style="font-size:13px">Aceita a base unificada (aba "Base_Maio_25_a_Maio_26") — colunas: MEDICO, CONVENIO, atendimento, PACIENTE, obs, Ano, Mês, Dia</span>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Como funciona</h2>
+      <div class="sub">Fluxo do fechamento por período de pagamento</div>
+      <ol style="margin-left:20px; line-height:1.9; font-size:13.5px">
+        <li><b>Carregar a base</b> — o painel lê a aba unificada com todos os meses.</li>
+        <li><b>Escolher o período de pagamento</b> — ex.: 30/07/2026 a 15/08/2026. O painel calcula, pela regra de vencimento de cada médico, qual competência vence dentro do período, e monta a lista organizada por competência e data de pagamento.</li>
+        <li><b>Revisar cada médico</b> — apuração automática da competência dele + lançamentos manuais.</li>
+        <li><b>Aprovar e acompanhar</b> — demonstrativo para NF, ciclo Apurado → Aprovado → Enviado → NF → Financeiro → Pago.</li>
+        <li><b>Exportar</b> — CCF (.xlsx) no layout atual. "Salvar fechamento" guarda o andamento para reabrir depois.</li>
+      </ol>
+    </div>
+  </main>
+</div>
+<div id="print-area"></div>
+
+<script>
+/* ================= CONFIG DE REGRAS (validada no piloto Abr–Jun/26) ================= */
+const norm = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const MESES = {'JANEIRO':1,'FEVEREIRO':2,'MARCO':3,'MARÇO':3,'ABRIL':4,'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12};
+const MESNOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const ALIASES = {
+ 'DR LUCAS':'lucas','DR. LUCAS':'lucas','DR. LUCAS VIEIRA BUENO ROSSI':'lucas',
+ 'DR NILSON':'nilson','DR. NILSON':'nilson','DR. NILSON SHIGUEAKI FURUKAWA':'nilson',
+ 'DR. MONIR SAFIEDDINE':'monir',
+ 'DR GUILHERME':'guilherme','DR. GUILHERME':'guilherme','DR. GUILHERME ARAUJO':'guilherme','DR. GUILHERME ARMBRUST ARAUJO':'guilherme',
+ 'DR. ALEXANDRE ICHIDA':'ichida',
+ 'DR. ALEXANDRE RUEDA':'rueda','DR. ALEXANDRE PEREIRA RUEDA':'rueda',
+ 'DR. RAPHAEL DEFINA':'defina','DR. DANIEL GADIOLI':'gadioli',
+ 'DRA MARIA CLAUDIA':'mclaudia','DRA. MARIA CLAUDIA':'mclaudia','DRA. MARIA CLAUDIA GALLO':'mclaudia',
+ 'DRA ANA CAROLINA':'anacarol','DRA. ANA CAROLINA':'anacarol','DRA CAROL':'anacarol','DRA. ANA CAROLINA VISCO C DE ALMEIDA':'anacarol',
+ 'DRA. ELIANE SOARES':'eliane','DRA. ELIANE CHRISTINA MEYER SOARES':'eliane',
+ 'DRA. GEORGIANA FELIPPE':'georgiana','DRA. GEORGIANA M R FELIPPE':'georgiana','DRA. GEORGIANA MARIA RANGEL FELIPPE':'georgiana',
+ 'DR. EDUARDO TAKANO':'takano','DR. EDUARDO E TAKANO':'takano',
+ 'DRA. MARIA CAROLINA ANDOLPHO':'mcarolina','DRA. CAMILA SAWATANI':'camila',
+ 'DR. MARCOS ESPINOSA':'espinosa','DR. MARCOS V ESPINOSA':'espinosa',
+ 'ANDRE AYRES':'ayres','DR ANDRE':'ayres','DR. ANDRE LUIZ AYRES':'ayres',
+ 'DR PIETRO':'pietro','DR. PIETRO':'pietro','DR. PIETRO DECHICHI':'pietro',
+ 'DRA. VICTORIA SAMPAIO':'resid','DRA REBECA CROSARA':'resid','DRA. REBECA CROSARA':'resid',
+ 'DRA. BEATRIZ FERREIRA':'resid',"DR. AUGUSTO B SANT'ANNA":'resid','DR. RENAN NISHIDA':'resid',
+ 'DR. ESTENIO BAZZO':'resid','RESIDENTES':'resid',
+};
+const EXCLUIR = new Set(['EXAME','EXAMES','ANGIO','CC','CENTRO CIRURGICO','CONSULTORA','ENFERMAGEM',
+ 'PRE OP','PRE OPERATORIO','PRE-OP','NAO FEZ','DR. MEDICO TESTE','ZCCIMP L','LENTE TERAPEUTICA',
+ 'DRA. MARILIA AFFONSO FERREIRA SANGEDE','DRA MARILIA']);
+const EXTERNOS_MED = new Set(['EXTERNOS']);
+const NV_PART = ['NOVA VISAO (PARCEIRO)','PARTICULAR HOG'];
+const GUI_EXC = ['NOVA VISAO (PARCEIRO)','PARTICULAR HOG','PARTICULAR (MEDICO)','SAMARITANO'];
+const T = {C:'CONSULTA', CO:'CONSULTA OCULOS', RET:'RETORNO', PO:'POS OP', ENC:'CONSULTA ENCAIXE',
+ CAT:'CONSULTA CATARATA', CCOR:'CONSULTA CORNEA', CPL:'CONSULTA PLASTICA'};
+
+const MEDICOS = [
+ {id:'lucas', nome:'Dr. Lucas Rossi', secao:'F2MR', vDia:30, vM:1, porPeriodo:true,
+  auto:[], man:[{c:'Valor Fixo (Consulta + Cirurgia)',q:1,v:38000},{c:'Diretoria Comercial',q:1,v:8000},
+   {c:'Diretoria Clínica',q:1,v:8000},{c:'Terça Pós (períodos)',q:0,v:1000},{c:'Cataratas (dias)',q:0,v:2000}]},
+ {id:'nilson', nome:'Dr. Nilson Furukawa', secao:'F2MR', vDia:30, vM:1, porPeriodo:true,
+  auto:[{c:'YAG',t:['YAG'],v:100}],
+  man:[{c:'Valor Fixo (inclui Foto e Angio)',q:1,v:38000},{c:'Diretoria Financeira',q:1,v:8000},
+   {c:'Extra Catarata (agendas)',q:0,v:1000},{c:'Extra Pós-op (agendas)',q:0,v:1000},
+   {c:'Extras (outras agendas)',q:0,v:1000},{c:'Mapa cirúrgico',q:0,v:1000},{c:'Atendimentos adicionais',q:0,v:65}]},
+ {id:'monir', nome:'Dr. Monir Safieddine', secao:'F2MR', vDia:10, vM:3, detConv:true,
+  auto:[{c:'Produção (consultas)',t:[T.C,T.CO,T.ENC,T.CAT,T.PO,T.RET,'TONO','REAVALICAO DE GRAU'],convExc:NV_PART,v:50},
+        {c:'PA',t:['PA'],convExc:NV_PART,v:40}], man:[]},
+ {id:'guilherme', nome:'Dr. Guilherme Armbrust', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'BLOCO 1 — Consultas / Retorno / Pós-op',t:[T.C,T.CO,T.CAT,T.RET,T.ENC,T.PO],convExc:GUI_EXC,v:65},
+   {c:'BLOCO 1 — Iridotomia',t:['IRIDEC','IRIDO'],convExc:GUI_EXC,v:80.5},
+   {c:'BLOCO 1 — Gônio',t:['GONIO'],convExc:GUI_EXC,v:5.5},
+   {c:'BLOCO 1 — Curva',t:['CURVA'],convExc:GUI_EXC,v:10.5},
+   {c:'BLOCO 1 — Fototrabe',t:['TRABEC','FOTOTRABE','FOTOTRABEC'],convExc:GUI_EXC,v:345},
+   {c:'BLOCO 2 — Cirurgias Beneficência (Trec/Tubo/Ciclofoto)',t:['CIRURGIA TREC','TUBO','CICLOFOTO'],convExc:GUI_EXC,v:575,nominal:true},
+   {c:'BLOCO 3 — Cirurgias Samaritano (950 − 16% = desconto de 798/paciente)',t:['CIRURGIA TREC','TUBO','CICLOFOTO','CIRURGIA'],convInc:['SAMARITANO'],v:-798,nominal:true,sam:{bruto:950,imposto:152}}],
+  man:[{c:'Ajuste (edição do desconto Samaritano ou outros)',q:0,v:0}],
+  nota:'Bloco 1: consultório (sem Particular/Cortesia). Bloco 2: cirurgias Beneficência nominais. Bloco 3: cirurgias Samaritano entram automaticamente como desconto de R$ 798/paciente (editável na linha de ajuste). Campo/OCT não contam (exame do HOG). Repasse sempre pelo médico da coluna MEDICO.'},
+ {id:'ichida', nome:'Dr. Alexandre Ichida', secao:'F2MR', vDia:10, vM:2,
+  auto:[{c:'Atendimentos (todos os tipos)',t:null,v:40}], man:[]},
+ {id:'defina', nome:'Dr. Raphael Defina', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Atendimentos (todos os tipos, incl. MR)',t:null,v:40}], man:[]},
+ {id:'gadioli', nome:'Dr. Daniel Gadioli', secao:'F2MR', vDia:10, vM:3, porPeriodo:true,
+  auto:[{c:'Períodos HOG (dias com atendimento)',t:null,v:700,porDia:true}], man:[]},
+ {id:'mclaudia', nome:'Dra. Maria Claudia Gallo', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Consultas (todos os tipos exceto PA)',t:null,tExc:['PA'],v:75},{c:'PA',t:['PA'],v:40}],
+  man:[{c:'Cirurgias nominais (ver sugestões abaixo)',q:0,v:1517}], sugCirurgia:true},
+ {id:'anacarol', nome:'Dra. Ana Carolina Visco', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Consulta Plástica / Pós-op / Retorno',t:[T.CPL,T.PO,T.RET],v:45},
+   {c:'Refração',t:[T.C,T.CO,T.ENC],v:40},{c:'PA',t:['PA'],v:40},
+   {c:'Cirurgia Plástica — período cirúrgico',t:['CIRURGIA PLASTICA'],v:2000,porDia:true}], man:[]},
+ {id:'eliane', nome:'Dra. Eliane Meyer', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Atendimentos (consultas, retorno, PA)',t:null,v:40}], man:[]},
+ {id:'georgiana', nome:'Dra. Georgiana', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'REFERÊNCIA (só para conferência): atendimentos dela na base neste mês',t:null,v:45,soReferencia:true}],
+  man:[{c:'HOG Campinas — atendimentos',q:0,v:45},
+   {c:'Monte Mor — períodos (indicar competência e datas no nome da linha)',q:0,v:1000}],
+  nota:'Dois locais, duas competências e dois repasses: HOG Campinas POR ATENDIMENTO e Monte Mor POR PERÍODO. Lançamento manual (é melhor assim) — use a referência automática só para conferir, e escreva a competência/datas de cada frente no nome da linha manual.'},
+ {id:'takano', nome:'Dr. Eduardo Takano', secao:'F2MR', vDia:10, vM:3, porPeriodo:true,
+  auto:[], man:[{c:'HOG Campinas (períodos)',q:0,v:600},{c:'MR (períodos)',q:0,v:600}]},
+ {id:'mcarolina', nome:'Dra. Maria Carolina Andolpho', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Atendimentos (todos os tipos)',t:null,v:40}], man:[]},
+ {id:'rueda', nome:'Dr. Alexandre Rueda', secao:'F2MR', vDia:10, vM:2,
+  auto:[{c:'Atendimentos (todos os tipos)',t:null,tExc:['PA'],v:65},{c:'PA',t:['PA'],v:40}], man:[],
+  nota:'Equipe antiga Dr. Aron — responsabilidade do HOG a partir de Jun/26.'},
+ {id:'camila', nome:'Dra. Camila Sawatani', secao:'F2MR', vDia:10, vM:2,
+  auto:[{c:'Atendimentos (todos os tipos)',t:null,v:40}], man:[],
+  nota:'Equipe antiga Dr. Aron — responsabilidade do HOG a partir de Jun/26.'},
+ {id:'espinosa', nome:'Dr. Marcos Espinosa', secao:'F2MR', vDia:10, vM:3,
+  auto:[{c:'Atendimentos',t:[T.C,T.CO,T.PO,'MR','PA'],convExc:['DR. MARCOS ESPINOSA (PARCEIRO)'],v:40},
+   {c:'A RECEBER do parceiro (convênio = nome dele)',t:null,convGeral:['DR. MARCOS ESPINOSA (PARCEIRO)'],v:0,soReferencia:true}], man:[]},
+ {id:'cleso', nome:'Dr. Cleso (preceptor)', secao:'F2MR', vDia:10, vM:3, porPeriodo:true,
+  auto:[{c:'REFERÊNCIA: atendimentos de residentes na base',t:null,v:0,soReferencia:true}],
+  man:[{c:'Períodos de residentes (R$ 180/período)',q:0,v:180}],
+  nota:'O sistema não indica manhã/tarde — informe os períodos manualmente. Residentes: Victoria, Rebeca, Beatriz, Augusto, Renan, Estênio.'},
+ {id:'ayres', nome:'Dr. André Ayres (recebimento)', secao:'RECEBIMENTOS', vDia:15, vM:1,
+  auto:[{c:'Aplicação',t:['APLICACAO'],convGeral:['ANDRE AYRES'],v:300},
+   {c:'Biometria',t:['BIOMETRIA'],convGeral:['ANDRE AYRES'],v:100},
+   {c:'OCT',t:['OCT'],convGeral:['ANDRE AYRES'],v:100},
+   {c:'YAG',t:['YAG'],convGeral:['ANDRE AYRES'],v:100},
+   {c:'Microscopia',t:['MICROSCOPIA'],convGeral:['ANDRE AYRES'],v:100},
+   {c:'Fotocoagulação',t:['FC'],convGeral:['ANDRE AYRES'],v:100},
+   {c:'USG (desconto)',t:['USG'],convGeral:['ANDRE AYRES'],v:-100}],
+  man:[], nota:'HOG recebe. NF = valor ÷ 0,84. Exames executados pelo HOG contam (filtro pelo convênio).'},
+ {id:'heriberto', nome:'Dr. Heriberto (externo)', secao:'EXTERNOS', vDia:15, vM:1,
+  auto:[], man:[{c:'Cirurgias externas (valor do fechamento)',q:0,v:0}]},
+ {id:'martinelli', nome:'Dr. Martinelli (recebimento)', secao:'RECEBIMENTOS', vDia:10, vM:1,
+  auto:[], man:[{c:'Cirurgias (R$ 800 — HOG recebe)',q:0,v:800},{c:'Cartucho',q:0,v:34.45},{c:'Faquinha 275',q:0,v:65},
+   {c:'Repasse Dr. Lucas (R$ 210/cirurgia) — informativo, negativo',q:0,v:-210},
+   {c:'Repasse Dr. Nilson (R$ 210/cirurgia) — informativo, negativo',q:0,v:-210}]},
+ {id:'marcia', nome:'Dra. Marcia (recebimento)', secao:'RECEBIMENTOS', vDia:10, vM:1,
+  auto:[], man:[{c:'Encontro de contas (R$ 250/consulta)',q:0,v:250}]},
+];
+const RESIDENTES_N = ['DRA. VICTORIA SAMPAIO','DRA REBECA CROSARA','DRA. REBECA CROSARA','DRA. BEATRIZ FERREIRA',"DR. AUGUSTO B SANT'ANNA",'DR. RENAN NISHIDA','DR. ESTENIO BAZZO'];
+const STATUS = ['Apurado','Aprovado','Enviado ao médico','NF recebida','Enviado ao financeiro','Pago'];
+const STCOLOR = {0:['#ECF0F4','#6B7A89'],1:['#E8F0F9','#1F4E79'],2:['#EDEAF6','#5B4B8A'],3:['#FFF3D6','#8A6100'],4:['#E0F2EF','#0F6B5C'],5:['#E3F3EA','#1E7A46']};
+
+/* ================= ESTADO =================
+   itens = linhas do fechamento: {k, medId, a, m (competência), venc}
+   manual/status/nf/obsMed são indexados pela chave k = medId|a-m           */
+let EST = {allRows:[], mesesDisp:[], periodo:null, itens:[], apurComp:{}, sugComp:{}, cirAj:{}, periodosDia:{},
+           pcc:{ini:'2026-04', fim:'2026-06', ed:{}, pags:[], interm:{}},
+           manual:{}, status:{}, nf:{}, obsMed:{}, semRegra:[], excl:{}, selecionado:null};
+
+const fmt = v => (v==null?'—':v.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}));
+const fmtC = v => 'R$ ' + fmt(v);
+const compTxt = (a,m) => MESNOME[m] + '/' + String(a).slice(2);
+const chave = (id,a,m) => `${id}|${a}-${m}`;
+
+function vencDate(med, a, m){
+  let vm = m + med.vM, va = a;
+  while(vm>12){vm-=12;va++;}
+  const ultimo = new Date(va, vm, 0).getDate();
+  return new Date(va, vm-1, Math.min(med.vDia, ultimo));
+}
+const fmtData = d => String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+
+/* ================= UPLOAD DA BASE ================= */
+let WBK = null;
+document.getElementById('file-base').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.getElementById('main').innerHTML = '<div class="card"><h2>Processando a planilha…</h2><div class="sub">Bases grandes (todos os meses) podem levar alguns segundos.</div></div>';
+  const rd = new FileReader();
+  rd.onload = ev => { setTimeout(()=>{
+    WBK = XLSX.read(ev.target.result, {type:'array'});
+    const baseSheet = WBK.SheetNames.find(n=>norm(n).startsWith('BASE'));
+    if(baseSheet) usarAba(baseSheet);
+    else if(WBK.SheetNames.length===1) usarAba(WBK.SheetNames[0]);
+    else escolherAba();
+  }, 50); };
+  rd.readAsArrayBuffer(f);
+  e.target.value = '';
+});
+function escolherAba(){
+  let h = `<div class="card"><h2>Escolha a aba com a base de produção</h2><div class="sub">Não encontrei uma aba começando com "Base". Selecione qual aba contém os atendimentos:</div>`;
+  WBK.SheetNames.forEach(n=>{ h += `<button class="btn sec" style="margin:4px" onclick="usarAba('${n.replace(/'/g,"\\'")}')">${n}</button>`; });
+  h += `</div>`;
+  document.getElementById('main').innerHTML = h;
+}
+function usarAba(nome){
+  const dados = XLSX.utils.sheet_to_json(WBK.Sheets[nome], {defval:null});
+  processarBase(dados);
+}
+function acharCol(obj, alvo){
+  for(const k of Object.keys(obj)) if(norm(k)===alvo || norm(k).startsWith(alvo)) return k;
+  return null;
+}
+function processarBase(dados){
+  if(!dados.length){alert('Aba vazia.');return;}
+  const c0 = dados[0];
+  const cMed = acharCol(c0,'MEDICO'), cConv = acharCol(c0,'CONVENIO'), cTipo = acharCol(c0,'ATENDIMENTO'),
+        cPac = acharCol(c0,'PACIENTE'), cObs = acharCol(c0,'OBS'), cAno = acharCol(c0,'ANO'),
+        cMes = acharCol(c0,'MES'), cDia = acharCol(c0,'DIA');
+  if(!cMed || !cTipo){alert('Não encontrei as colunas MEDICO/atendimento. Confira a aba.');return;}
+  EST.allRows = dados.filter(r=>r[cMed]).map(r => ({
+    med: norm(r[cMed]), conv: norm(cConv?r[cConv]:''), tipo: norm(r[cTipo]),
+    pac: (r[cPac]||'').toString().trim(), obs: (cObs?r[cObs]:'')||'',
+    ano: cAno?+r[cAno]:null, mes: cMes?(MESES[norm(r[cMes])]||null):null, dia: cDia?r[cDia]:null,
+    nc: norm(cObs?r[cObs]:'').includes('NAO COBRAR'), cort: norm(cConv?r[cConv]:'')==='CORTESIA'
+  }));
+  const cnt = {};
+  EST.allRows.forEach(r=>{ if(r.mes && r.ano){const k=r.ano*100+r.mes; cnt[k]=(cnt[k]||0)+1;} });
+  EST.mesesDisp = Object.entries(cnt).map(([k,n])=>({a:Math.floor(k/100), m:k%100, n})).sort((x,y)=>(y.a*100+y.m)-(x.a*100+x.m));
+  if(!EST.mesesDisp.length){alert('Não encontrei as colunas Ano/Mês preenchidas.');return;}
+  EST.apurComp = {}; EST.sugComp = {};
+  telaPeriodo();
+}
+
+/* ================= SELEÇÃO DO PERÍODO DE PAGAMENTO ================= */
+function telaPeriodo(){
+  const hoje = EST.periodo ? EST.periodo.ini : '';
+  let h = `<div class="card"><h2>Período de pagamento</h2>
+    <div class="sub">Informe o intervalo dos vencimentos (ex.: 30/07/2026 a 15/08/2026). O painel identifica, pela regra de cada médico, qual competência vence dentro do período.</div>
+    <div class="periodo-box">
+      <div><label>Início do período</label><input type="date" id="per-ini" value="${EST.periodo?EST.periodo.ini:''}"></div>
+      <div><label>Fim do período</label><input type="date" id="per-fim" value="${EST.periodo?EST.periodo.fim:''}"></div>
+      <button class="btn" onclick="aplicarPeriodo()">Montar fechamento →</button>
+    </div></div>`;
+  h += `<div class="card"><h2>Ou fechar por uma competência específica</h2><div class="sub">Modo alternativo: todos os médicos numa mesma competência (base carregada: ${EST.allRows.length.toLocaleString('pt-BR')} atendimentos em ${EST.mesesDisp.length} meses).</div><div>`;
+  EST.mesesDisp.forEach(x=>{
+    h += `<button class="btn sec" style="margin:4px" onclick="porCompetencia(${x.a},${x.m})"><b>${compTxt(x.a,x.m)}</b> · ${x.n.toLocaleString('pt-BR')} linhas</button>`;
+  });
+  h += `</div></div>`;
+  document.getElementById('main').innerHTML = h;
+  document.getElementById('sidebar').innerHTML = '';
+}
+function aplicarPeriodo(){
+  const ini = document.getElementById('per-ini').value, fim = document.getElementById('per-fim').value;
+  if(!ini || !fim){alert('Informe as duas datas.');return;}
+  const dIni = new Date(ini+'T00:00:00'), dFim = new Date(fim+'T23:59:59');
+  if(dFim < dIni){alert('A data final é anterior à inicial.');return;}
+  EST.periodo = {ini, fim};
+  // candidatos: meses da base + 3 meses além (para fixos cuja produção ainda não está na base)
+  const minK = Math.min(...EST.mesesDisp.map(x=>x.a*12+x.m)), maxK = Math.max(...EST.mesesDisp.map(x=>x.a*12+x.m));
+  EST.itens = [];
+  MEDICOS.forEach(med=>{
+    for(let k=minK; k<=maxK+3; k++){
+      const a = Math.floor((k-1)/12), m = ((k-1)%12)+1;
+      const vd = vencDate(med, a, m);
+      if(vd>=dIni && vd<=dFim){
+        const temBase = EST.mesesDisp.some(x=>x.a===a && x.m===m);
+        EST.itens.push({k:chave(med.id,a,m), medId:med.id, a, m, venc:fmtData(vd), vd:vd.getTime(), temBase});
+      }
+    }
+  });
+  // ordena por competência e depois por data de pagamento (pedido da Evelise)
+  EST.itens.sort((x,y)=>(x.a*100+x.m)-(y.a*100+y.m) || x.vd-y.vd);
+  prepararItens();
+}
+function porCompetencia(a,m){
+  EST.periodo = null;
+  EST.itens = MEDICOS.map(med=>({k:chave(med.id,a,m), medId:med.id, a, m,
+    venc:fmtData(vencDate(med,a,m)), vd:vencDate(med,a,m).getTime(), temBase:true}));
+  EST.itens.sort((x,y)=>x.vd-y.vd);
+  prepararItens();
+}
+function prepararItens(){
+  ALERTA_CACHE = {};
+  EST.itens.forEach(it=>{
+    apurarComp(it.a, it.m);
+    if(!(it.k in EST.manual)){
+      const med = MEDICOS.find(x=>x.id===it.medId);
+      EST.manual[it.k] = med.man.map(x=>({...x}));
+    }
+    if(!(it.k in EST.status)) EST.status[it.k] = 0;
+  });
+  EST.selecionado = null;
+  render();
+}
+
+/* ================= APURAÇÃO POR COMPETÊNCIA ================= */
+function matchRows(rows, a){
+  let rs = rows;
+  if(a.convGeral){ rs = rs.filter(r=>a.convGeral.includes(r.conv)); }
+  else { rs = rs.filter(r=>r._mid===a._mid); }
+  if(a.t) rs = rs.filter(r=>a.t.includes(r.tipo));
+  if(a.tExc) rs = rs.filter(r=>!a.tExc.includes(r.tipo));
+  if(a.convInc) rs = rs.filter(r=>a.convInc.includes(r.conv));
+  if(a.convExc) rs = rs.filter(r=>!a.convExc.includes(r.conv));
+  return rs;
+}
+function apurarComp(a, m){
+  const ck = a+'-'+m;
+  if(EST.apurComp[ck]) return;
+  const rows = EST.allRows.filter(r=>r.ano===a && r.mes===m);
+  rows.forEach(r=>{ r._mid = ALIASES[r.med] || null; r._resid = RESIDENTES_N.includes(r.med); });
+  const excl = {cortesia:0, naoCobrar:0}, semRegra = {};
+  rows.forEach(r=>{
+    if(r.cort) excl.cortesia++;
+    if(r.nc) excl.naoCobrar++;
+    if(!r._mid && !EXCLUIR.has(r.med) && !EXTERNOS_MED.has(r.med) && !r._resid && r.med)
+      semRegra[r.med] = (semRegra[r.med]||0)+1;
+  });
+  const porMed = {};
+  MEDICOS.forEach(med=>{
+    const comps = [];
+    med.auto.forEach(ac=>{
+      ac._mid = med.id;
+      let rs;
+      if(med.id==='cleso' && ac.soReferencia) rs = rows.filter(r=>r._resid);
+      else rs = matchRows(rows, ac);
+      const ignoraNC = !!ac.convGeral;
+      const validas = rs.filter(r=>(ignoraNC || !r.nc) && !r.cort);
+      const nCort = rs.filter(r=>r.cort).length, nNC = ignoraNC ? 0 : rs.filter(r=>r.nc).length;
+      const q = ac.porDia ? new Set(validas.map(r=>r.dia)).size : validas.length;
+      comps.push({c:ac.c, q, v:ac.v, tot:ac.soReferencia?0:q*ac.v, ref:!!ac.soReferencia, nominal:!!ac.nominal, nCort, nNC});
+    });
+    porMed[med.id] = comps;
+  });
+  EST.apurComp[ck] = {porMed, excl, semRegra:Object.entries(semRegra).sort((x,y)=>y[1]-x[1])};
+  EST.sugComp[ck] = rows.filter(r=>['CIRURGIA','CIRURGIA ESTRABISMO'].includes(r.tipo))
+    .map(r=>({pac:r.pac, med:r.med, dia:r.dia, conv:r.conv, obs:r.obs}));
+}
+function autoDe(it){ return (EST.apurComp[it.a+'-'+it.m]||{porMed:{}}).porMed[it.medId] || []; }
+function totalItem(it){
+  const auto = compsAjustados(it).reduce((s,c)=>s+(c.ref?0:c.tot),0);
+  const man = (EST.manual[it.k]||[]).reduce((s,c)=>s+(+c.q||0)*(+c.v||0),0);
+  return auto+man;
+}
+
+/* ============ DETALHAMENTO, ENCONTRO DE CONTAS E ALERTAS ============ */
+function linhasComp(a,m){
+  const rows = EST.allRows.filter(r=>r.ano===a && r.mes===m);
+  rows.forEach(r=>{ r._mid = ALIASES[r.med]||null; r._resid = RESIDENTES_N.includes(r.med); });
+  return rows;
+}
+function linhasDoMedico(it){
+  const med = medDe(it), rows = linhasComp(it.a, it.m);
+  if(med.id==='cleso') return rows.filter(r=>r._resid);
+  const convs = [];
+  med.auto.forEach(x=>{ if(x.convGeral) convs.push(...x.convGeral); });
+  return rows.filter(r=>r._mid===med.id || convs.includes(r.conv));
+}
+function detalheItem(it){
+  const med = medDe(it), rows = linhasComp(it.a, it.m);
+  const val = new Map();
+  med.auto.forEach(ac=>{
+    ac._mid = med.id;
+    const rs = (med.id==='cleso' && ac.soReferencia) ? rows.filter(r=>r._resid) : matchRows(rows, ac);
+    rs.forEach(r=>{ if(!val.has(r)) val.set(r,{v:ac.soReferencia?0:ac.v, ncOk:!!ac.convGeral, porDia:!!ac.porDia, nome:ac.c, nominal:!!ac.nominal, sam:ac.sam||null}); });
+  });
+  const grupos = {}, naoComp = {}, dias = {}, exclu = [], foraRegra = {}, nominais = {};
+  const tipoMatch = r => med.auto.some(a => (!a.t || a.t.includes(r.tipo)) && (!a.tExc || !a.tExc.includes(r.tipo)));
+  linhasDoMedico(it).forEach(r=>{
+    const d = dias[r.dia] = dias[r.dia] || {};
+    d[r.tipo] = (d[r.tipo]||0)+1;
+    const mv = val.get(r);
+    if(!mv){
+      if(tipoMatch(r)) foraRegra[r.tipo+' ('+r.conv+')'] = (foraRegra[r.tipo+' ('+r.conv+')']||0)+1;
+      else if(!med.porPeriodo) naoComp[r.tipo] = (naoComp[r.tipo]||0)+1;
+      return;
+    }
+    if(r.cort || (r.nc && !mv.ncOk)){ exclu.push({dia:r.dia, tipo:r.tipo, pac:r.pac, motivo:r.cort?'cortesia':'não cobrar'}); return; }
+    if(mv.nominal){
+      const nb = nominais[mv.nome] = nominais[mv.nome] || {c:mv.nome, v:mv.v, sam:mv.sam, rows:[]};
+      nb.rows.push({dia:r.dia, pac:r.pac, conv:r.conv, tipo:r.tipo, obs:r.obs});
+      return;
+    }
+    if(mv.porDia){
+      // pago por PERÍODO (dia), não por procedimento: 1 linha por dia, valor único
+      const kk = 'PD|'+mv.nome+'|'+r.dia;
+      grupos[kk] = grupos[kk] || {dia:r.dia, tipo:mv.nome, conv:med.detConv?r.conv:null, q:1, v:mv.v, _qtdProc:0};
+      grupos[kk]._qtdProc++;
+      return;
+    }
+    const kk = r.dia+'|'+r.tipo+'|'+(med.detConv? r.conv : '');
+    const g = grupos[kk] = grupos[kk] || {dia:r.dia, tipo:r.tipo, conv:med.detConv?r.conv:null, q:0, v:mv.v};
+    g.q++;
+  });
+  const lin = Object.values(grupos).sort((x,y)=>x.dia-y.dia || x.tipo.localeCompare(y.tipo) || (x.conv||'').localeCompare(y.conv||''));
+  const agendas = Object.entries(dias).map(([d,tt])=>({dia:+d,
+    resumo:Object.entries(tt).sort((x,y)=>y[1]-x[1]).map(([t,q])=>`${t} ×${q}`).join(', ')})).sort((x,y)=>x.dia-y.dia);
+  const nomArr = Object.values(nominais);
+  nomArr.forEach(nb=>{ nb.rows.sort((x,y)=>x.dia-y.dia || (x.pac||'').localeCompare(y.pac||'')); });
+  return {lin, agendas, naoComp:Object.entries(naoComp).sort((x,y)=>y[1]-x[1]),
+    foraRegra:Object.entries(foraRegra).sort((x,y)=>y[1]-x[1]), exclu, nominais:nomArr};
+}
+function cirurgiasGuilherme(it){
+  const cir = linhasDoMedico(it).filter(r=>r.tipo.includes('CIRURGIA')||['IRIDEC','TX CORNEA','LAVAGEM DE CAMARA'].includes(r.tipo));
+  return {sam:cir.filter(r=>r.conv==='SAMARITANO'), hog:cir.filter(r=>r.conv!=='SAMARITANO')};
+}
+let ALERTA_CACHE = {};
+function alertaQtd(it){
+  if(!(it.k in ALERTA_CACHE)) ALERTA_CACHE[it.k] = detalheItem(it).naoComp.reduce((s,x)=>s+x[1],0);
+  return ALERTA_CACHE[it.k];
+}
+function tabelaDetalheHTML(it, print){
+  const m = medDe(it), det = detalheItem(it);
+  if(!det.lin.length) return '';
+  const cols = m.detConv ? 6 : 5;
+  let t = `<table><tr><th>Data</th><th>Procedimento</th>${m.detConv?'<th>Convênio</th>':''}<th class="num" style="text-align:right">Qtd</th><th class="num" style="text-align:right">Valor unit.</th><th class="num" style="text-align:right">Total</th></tr>`;
+  let diaAtual = null, subDia = 0, totG = 0;
+  const fechaDia = () => { if(diaAtual!==null) t += `<tr class="total"><td colspan="${cols-1}" style="text-align:right"><b>Total do dia ${String(diaAtual).padStart(2,'0')}</b></td><td class="num" style="text-align:right"><b>${fmt(subDia)}</b></td></tr>`; };
+  det.lin.forEach(l=>{
+    if(l.dia!==diaAtual){ fechaDia(); diaAtual = l.dia; subDia = 0; }
+    const tot = l.q*l.v; subDia += tot; totG += tot;
+    const rot = l._qtdProc ? `${l.tipo} <span style="font-size:11px;color:#5A6B7C">(${l._qtdProc} cirurgia${l._qtdProc>1?'s':''} no dia)</span>` : l.tipo;
+    t += `<tr><td>${String(l.dia).padStart(2,'0')}/${String(it.m).padStart(2,'0')}</td><td>${rot}</td>${m.detConv?`<td>${l.conv||''}</td>`:''}<td class="num" style="text-align:right">${l.q}</td><td class="num" style="text-align:right">${fmt(l.v)}</td><td class="num" style="text-align:right">${fmt(tot)}</td></tr>`;
+  });
+  fechaDia();
+  t += `<tr class="total"><td colspan="${cols-1}" style="text-align:right"><b>TOTAL DO DETALHAMENTO</b></td><td class="num" style="text-align:right"><b>${fmt(totG)}</b></td></tr></table>`;
+  if(det.exclu.length){
+    t += `<p style="font-size:11px;margin-top:4px">Fora do valor (${det.exclu.length}): ` +
+      det.exclu.map(e=>`${String(e.dia).padStart(2,'0')}/${String(it.m).padStart(2,'0')} ${e.tipo} — ${e.pac} (${e.motivo})`).join('; ') + `</p>`;
+  }
+  return t;
+}
+function tabelaAgendasHTML(it, comEspaco, editavel){
+  const det = detalheItem(it);
+  if(!det.agendas.length) return '';
+  const per = (EST.periodosDia = EST.periodosDia||{})[it.k] || {};
+  let t = `<table><tr><th>Data</th><th>Atendimentos registrados na base</th>${comEspaco?'<th style="width:130px">Períodos (1 ou 2)</th>':''}</tr>`;
+  let soma = 0;
+  det.agendas.forEach(a=>{
+    const v = per[a.dia];
+    if(v) soma += +v;
+    let cel = '';
+    if(comEspaco){
+      if(editavel) cel = `<td style="text-align:center"><input class="qtd" type="number" min="0" max="2" step="1" value="${v||''}" onchange="perDia('${it.k}',${a.dia},this.value)" style="width:60px;text-align:center"></td>`;
+      else cel = `<td style="height:26px;text-align:center">${v||'&nbsp;'}</td>`;
+    }
+    t += `<tr><td>${dd(a.dia,it.m)}</td><td>${a.resumo}</td>${cel}</tr>`;
+  });
+  if(comEspaco && soma>0) t += `<tr class="total"><td colspan="2" style="text-align:right"><b>Total de períodos marcados</b></td><td style="text-align:center"><b>${soma}</b></td></tr>`;
+  t += `</table>`;
+  return t;
+}
+function perDia(k, dia, v){ EST.periodosDia = EST.periodosDia||{}; EST.periodosDia[k] = EST.periodosDia[k]||{}; EST.periodosDia[k][dia] = v===''?null:+v; render(); }
+const dd = (d,m) => String(d).padStart(2,'0')+'/'+String(m).padStart(2,'0');
+function nominalInfo(it){
+  const det = detalheItem(it);
+  const aj = (EST.cirAj = EST.cirAj||{})[it.k] || {};
+  return det.nominais.map((nb,bi)=>{
+    const rows = nb.rows.map((r,ri)=>{
+      const a = aj[bi+'_'+ri] || {};
+      const inc = a.inc!==false;
+      const val = (a.v!==undefined && a.v!==null) ? +a.v : nb.v;
+      return {...r, rid:bi+'_'+ri, inc, val};
+    });
+    const incl = rows.filter(r=>r.inc);
+    return {c:nb.c, v:nb.v, sam:nb.sam, rows, q:incl.length, tot:incl.reduce((s2,r)=>s2+r.val,0)};
+  });
+}
+function cirTog(k,rid,on){ EST.cirAj=EST.cirAj||{}; EST.cirAj[k]=EST.cirAj[k]||{}; (EST.cirAj[k][rid]=EST.cirAj[k][rid]||{}).inc=on; render(); }
+function cirVal(k,rid,v){ EST.cirAj=EST.cirAj||{}; EST.cirAj[k]=EST.cirAj[k]||{}; (EST.cirAj[k][rid]=EST.cirAj[k][rid]||{}).v=(v===''?null:+v); render(); }
+function compsAjustados(it){
+  const noms = medDe(it).auto.some(a=>a.nominal) ? nominalInfo(it) : null;
+  return autoDe(it).map(c=>{
+    if(c.nominal && noms){ const nb = noms.find(n=>n.c===c.c); if(nb) return {...c, q:nb.q, tot:nb.tot}; }
+    return c;
+  });
+}
+function tabelaNominaisHTML(it, mmm){
+  const noms = nominalInfo(it);
+  let h = '';
+  noms.forEach(nb=>{
+    const rows = nb.rows.filter(r=>r.inc);
+    if(!rows.length) return;
+    h += `<h2 style="font-size:14px;margin-top:16px">${nb.c}</h2>`;
+    if(nb.sam){
+      h += `<table><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th class="num" style="text-align:right">Valor cirurgia (R$)</th><th class="num" style="text-align:right">Imposto 16%</th><th class="num" style="text-align:right">A descontar (R$)</th></tr>`;
+      rows.forEach(r=>{ const pad = r.val===nb.v; h += `<tr><td>${dd(r.dia,it.m)}</td><td>${r.pac}</td><td>${r.tipo}</td><td class="num" style="text-align:right">${pad?fmt(nb.sam.bruto):'—'}</td><td class="num" style="text-align:right">${pad?('−'+fmt(nb.sam.imposto)):'—'}</td><td class="num" style="text-align:right;color:#B3402A">${fmt(r.val)}</td></tr>`; });
+      h += `<tr class="total"><td colspan="5" style="text-align:right"><b>TOTAL (${rows.length})</b></td><td class="num" style="text-align:right;color:#B3402A"><b>${fmt(nb.tot)}</b></td></tr></table>`;
+    } else {
+      h += `<table><tr><th>Data</th><th>Paciente</th><th>Convênio</th><th>Tipo</th><th class="num" style="text-align:right">Valor (R$)</th></tr>`;
+      rows.forEach(r=>{ h += `<tr><td>${dd(r.dia,it.m)}</td><td>${r.pac}</td><td>${r.conv}</td><td>${r.tipo}</td><td class="num" style="text-align:right">${fmt(r.val)}</td></tr>`; });
+      h += `<tr class="total"><td colspan="4" style="text-align:right"><b>TOTAL (${rows.length})</b></td><td class="num" style="text-align:right"><b>${fmt(nb.tot)}</b></td></tr></table>`;
+    }
+  });
+  return h;
+}
+function tabelaCirurgiasHTML(lista, mostraConv){
+  if(!lista.length) return '<p style="font-size:12px;color:#5A6B7C">Nenhuma cirurgia na base nesta competência.</p>';
+  let t = `<table><tr><th>Paciente</th><th>Tipo de cirurgia</th><th>Dia</th>${mostraConv?'<th>Convênio</th>':''}<th>Observação</th></tr>`;
+  lista.forEach(r=>{ t += `<tr><td>${r.pac}</td><td>${r.tipo}</td><td>${String(r.dia||'').toString().padStart(2,'0')}</td>${mostraConv?`<td>${r.conv||''}</td>`:''}<td>${r.obs||''}</td></tr>`; });
+  return t + `</table>`;
+}
+
+/* ================= RENDER ================= */
+function render(){
+  const per = EST.periodo ? `Pagamentos ${EST.periodo.ini.split('-').reverse().join('/')} a ${EST.periodo.fim.split('-').reverse().join('/')}` :
+    (EST.itens.length ? 'Fechamento por competência' : '');
+  document.getElementById('hdr-comp').textContent = EST.itens.length ?
+    `${per} · ${EST.itens.length} repasses` : 'Nenhuma base carregada';
+  document.getElementById('btn-trocar').style.display = EST.allRows.length ? '' : 'none';
+  renderSidebar();
+  if(EST.selecionado==='__pietro') renderPietro();
+  else if(EST.selecionado) renderItem(EST.selecionado);
+  else if(EST.itens.length) renderResumo();
+}
+function medDe(it){ return MEDICOS.find(x=>x.id===it.medId); }
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  if(!EST.itens.length){ sb.innerHTML=''; return; }
+  let h = `<div style="padding:4px 8px"><button class="btn sec mini" onclick="EST.selecionado=null;render()">📊 Visão geral</button></div>`;
+  ['F2MR','EXTERNOS','RECEBIMENTOS'].forEach(sec=>{
+    const its = EST.itens.filter(it=>medDe(it).secao===sec);
+    if(!its.length) return;
+    h += `<h3>${sec}</h3>`;
+    its.forEach(it=>{
+      const m = medDe(it), st = EST.status[it.k]||0, [bg,fg] = STCOLOR[st];
+      h += `<div class="medcard ${EST.selecionado===it.k?'sel':''}" onclick="EST.selecionado='${it.k}';render()">
+        <div><div class="nome">${m.nome}</div><div class="valor">Comp. <b>${compTxt(it.a,it.m)}</b> · ${fmtC(totalItem(it))} · venc ${it.venc}</div></div>
+        <span class="pill" style="background:${bg};color:${fg}">${STATUS[st]}</span></div>`;
+    });
+  });
+  h += `<h3>CONTA CORRENTE</h3>
+    <div class="medcard ${EST.selecionado==='__pietro'?'sel':''}" onclick="EST.selecionado='__pietro';render()">
+      <div><div class="nome">Dr. Pietro Dechichi</div><div class="valor">Extrato ativo · saldo ${fmtC(pccSaldo().saldo)}</div></div>
+      <span class="pill" style="background:#E8F0F9;color:#1F4E79">Extrato</span></div>`;
+  sb.innerHTML = h;
+}
+function renderResumo(){
+  const totF = EST.itens.filter(it=>medDe(it).secao!=='RECEBIMENTOS').reduce((s,it)=>s+totalItem(it),0);
+  const totR = EST.itens.filter(it=>medDe(it).secao==='RECEBIMENTOS').reduce((s,it)=>s+totalItem(it),0);
+  const aprov = EST.itens.filter(it=>(EST.status[it.k]||0)>=1).length;
+  const pagos = EST.itens.filter(it=>(EST.status[it.k]||0)===5).length;
+  let h = `<div class="kpis">
+    <div class="kpi"><div class="n">${EST.itens.length}</div><div class="l">Repasses no período</div></div>
+    <div class="kpi"><div class="n">${fmtC(totF)}</div><div class="l">A pagar (F2MR + Externos)</div></div>
+    <div class="kpi"><div class="n">${fmtC(totR)}</div><div class="l">A receber</div></div>
+    <div class="kpi"><div class="n">${aprov}/${EST.itens.length}</div><div class="l">Aprovados</div></div>
+    <div class="kpi"><div class="n">${pagos}</div><div class="l">Pagos</div></div></div>`;
+  h += `<div class="card"><h2>Fechamento — organizado por competência e data de pagamento
+    <span style="float:right"><button class="btn mini" onclick="imprimirResumo(true)">⬇️ Baixar PDF</button>
+    <button class="btn mini sec" onclick="imprimirResumo(false)">🖨️ Imprimir</button></span></h2>
+    <div class="sub">Clique num repasse (aqui ou na lateral) para revisar, lançar manuais e aprovar.</div>
+    <table><tr><th>Competência</th><th>Médico</th><th>Seção</th><th class="num">Valor (R$)</th><th>Vencimento</th><th>Status</th><th>NF</th></tr>`;
+  let grupoAtual = null, subtotal = 0, totalG = 0;
+  const fechaGrupo = () => { if(grupoAtual!==null) h += `<tr class="total"><td colspan="3">Total competência ${grupoAtual}</td><td class="num">${fmt(subtotal)}</td><td colspan="3"></td></tr>`; };
+  EST.itens.forEach(it=>{
+    const g = compTxt(it.a,it.m);
+    if(g!==grupoAtual){ fechaGrupo(); h += `<tr class="grupo"><td colspan="7">Competência: ${g}</td></tr>`; grupoAtual = g; subtotal = 0; }
+    const m = medDe(it), st = EST.status[it.k]||0, [bg,fg] = STCOLOR[st];
+    const t = totalItem(it); subtotal += t; totalG += t;
+    let alerta = it.temBase ? '' : ' <span class="tag" title="A base não tem atendimentos desta competência">sem dados na base</span>';
+    const nAl = it.temBase ? alertaQtd(it) : 0;
+    if(nAl>0) alerta += ` <span class="tag" style="background:var(--vermbg);color:var(--verm)" title="Procedimentos que não casaram com nenhuma regra — abra o médico para ver">⚠ ${nAl} não computado${nAl>1?'s':''}</span>`;
+    h += `<tr style="cursor:pointer" onclick="EST.selecionado='${it.k}';render()"><td><b>${g}</b></td><td>${m.nome}${alerta}</td><td>${m.secao}</td>
+      <td class="num">${fmt(t)}</td><td>${it.venc}</td>
+      <td><span class="pill" style="background:${bg};color:${fg}">${STATUS[st]}</span></td><td>${(EST.nf[it.k]||{}).num||''}</td></tr>`;
+  });
+  fechaGrupo();
+  h += `<tr class="total"><td colspan="3">TOTAL GERAL</td><td class="num">${fmt(totalG)}</td><td colspan="3"></td></tr></table></div>`;
+  // sem regra: união das competências usadas
+  const vistos = {}, srAgg = {};
+  EST.itens.forEach(it=>{ const ck = it.a+'-'+it.m;
+    if(vistos[ck] || !EST.apurComp[ck]) return; vistos[ck]=1;
+    EST.apurComp[ck].semRegra.forEach(([n,q])=>{ srAgg[n] = (srAgg[n]||0)+q; });
+  });
+  const sr = Object.entries(srAgg).sort((x,y)=>y[1]-x[1]);
+  if(sr.length){
+    h += `<div class="card"><h2>Atendimentos sem regra cadastrada (nas competências deste fechamento)</h2><table><tr><th>Nome na base</th><th class="num">Atendimentos</th></tr>`;
+    sr.forEach(([n,q])=>{h+=`<tr><td>${n}</td><td class="num">${q}</td></tr>`;});
+    h += `</table></div>`;
+  }
+  document.getElementById('main').innerHTML = h;
+}
+function renderItem(k){
+  const it = EST.itens.find(x=>x.k===k);
+  if(!it){ EST.selecionado=null; renderResumo(); return; }
+  const m = medDe(it), st = EST.status[k]||0;
+  const comps = compsAjustados(it), man = EST.manual[k]||[];
+  const ck = it.a+'-'+it.m;
+  let h = `<div class="card"><h2>${m.nome} <span class="tag">Competência ${compTxt(it.a,it.m)}</span> <span class="tag">${m.secao}</span> <span class="tag">venc ${it.venc}</span></h2>`;
+  if(m.nota) h += `<div class="aviso">⚠️ ${m.nota}</div>`;
+  if(!it.temBase) h += `<div class="aviso">⚠️ A base carregada não tem atendimentos de ${compTxt(it.a,it.m)} — a apuração automática ficará zerada; use os lançamentos manuais.</div>`;
+  h += `<div class="statusbar">` + STATUS.map((s,i)=>
+    `<span class="step ${i<st?'done':''} ${i===st?'cur':''}" onclick="setStatus('${k}',${i})">${i<st?'✓ ':''}${s}</span>`).join('') + `</div>`;
+  h += `<div class="grid2"><div><label class="obsrow">Nº da NF</label><input type="text" value="${(EST.nf[k]||{}).num||''}" onchange="setNF('${k}','num',this.value)"></div>
+        <div><label class="obsrow">Observações</label><input type="text" value="${EST.obsMed[k]||''}" onchange="EST.obsMed['${k}']=this.value"></div></div>`;
+  h += `</div>`;
+  h += `<div class="card"><h2>Apuração automática</h2><div class="sub">Calculada da base — competência ${compTxt(it.a,it.m)}. Cortesias e "não cobrar" fora do valor (mostradas ao lado).</div>`;
+  if(comps.length){
+    h += `<table><tr><th>Componente</th><th class="num">Qtd</th><th class="num">Valor unit.</th><th class="num">Total</th><th>Excluídos</th></tr>`;
+    comps.forEach(c=>{
+      const ex = [c.nCort?`${c.nCort} cortesia`:null, c.nNC?`${c.nNC} não cobrar`:null].filter(Boolean).join(', ');
+      h += `<tr${c.ref?' class="obsrow"':''}><td>${c.c}</td><td class="num">${c.q}</td><td class="num">${c.ref?'—':fmt(c.v)}</td><td class="num">${c.ref?'(referência)':fmt(c.tot)}</td><td>${ex||''}</td></tr>`;
+    });
+    h += `</table>`;
+  } else h += `<div class="sub">Sem componentes automáticos — este médico é 100% lançamento manual.</div>`;
+  h += `</div>`;
+  const det = detalheItem(it);
+  if(det.naoComp.length){
+    h += `<div class="aviso" style="background:var(--vermbg);border-color:#E0A9A0;color:var(--verm)"><b>⚠️ ATENÇÃO — procedimentos NÃO computados nesta apuração:</b> ` +
+      det.naoComp.map(([t,q])=>`${t} (${q}×)`).join(' · ') +
+      `.<br>Confira se é erro de digitação na base (ex.: dois tipos grudados como "Consulta Consulta Óculos") ou regra faltando. Se for devido, lance manualmente.</div>`;
+  }
+  if(det.foraRegra.length){
+    h += `<div class="aviso">ℹ️ Fora do repasse pela regra de convênio: ` + det.foraRegra.map(([t,q])=>`${t} ×${q}`).join(' · ') + `.</div>`;
+  }
+  const temDetalhe = m.auto.some(a=>!a.soReferencia && !a.porDia);
+  if(temDetalhe && det.lin.length){
+    h += `<div class="card"><h2>Detalhamento por dia${m.detConv?' e convênio':''}</h2><div class="sub">Conferência agenda por agenda — este quadro sai no demonstrativo impresso.</div>` + tabelaDetalheHTML(it) + `</div>`;
+  }
+  if(m.porPeriodo && det.agendas.length){
+    h += `<div class="card"><h2>Agendas do mês — marque os períodos</h2><div class="sub">Digite 1 ou 2 em cada dia trabalhado; o total aparece embaixo para você usar na quantidade do lançamento manual, e o demonstrativo sai com a coluna preenchida (dias em branco saem vazios para o médico marcar).</div>` + tabelaAgendasHTML(it, true, true) + `</div>`;
+  }
+  if(det.nominais.length){
+    const noms = nominalInfo(it);
+    let nh = '';
+    noms.forEach(nb=>{
+      nh += `<h2 style="font-size:13.5px;margin:12px 0 4px;color:var(--azul)">${nb.c}</h2>
+        <table><tr><th style="width:56px">Incluir</th><th>Data</th><th>Paciente</th><th>Convênio</th><th>Tipo</th><th class="num" style="width:120px">Valor (R$)</th></tr>`;
+      nb.rows.forEach(r=>{
+        nh += `<tr style="${r.inc?'':'opacity:.45'}">
+          <td style="text-align:center"><input type="checkbox" style="width:auto" ${r.inc?'checked':''} onchange="cirTog('${it.k}','${r.rid}',this.checked)"></td>
+          <td${r.inc?'':' style="text-decoration:line-through"'}>${dd(r.dia,it.m)}</td>
+          <td${r.inc?'':' style="text-decoration:line-through"'}>${r.pac}</td>
+          <td>${r.conv}</td><td>${r.tipo}</td>
+          <td class="num"><input class="val" type="number" step="any" value="${r.val}" ${r.inc?'':'disabled'} onchange="cirVal('${it.k}','${r.rid}',this.value)"></td></tr>`;
+      });
+      nh += `<tr class="total"><td colspan="5" style="text-align:right">TOTAL — ${nb.q} incluída${nb.q==1?'':'s'}</td><td class="num">${fmt(nb.tot)}</td></tr></table>`;
+    });
+    h += `<div class="card"><h2>Cirurgias detectadas na base (automático, editável)</h2><div class="sub">Desmarque "Incluir" para tirar uma cirurgia do repasse ou edite o valor direto no campo. O demonstrativo sai só com as incluídas, já com os valores editados.</div>` + nh + `</div>`;
+  }
+  h += `<div class="card"><h2>Lançamentos manuais</h2><div class="sub">Fixos, agendas, períodos, acertos e descontos (negativo).</div>
+    <table><tr><th>Componente</th><th class="num">Qtd</th><th class="num">Valor unit.</th><th class="num">Total</th><th></th></tr>`;
+  man.forEach((x,i)=>{
+    h += `<tr><td><input type="text" value="${x.c.replace(/"/g,'&quot;')}" onchange="setMan('${k}',${i},'c',this.value)"></td>
+      <td class="num"><input class="qtd" type="number" step="any" value="${x.q}" onchange="setMan('${k}',${i},'q',this.value)"></td>
+      <td class="num"><input class="val" type="number" step="any" value="${x.v}" onchange="setMan('${k}',${i},'v',this.value)"></td>
+      <td class="num">${fmt((+x.q||0)*(+x.v||0))}</td>
+      <td><button class="btn mini sec" onclick="delMan('${k}',${i})">✕</button></td></tr>`;
+  });
+  h += `</table><div style="margin-top:8px"><button class="btn mini sec" onclick="addMan('${k}')">+ Adicionar linha</button></div></div>`;
+  if(m.sugCirurgia && (EST.sugComp[ck]||[]).length){
+    h += `<div class="card"><h2>Sugestões de cirurgia (competência ${compTxt(it.a,it.m)})</h2><div class="sub">Linhas de "Cirurgia" na base (inclusive sob EXTERNOS/CC) — confira quais são da ${m.nome} e ajuste a quantidade nos lançamentos manuais.</div>
+      <table><tr><th>Paciente</th><th>Registrado sob</th><th class="num">Dia</th><th>Convênio</th><th>Observação</th></tr>`;
+    EST.sugComp[ck].forEach(s=>{h+=`<tr><td>${s.pac}</td><td>${s.med}</td><td class="num">${s.dia||''}</td><td>${s.conv||''}</td><td>${s.obs||''}</td></tr>`;});
+    h += `</table><div class="sub" style="margin-top:8px">Dica: para o demonstrativo sair nominal, adicione nos lançamentos manuais uma linha por paciente (ex.: "Cirurgia — NOME DO PACIENTE", qtd 1 × 1.517).</div></div>`;
+  }
+  h += `<div class="card"><h2>Total do repasse: ${fmtC(totalItem(it))}</h2>
+    <div class="sub">Competência ${compTxt(it.a,it.m)} · Vencimento ${it.venc} · Seção ${m.secao}</div>
+    <button class="btn" onclick="imprimirDemo('${k}', true)">⬇️ Demonstrativo em PDF</button>
+    <button class="btn sec" onclick="imprimirDemo('${k}', false)">🖨️ Imprimir</button>
+    <button class="btn sec" onclick="setStatus('${k}',1)">✔ Aprovar</button></div>`;
+  document.getElementById('main').innerHTML = h;
+}
+function setMan(k,i,c,v){ EST.manual[k][i][c] = c==='c'?v:+v; render(); }
+function addMan(k){ EST.manual[k].push({c:'Novo componente',q:0,v:0}); render(); }
+function delMan(k,i){ EST.manual[k].splice(i,1); render(); }
+function setStatus(k,i){ EST.status[k] = (EST.status[k]===i && i>0) ? i-1 : i; render(); }
+function setNF(k,c,v){ EST.nf[k] = EST.nf[k]||{}; EST.nf[k][c]=v; }
+
+/* ================= CONTA CORRENTE — DR. PIETRO ================= */
+const PCC_REGRAS = 'FACO convênio R$ 225 · Vitrectomia (Bene/Intermédica) R$ 1.100 · Vitrectomia + FACO R$ 1.250 · Retirada de óleo R$ 800 · Taxa CC paciente particular (FACO): −R$ 900 · Intermédica: repassa quando o HOG recebe';
+function pccMeses(){
+  const p = EST.pcc || {};
+  const [ia,im] = (p.ini||'2026-04').split('-').map(Number);
+  const [fa,fm] = (p.fim||'2026-06').split('-').map(Number);
+  const out = [];
+  for(let k=ia*12+im; k<=fa*12+fm && out.length<24; k++){
+    out.push({a:Math.floor((k-1)/12), m:((k-1)%12)+1});
+  }
+  return out;
+}
+function pccEd(key, def){
+  const e = (EST.pcc.ed||{})[key] || {};
+  return {q:(e.q!==undefined && e.q!==null)?+e.q:def.q, v:(e.v!==undefined && e.v!==null)?+e.v:def.v, inc:e.inc!==false};
+}
+function pccSet(key, campo, val){
+  EST.pcc.ed = EST.pcc.ed||{}; EST.pcc.ed[key] = EST.pcc.ed[key]||{};
+  EST.pcc.ed[key][campo] = (val===''?null:(campo==='inc'?val:+val));
+  render();
+}
+function pietroMes(a, m){
+  const rows = linhasComp(a, m).filter(r=>r._mid==='pietro' && !r.cort && !r.nc);
+  const faco = {}, taxa = {}, vitre = [], interm = [], outros = [];
+  const temFacoDia = {};
+  rows.forEach(r=>{
+    if(r.tipo==='CIRURGIA FACO CONVENIO'){
+      if(r.conv==='DR. PIETRO (PARCEIRO)') taxa[r.dia] = (taxa[r.dia]||0)+1;
+      else if(['BENEFICIENCIA','REMIDO SOCIO','BENE VITAL 400','BENE VITAL 100'].includes(r.conv)){
+        faco[r.dia] = (faco[r.dia]||0)+1;
+        (temFacoDia[r.dia] = temFacoDia[r.dia]||new Set()).add(r.pac);
+      } else outros.push(r);
+    } else if(r.tipo==='CIRURGIA VITRE'){
+      if(r.conv==='INTERMEDICA') interm.push(r);
+      else if(['BENEFICIENCIA','REMIDO SOCIO'].includes(r.conv)) vitre.push(r);
+      else outros.push(r);
+    } else if(r.tipo.includes('CIRURGIA')) outros.push(r);
+  });
+  const mk = a+'-'+m;
+  const linF = Object.keys(faco).map(Number).sort((x,y)=>x-y).map(d=>{
+    const e = pccEd(mk+'|f|'+d, {q:faco[d], v:225});
+    return {key:mk+'|f|'+d, dia:d, rot:'Cirurgia FACO convênio', qBase:faco[d], q:e.q, v:e.v, tot:e.q*e.v};
+  });
+  const linT = Object.keys(taxa).map(Number).sort((x,y)=>x-y).map(d=>{
+    const e = pccEd(mk+'|t|'+d, {q:taxa[d], v:-900});
+    return {key:mk+'|t|'+d, dia:d, rot:'Taxa CC — FACO paciente particular do médico', qBase:taxa[d], q:e.q, v:e.v, tot:e.q*e.v, neg:true};
+  });
+  const linV = vitre.map(r=>{
+    const par = (temFacoDia[r.dia]||new Set()).has(r.pac);
+    const e = pccEd(mk+'|v|'+r.dia+'|'+r.pac, {q:1, v:par?1250:1100});
+    return {key:mk+'|v|'+r.dia+'|'+r.pac, dia:r.dia, rot:'Vitrectomia — '+r.pac+' ('+r.conv+')'+(par?' — FACO no mesmo dia: sugerido R$ 1.250':''), qBase:1, q:e.inc?1:0, v:e.v, tot:(e.inc?1:0)*e.v, inc:e.inc, vit:true};
+  });
+  const tot = [...linF, ...linT, ...linV].reduce((s2,l)=>s2+l.tot, 0);
+  return {linhas:[...linF, ...linT, ...linV].sort((x,y)=>x.dia-y.dia), interm, outros, tot};
+}
+function pccSaldo(){
+  if(!EST.allRows.length) return {saldo:0, meses:[], pago:0, credito:0};
+  const meses = pccMeses().map(({a,m})=>({a, m, dados:pietroMes(a,m)}));
+  const manuais = (EST.pcc.mans||[]).reduce((s2,x)=>s2+(+x.valor||0), 0);
+  const credito = meses.reduce((s2,x)=>s2+x.dados.tot, 0) + manuais;
+  const pago = (EST.pcc.pags||[]).reduce((s2,p)=>s2+(+p.valor||0), 0);
+  return {saldo:credito-pago, meses, pago, credito, manuais};
+}
+function pccPagAdd(){ (EST.pcc.pags = EST.pcc.pags||[]).push({data:'', valor:0, obs:''}); render(); }
+function pccManAdd(desc, valor){ (EST.pcc.mans = EST.pcc.mans||[]).push({data:'', desc:desc||'Lançamento manual', valor:valor||0}); render(); }
+function pccManSet(i, campo, v){ EST.pcc.mans[i][campo] = campo==='valor'?+v:v; render(); }
+function pccManDel(i){ EST.pcc.mans.splice(i,1); render(); }
+function pccPagSet(i, campo, v){ EST.pcc.pags[i][campo] = campo==='valor'?+v:v; render(); }
+function pccPagDel(i){ EST.pcc.pags.splice(i,1); render(); }
+function pccInterm(rid, campo, v){ EST.pcc.interm = EST.pcc.interm||{}; (EST.pcc.interm[rid]=EST.pcc.interm[rid]||{})[campo]=v; }
+function pccPer(campo, v){ EST.pcc[campo] = v; render(); }
+
+function pccHTML(edit){
+  if(!EST.allRows.length) return '<div class="card"><h2>Conta Corrente — Dr. Pietro</h2><div class="sub">Carregue a base para montar o extrato.</div></div>';
+  const sal = pccSaldo();
+  let h = '';
+  sal.meses.forEach(({a, m, dados})=>{
+    h += `<h2 style="font-size:14px;margin-top:16px">${MESNOME[m].toUpperCase()}/${String(a).slice(2)} — apuração</h2>`;
+    if(!dados.linhas.length){ h += `<p class="nota" style="font-size:11.5px;color:#5A6B7C">Sem cirurgias na base neste mês.</p>`; }
+    else {
+      h += `<table><tr>${edit?'<th style="width:50px">Incluir</th>':''}<th>Data</th><th>Procedimento</th><th class="num" style="text-align:right">Qtd</th><th class="num" style="text-align:right">Valor unit. (R$)</th><th class="num" style="text-align:right">Total (R$)</th></tr>`;
+      dados.linhas.forEach(l=>{
+        const cor = l.tot<0?' style="color:#B3402A"':'';
+        if(edit){
+          const chk = l.vit ? `<input type="checkbox" style="width:auto" ${l.inc?'checked':''} onchange="pccSet('${l.key}','inc',this.checked)">` : '';
+          h += `<tr><td style="text-align:center">${chk}</td><td>${dd(l.dia,m)}</td><td>${l.rot}${l.qBase!==l.q?' <span style="font-size:10px;color:#8A6100">(base: '+l.qBase+')</span>':''}</td>
+            <td class="num">${l.vit?l.q:`<input class="qtd" type="number" step="1" value="${l.q}" onchange="pccSet('${l.key}','q',this.value)">`}</td>
+            <td class="num"><input class="val" type="number" step="any" value="${l.v}" onchange="pccSet('${l.key}','v',this.value)"></td>
+            <td class="num"${cor}>${fmt(l.tot)}</td></tr>`;
+        } else if(l.tot!==0){
+          h += `<tr><td>${dd(l.dia,m)}</td><td>${l.rot}</td><td class="num" style="text-align:right">${l.q}</td><td class="num" style="text-align:right">${fmt(l.v)}</td><td class="num" style="text-align:right"${cor}>${fmt(l.tot)}</td></tr>`;
+        }
+      });
+      h += `<tr class="total"><td colspan="${edit?5:4}" style="text-align:right"><b>TOTAL ${MESNOME[m].toUpperCase()}/${String(a).slice(2)} (HOG)</b></td><td class="num" style="text-align:right"><b>${fmt(dados.tot)}</b></td></tr></table>`;
+    }
+    dados.interm.forEach(r=>{
+      const rid = a+'-'+m+'|'+r.dia+'|'+r.pac;
+      const iv = (EST.pcc.interm||{})[rid]||{};
+      h += `<div class="aviso" style="background:#EDEAF6;border-color:#C4BBE0;color:#5B4B8A">⏳ <b>INTERMÉDICA (repassa quando o HOG receber):</b> ${dd(r.dia,m)} — Vitrectomia — ${r.pac} — R$ 1.100,00${r.obs?' · obs: '+r.obs:''}<br>
+        HOG recebeu em: ${edit?`<input type="text" placeholder="__/__/__" style="width:110px" value="${iv.recebido||''}" onchange="pccInterm('${rid}','recebido',this.value)">`:(iv.recebido||'____')} &nbsp;·&nbsp;
+        Repassado em: ${edit?`<input type="text" placeholder="__/__/__" style="width:110px" value="${iv.repassado||''}" onchange="pccInterm('${rid}','repassado',this.value)">`:(iv.repassado||'____')}</div>`;
+    });
+    dados.outros.forEach(r=>{
+      const desc = (dd(r.dia,m)+' — '+r.pac+' — '+r.tipo+' ('+r.conv+')').replace(/'/g,'');
+      h += `<div class="aviso">⚠️ <b>Fora da regra — conferir:</b> ${dd(r.dia,m)} — ${r.pac} — ${r.tipo} — convênio ${r.conv}${r.obs?' · obs: '+r.obs:''}.
+        ${edit?`<button class="btn mini" style="margin-left:8px" onclick="pccManAdd('${desc}',0)">➕ Lançar na conta corrente</button>`:''}</div>`;
+    });
+  });
+  // conta corrente
+  h += `<h2 style="font-size:14px;margin-top:18px">CONTA CORRENTE — saldo e pagamentos</h2>
+    <table><tr><th>Data</th><th>Lançamento</th><th class="num" style="text-align:right">Crédito (R$)</th><th class="num" style="text-align:right">Pago (R$)</th>${edit?'<th style="width:44px"></th>':''}</tr>`;
+  sal.meses.forEach(({a, m, dados})=>{
+    if(dados.tot!==0) h += `<tr><td>${MESNOME[m]}/${String(a).slice(2)}</td><td>Apuração ${MESNOME[m]}/${String(a).slice(2)} (HOG)</td><td class="num" style="text-align:right">${fmt(dados.tot)}</td><td></td>${edit?'<td></td>':''}</tr>`;
+  });
+  (EST.pcc.mans||[]).forEach((x,i)=>{
+    if(edit){
+      h += `<tr style="background:#FFFDF2"><td><input type="text" placeholder="__/__/__" style="width:100px" value="${x.data||''}" onchange="pccManSet(${i},'data',this.value)"></td>
+        <td><input type="text" value="${(x.desc||'').replace(/"/g,'&quot;')}" onchange="pccManSet(${i},'desc',this.value)"></td>
+        <td class="num"><input class="val" type="number" step="any" value="${x.valor||0}" onchange="pccManSet(${i},'valor',this.value)"></td><td></td>
+        <td><button class="btn mini sec" onclick="pccManDel(${i})">✕</button></td></tr>`;
+    } else if(+x.valor){
+      h += `<tr><td>${x.data||''}</td><td>${x.desc||''} (lançamento manual)</td><td class="num" style="text-align:right${(+x.valor<0)?';color:#B3402A':''}">${fmt(+x.valor)}</td><td></td></tr>`;
+    }
+  });
+  (EST.pcc.pags||[]).forEach((p,i)=>{
+    if(edit){
+      h += `<tr><td><input type="text" placeholder="__/__/__" style="width:100px" value="${p.data||''}" onchange="pccPagSet(${i},'data',this.value)"></td>
+        <td><input type="text" value="${(p.obs||'Pagamento').replace(/"/g,'&quot;')}" onchange="pccPagSet(${i},'obs',this.value)"></td><td></td>
+        <td class="num"><input class="val" type="number" step="any" value="${p.valor||0}" onchange="pccPagSet(${i},'valor',this.value)"></td>
+        <td><button class="btn mini sec" onclick="pccPagDel(${i})">✕</button></td></tr>`;
+    } else if(+p.valor){
+      h += `<tr><td>${p.data||''}</td><td>${p.obs||'Pagamento'}</td><td></td><td class="num" style="text-align:right">${fmt(+p.valor)}</td></tr>`;
+    }
+  });
+  h += `<tr class="total"><td colspan="2" style="text-align:right"><b>TOTAIS</b></td><td class="num" style="text-align:right"><b>${fmt(sal.credito)}</b></td><td class="num" style="text-align:right"><b>${fmt(sal.pago)}</b></td>${edit?'<td></td>':''}</tr>
+    <tr><td colspan="${edit?4:3}" style="background:#1F4E79;color:#fff;font-weight:700">SALDO A PAGAR AO DR. PIETRO (HOG)</td><td class="num" style="text-align:right;background:#1F4E79;color:#fff;font-weight:700">R$ ${fmt(sal.saldo)}</td>${edit?'<td style="background:#1F4E79"></td>':''}</tr></table>`;
+  return h;
+}
+function renderPietro(){
+  const p = EST.pcc||{};
+  let h = `<div class="card"><h2>Dr. Pietro Dechichi — Conta Corrente <span class="tag">extrato ativo</span></h2>
+    <div class="sub">${PCC_REGRAS}. Pagamentos irregulares: registre cada pagamento com data e valor para abater do saldo. Use "Salvar fechamento" para guardar o extrato.</div>
+    <div class="periodo-box">
+      <div><label>Período — início</label><input type="month" value="${p.ini||'2026-04'}" onchange="pccPer('ini',this.value)"></div>
+      <div><label>Período — fim</label><input type="month" value="${p.fim||'2026-06'}" onchange="pccPer('fim',this.value)"></div>
+      <button class="btn" onclick="extratoPietro(true)">⬇️ Extrato em PDF</button>
+      <button class="btn sec" onclick="extratoPietro(false)">🖨️ Imprimir</button>
+      <button class="btn sec mini" onclick="pccPagAdd()">+ Registrar pagamento</button>
+      <button class="btn sec mini" onclick="pccManAdd()">+ Lançamento manual (crédito/débito)</button>
+    </div></div>
+    <div class="card">` + pccHTML(true) + `</div>`;
+  document.getElementById('main').innerHTML = h;
+}
+function extratoPietro(pdf){
+  const p = EST.pcc||{};
+  document.getElementById('print-area').innerHTML = `
+    <h1>Extrato de Conta Corrente — Dr. Pietro Dechichi</h1>
+    <div class="ph">Período: <b>${p.ini}</b> a <b>${p.fim}</b> · HOG — Faturamento</div>
+    <div style="background:#F0F4F9;border:1px solid #C9D4E0;border-radius:6px;padding:8px 12px;font-size:11px;margin-bottom:8px"><b>Regras:</b> ${PCC_REGRAS}</div>
+    ` + pccHTML(false) + `
+    <p style="font-size:11px;margin-top:12px">Confira a produção e os pagamentos do período. A Intermédica é repassada somente após o recebimento pelo HOG. Divergências: retornar este extrato com apontamentos.</p>
+    <div class="assin"><div>Médico(a)</div><div>HOG — Faturamento</div></div>`;
+  if(pdf) baixarPDF(`Extrato_Pietro_${p.ini}_a_${p.fim}.pdf`);
+  else window.print();
+}
+
+/* ================= DEMONSTRATIVO ================= */
+function imprimirDemo(k, pdf){
+  const it = EST.itens.find(x=>x.k===k), m = medDe(it);
+  const comps = compsAjustados(it).filter(c=>!c.ref);
+  const man = (EST.manual[k]||[]).filter(x=>(+x.q||0)*(+x.v||0)!==0);
+  const det = detalheItem(it);
+  let extra = '';
+  const temDetalhe = m.auto.some(a=>!a.soReferencia && !a.porDia);
+  if(temDetalhe && det.lin.length){
+    const tit = m.id==='guilherme' ? 'BLOCO 1 — Atendimentos em consultório, por dia' : `Detalhamento por dia${m.detConv?' e convênio':''}`;
+    extra += `<h2 style="font-size:14px;margin-top:18px">${tit}</h2>` + tabelaDetalheHTML(it, true);
+  }
+  if(m.porPeriodo && det.agendas.length){
+    extra += `<h2 style="font-size:14px;margin-top:18px">Agendas do mês — indique os períodos trabalhados</h2>
+      <p style="font-size:11px">Preencha na última coluna se foi 1 ou 2 períodos naquele dia.</p>` + tabelaAgendasHTML(it, true);
+  }
+  extra += tabelaNominaisHTML(it);
+  if(m.sugCirurgia){
+    const sug = EST.sugComp[it.a+'-'+it.m]||[];
+    if(sug.length) extra += `<h2 style="font-size:14px;margin-top:18px">Cirurgias registradas na base (competência ${compTxt(it.a,it.m)})</h2>` + tabelaCirurgiasHTML(sug.map(x=>({pac:x.pac,tipo:'Cirurgia',dia:x.dia,conv:x.conv,obs:x.obs})), true);
+  }
+  let resumo = `<h2 style="font-size:14px;margin-top:18px">RESUMO DO REPASSE</h2><table>`;
+  comps.forEach(c=>{ if(c.tot!==0) resumo += `<tr><td>${c.c} (${c.q})</td><td style="text-align:right;width:130px">${fmt(c.tot)}</td></tr>`; });
+  man.forEach(x=>{ resumo += `<tr><td>${x.c}${(+x.q)>1?` (${x.q})`:''}</td><td style="text-align:right;width:130px">${fmt((+x.q||0)*(+x.v||0))}</td></tr>`; });
+  resumo += `<tr><td style="background:#1F4E79;color:#fff"><b>VALOR FINAL DO REPASSE — vencimento ${it.venc}</b></td><td style="text-align:right;background:#1F4E79;color:#fff"><b>R$ ${fmt(totalItem(it))}</b></td></tr></table>`;
+  document.getElementById('print-area').innerHTML = `
+    <h1>Demonstrativo de Repasse Médico — HOG</h1>
+    <div class="ph"><b>${m.nome}</b> · Competência: <b>${compTxt(it.a,it.m)}</b> · Vencimento: <b>${it.venc}</b> · Seção: ${m.secao}</div>
+    <div style="background:#E3F3EA;border:2px solid #1E7A46;border-radius:8px;padding:10px 14px;margin:10px 0;font-size:15px;text-align:center">
+      💡 <b>VALOR PARA EMISSÃO DA NOTA FISCAL: R$ ${fmt(totalItem(it))}</b> &nbsp;·&nbsp; Vencimento: <b>${it.venc}</b></div>
+    ${extra}
+    ${resumo}
+    <p style="font-size:11px;margin-top:14px">Confira os valores acima e emita a nota fiscal no valor final, com vencimento em ${it.venc}. Dúvidas ou divergências: retornar este demonstrativo com apontamentos.</p>
+    <div class="assin"><div>Médico(a)</div><div>HOG — Faturamento</div></div>`;
+  if(pdf){
+    const nome = `Demonstrativo_${m.nome.replace(/[^A-Za-zÀ-ú0-9]+/g,'_')}_${compTxt(it.a,it.m).replace('/','-')}.pdf`;
+    baixarPDF(nome);
+  } else window.print();
+}
+
+/* ================= GERAÇÃO DE PDF (download direto) ================= */
+function baixarPDF(nomeArquivo){
+  const el = document.createElement('div');
+  el.innerHTML = document.getElementById('print-area').innerHTML;
+  el.style.cssText = 'width:690px;padding:10px;background:#fff;font-family:Segoe UI,Arial,sans-serif;font-size:12px;color:#111;';
+  el.querySelectorAll('table').forEach(t=>{t.style.tableLayout='auto'; t.style.maxWidth='670px';});
+  el.querySelectorAll('th,td').forEach(c=>{c.style.wordBreak='break-word';});
+  el.querySelectorAll('h1').forEach(x=>{x.style.fontSize='17px'; x.style.margin='0 0 4px';});
+  el.querySelectorAll('h2').forEach(x=>{x.style.fontSize='13px'; x.style.margin='14px 0 4px';});
+  el.querySelectorAll('table').forEach(t=>{t.style.width='100%'; t.style.borderCollapse='collapse'; t.style.margin='8px 0';});
+  el.querySelectorAll('th,td').forEach(c=>{c.style.border='1px solid #999'; c.style.padding='3px 6px'; c.style.fontSize='10.5px';});
+  el.querySelectorAll('th').forEach(c=>{c.style.background='#E8F0F9';});
+  el.querySelectorAll('tr').forEach(r=>{r.style.pageBreakInside='avoid';});
+  document.body.appendChild(el);
+  window.scrollTo(0,0);
+  if(typeof html2pdf === 'undefined'){ el.remove(); window.print(); return; }
+  html2pdf().set({margin:[10,8,12,8], filename:nomeArquivo,
+    image:{type:'jpeg', quality:0.95}, html2canvas:{scale:2, useCORS:true, scrollY:0, scrollX:0},
+    jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}, pagebreak:{mode:['css','legacy']}})
+    .from(el).save().then(()=>el.remove()).catch(()=>{ el.remove(); window.print(); });
+}
+
+/* ================= IMPRESSÃO DA VISÃO GERAL ================= */
+function imprimirResumo(pdf){
+  if(!EST.itens.length){alert('Monte um fechamento primeiro.');return;}
+  const per = EST.periodo ? `Pagamentos de ${EST.periodo.ini.split('-').reverse().join('/')} a ${EST.periodo.fim.split('-').reverse().join('/')}` : 'Fechamento por competência';
+  const totF = EST.itens.filter(it=>medDe(it).secao!=='RECEBIMENTOS').reduce((s,it)=>s+totalItem(it),0);
+  const totR = EST.itens.filter(it=>medDe(it).secao==='RECEBIMENTOS').reduce((s,it)=>s+totalItem(it),0);
+  const aprov = EST.itens.filter(it=>(EST.status[it.k]||0)>=1).length;
+  const pagos = EST.itens.filter(it=>(EST.status[it.k]||0)===5).length;
+  let t = `<table><tr><th>Competência</th><th>Médico / Parceiro</th><th>Seção</th><th style="text-align:right">Valor (R$)</th><th>Vencimento</th><th>Status</th><th>NF</th><th>Obs</th></tr>`;
+  let grupoAtual = null, subtotal = 0, totalG = 0;
+  const fechaGrupo = () => { if(grupoAtual!==null) t += `<tr><td colspan="3" style="text-align:right;background:#F0F4F9"><b>Total competência ${grupoAtual}</b></td><td style="text-align:right;background:#F0F4F9"><b>${fmt(subtotal)}</b></td><td colspan="4" style="background:#F0F4F9"></td></tr>`; };
+  EST.itens.forEach(it=>{
+    const g = compTxt(it.a,it.m);
+    if(g!==grupoAtual){ fechaGrupo(); t += `<tr><td colspan="8" style="background:#E8F0F9"><b>Competência: ${g}</b></td></tr>`; grupoAtual = g; subtotal = 0; }
+    const m = medDe(it), tv = totalItem(it); subtotal += tv; totalG += tv;
+    t += `<tr><td>${g}</td><td>${m.nome}${it.temBase?'':' (sem dados na base)'}</td><td>${m.secao}</td><td style="text-align:right">${fmt(tv)}</td><td>${it.venc}</td><td>${STATUS[EST.status[it.k]||0]}</td><td>${(EST.nf[it.k]||{}).num||''}</td><td>${EST.obsMed[it.k]||''}</td></tr>`;
+  });
+  fechaGrupo();
+  t += `<tr><td colspan="3" style="text-align:right;background:#F0F4F9"><b>TOTAL GERAL</b></td><td style="text-align:right;background:#F0F4F9"><b>${fmt(totalG)}</b></td><td colspan="4" style="background:#F0F4F9"></td></tr></table>`;
+  document.getElementById('print-area').innerHTML = `
+    <h1>Fechamento de Repasses Médicos — HOG</h1>
+    <div class="ph"><b>${per}</b> · ${EST.itens.length} repasses · A pagar (F2MR + Externos): <b>${fmtC(totF)}</b> · A receber: <b>${fmtC(totR)}</b> · Aprovados: ${aprov}/${EST.itens.length} · Pagos: ${pagos}</div>
+    ${t}
+    <p style="font-size:11px;margin-top:10px">Emitido em: ${new Date().toLocaleDateString('pt-BR')} — organizado por competência e data de pagamento.</p>`;
+  if(pdf){
+    const nome = EST.periodo ? `VisaoGeral_${EST.periodo.ini}_a_${EST.periodo.fim}.pdf` : 'VisaoGeral_fechamento.pdf';
+    baixarPDF(nome);
+  } else window.print();
+}
+
+/* ================= EXPORTAÇÃO CCF ================= */
+function exportarCCF(){
+  if(!EST.itens.length){alert('Monte um fechamento primeiro (carregue a base e escolha o período).');return;}
+  const wbk = XLSX.utils.book_new();
+  const per = EST.periodo ? `${EST.periodo.ini.split('-').reverse().join('/')} a ${EST.periodo.fim.split('-').reverse().join('/')}` : 'por competência';
+  const aoa = [[`CCF – Pagamentos: ${per}`],['Nome','Mês Ref. (Competência)','Valor (R$)','Vencimento','NF','Status','Obs']];
+  ['F2MR','EXTERNOS','RECEBIMENTOS'].forEach(sec=>{
+    const its = EST.itens.filter(it=>medDe(it).secao===sec && totalItem(it)!==0);
+    if(!its.length) return;
+    aoa.push([sec]);
+    let sub = 0;
+    its.forEach(it=>{
+      const t = totalItem(it); sub += t;
+      aoa.push([medDe(it).nome, compTxt(it.a,it.m), t, it.venc, (EST.nf[it.k]||{}).num||'', STATUS[EST.status[it.k]||0], EST.obsMed[it.k]||'']);
+    });
+    aoa.push([`SUBTOTAL ${sec}`,'',sub],[]);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(aoa);
+  ws1['!cols'] = [{wch:38},{wch:20},{wch:14},{wch:12},{wch:10},{wch:20},{wch:30}];
+  XLSX.utils.book_append_sheet(wbk, ws1, 'CCF');
+  // resumo por competência
+  const aoa3 = [['RESUMO POR COMPETÊNCIA'],['Competência','Médico','Seção','Valor (R$)','Vencimento','Status']];
+  let g = null;
+  EST.itens.forEach(it=>{
+    const gc = compTxt(it.a,it.m);
+    if(gc!==g){ aoa3.push([`Competência: ${gc}`]); g = gc; }
+    aoa3.push([gc, medDe(it).nome, medDe(it).secao, totalItem(it), it.venc, STATUS[EST.status[it.k]||0]]);
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(aoa3);
+  ws3['!cols'] = [{wch:14},{wch:36},{wch:14},{wch:14},{wch:12},{wch:20}];
+  XLSX.utils.book_append_sheet(wbk, ws3, 'Resumo por Competência');
+  // memória de cálculo
+  const aoa2 = [['Médico','Competência','Seção','Componente','Qtd','Valor unit.','Total']];
+  EST.itens.forEach(it=>{
+    const m = medDe(it);
+    compsAjustados(it).filter(c=>!c.ref).forEach(c=>aoa2.push([m.nome, compTxt(it.a,it.m), m.secao, c.c, c.q, c.v, c.tot]));
+    (EST.manual[it.k]||[]).filter(x=>(+x.q||0)*(+x.v||0)!==0).forEach(x=>aoa2.push([m.nome, compTxt(it.a,it.m), m.secao, x.c+' (manual)', +x.q, +x.v, (+x.q||0)*(+x.v||0)]));
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols'] = [{wch:32},{wch:12},{wch:14},{wch:44},{wch:8},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wbk, ws2, 'Memória de cálculo');
+  XLSX.writeFile(wbk, `CCF_pagamentos_${(EST.periodo?EST.periodo.ini+'_a_'+EST.periodo.fim:'competencia')}.xlsx`);
+}
+
+/* ================= SALVAR / CARREGAR ================= */
+function salvarEstado(){
+  const dump = {periodo:EST.periodo, itens:EST.itens, apurComp:EST.apurComp, sugComp:EST.sugComp,
+    manual:EST.manual, status:EST.status, nf:EST.nf, obsMed:EST.obsMed, mesesDisp:EST.mesesDisp, cirAj:EST.cirAj||{}, periodosDia:EST.periodosDia||{}, pcc:EST.pcc};
+  const blob = new Blob([JSON.stringify(dump,null,1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const nome = EST.periodo ? `fechamento_${EST.periodo.ini}_a_${EST.periodo.fim}.json` : 'fechamento.json';
+  a.download = nome;
+  a.click();
+}
+document.getElementById('file-estado').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ev=>{
+    const d = JSON.parse(ev.target.result);
+    Object.assign(EST, d);
+    EST.allRows = EST.allRows||[]; EST.selecionado = null;
+    render();
+  };
+  rd.readAsText(f); e.target.value='';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa-Mestre — Ecossistema & Arquitetura CRM-HOG</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#EEF2F6;color:#1A2B3C;font-size:13.5px;line-height:1.5;padding:24px;}
+  .wrap{max-width:1200px;margin:0 auto;}
+  h1{font-size:22px;color:#0D2137;margin-bottom:4px;}
+  .sub{color:#5A6B7B;font-size:13px;margin-bottom:20px;}
+  h2{font-size:15px;color:#0D2137;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid #D7DFE8;display:flex;align-items:center;gap:8px;}
+  h2 .n{background:#2B9BE8;color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
+  .card{background:#fff;border:1px solid #D7DFE8;border-radius:10px;padding:16px;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:#F5F7FA;text-align:left;padding:7px 10px;color:#5A6B7B;font-size:11px;text-transform:uppercase;border-bottom:1px solid #D7DFE8;}
+  td{padding:7px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600;}
+  .t-src{background:#EDE3FB;color:#5B2C9E;} .t-crm{background:#DCF0FD;color:#0A5E96;} .t-out{background:#D4F7E1;color:#0F6A30;}
+  .t-int{background:#FEF0DC;color:#9A5700;} .t-new{background:#FDDDE0;color:#C0122A;}
+
+  /* ecosystem 3 columns */
+  .eco{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px;align-items:stretch;}
+  @media(max-width:900px){.eco{grid-template-columns:1fr;}}
+  .col{background:#fff;border:1px solid #D7DFE8;border-radius:10px;padding:12px;}
+  .col h3{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6B7E90;margin-bottom:10px;text-align:center;}
+  .col.center{border:2px solid #2B9BE8;background:#F7FBFE;}
+  .box{border-radius:8px;padding:8px 10px;margin-bottom:7px;font-size:12px;}
+  .box b{display:block;font-size:12.5px;}
+  .box small{color:#5A6B7B;font-size:10.5px;}
+  .box.src{background:#F3ECFC;border-left:3px solid #8A63C4;}
+  .box.out{background:#EAF7EF;border-left:3px solid #1A9E4A;}
+  .box.mod{background:#EAF4FC;border-left:3px solid #2B9BE8;}
+  .flowlbl{font-size:10.5px;color:#6B7E90;text-align:center;margin:2px 0 8px;font-style:italic;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr;}}
+  .mini{background:#fff;border:1px solid #D7DFE8;border-radius:8px;padding:12px;}
+  .mini h4{font-size:13px;color:#0D2137;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .mini ul{margin:0 0 0 16px;color:#3C4E60;font-size:12px;}
+  .mini ul li{margin-bottom:3px;}
+  .req{background:#FFF8F0;border:1px dashed #F4A261;border-radius:6px;padding:5px 8px;font-size:11px;margin-top:6px;color:#7a5a1e;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;margin-bottom:16px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🗺️ Mapa-Mestre — Ecossistema & Arquitetura CRM-HOG</h1>
+  <div class="sub">Consolidação do levantamento (as-is) + alvo. Base para o trabalho módulo a módulo. — v1, ago/2026</div>
+
+  <div class="legend">
+    <span><span class="tag t-src">Fonte da verdade externa</span></span>
+    <span><span class="tag t-crm">CRM-HOG (constrói)</span></span>
+    <span><span class="tag t-out">Consome / integra</span></span>
+    <span><span class="tag t-int">Integração</span></span>
+    <span><span class="tag t-new">Requisito novo</span></span>
+  </div>
+
+  <!-- 1. ECOSSISTEMA -->
+  <h2><span class="n">1</span> Ecossistema — quem alimenta quem</h2>
+  <div class="eco">
+    <div class="col">
+      <h3>⬅ Fontes / entram no CRM</h3>
+      <div class="box src"><b>SIVOE</b> <small>prontuário + cadastro do paciente. Envia: paciente, <b>pedido de exames</b>, visita. Prontuário fica restrito (por papel).</small></div>
+      <div class="box src"><b>NextQS</b> <small>fila / senha / chamar paciente (recepção → estações)</small></div>
+      <div class="box src"><b>DIGISAC</b> <small>convocação do paciente (córnea, follow-up)</small></div>
+      <div class="box src"><b>SES-SP</b> <small>posição na fila de transplante de córnea (RGTC)</small></div>
+    </div>
+    <div class="col center">
+      <h3>★ CRM-HOG (núcleo)</h3>
+      <div class="box mod"><b>Agendas (4 camadas)</b><small>reserva→liberação→agenda lógica→regras · Mapa de Ocupação</small></div>
+      <div class="box mod"><b>Fluxo de estações</b><small>recepção→autorefrator→médico→consultora/exames · rastreio</small></div>
+      <div class="box mod"><b>Comercial / Funil</b><small>catarata · plástica · córnea · retina · glaucoma</small></div>
+      <div class="box mod"><b>Cirúrgico</b><small>agenda c/ <b>médico executor</b> · HOG ou externa · LIO</small></div>
+      <div class="box mod"><b>Financeiro</b><small>caixa · conciliação (c/ ajustes pré-fechamento) · repasse</small></div>
+      <div class="box mod"><b>Cadastros</b><small>médicos (medId) · salas · convênios · TUSS · padrões</small></div>
+    </div>
+    <div class="col">
+      <h3>Consome / integra ➡</h3>
+      <div class="box out"><b>hog-saidas</b> <small>produção cirúrgica (executor+tipos). O CRM alimenta na baixa cirúrgica → repasse</small></div>
+      <div class="box out"><b>Dash Faturamento/Repasse</b> <small>regras por profissional; o CRM fornece a produção estruturada</small></div>
+      <div class="box out"><b>Estoque</b> <small>LIO + materiais; entradas/saídas ligadas ao agendamento cirúrgico</small></div>
+      <div class="box out"><b>OMIE</b> <small>financeiro / contas a receber</small></div>
+      <div class="box out"><b>Parceiros / Holanda de Freitas</b> <small>cirurgia externa + cobrança de parceiro</small></div>
+    </div>
+  </div>
+  <div class="flowlbl">Regra de ouro: cada dado tem <b>um dono</b>. SIVOE é dono do paciente/prontuário; o CRM é dono das agendas, comercial, cirúrgico e financeiro; os demais consomem o que o CRM produz.</div>
+
+  <!-- 2. MÓDULOS -->
+  <h2><span class="n">2</span> Módulos do CRM</h2>
+  <div class="grid3">
+    <div class="mini"><h4>🗓️ Ambulatório</h4>
+      <ul><li>Mapa de Ocupação (híbrido, reserva no clique)</li><li>Agenda Médica (estação do médico) — <b>slot</b> (encaixe/bloco/plantão)</li><li>Agenda de Exames — <b>agenda contínua</b> (sala=recurso, duração/exame)</li><li>Lista de Espera</li></ul>
+      <div class="req">Dois paradigmas: consulta = slot; exame = tempo contínuo (Projeto AGENDA EXAMES).</div></div>
+    <div class="mini"><h4>🔪 Centro Cirúrgico</h4>
+      <ul><li>Agenda cirúrgica c/ <b>executor</b> · HOG/Externa</li><li>Estoque de LIO / materiais</li><li>Checagem D-3 · Pré-op · Pós-op</li></ul></div>
+    <div class="mini"><h4>🩺 Consultora Cirúrgica</h4>
+      <ul><li>Atendimento pré-cirúrgico (venda LIO)</li><li>Fechamento do Dia (score)</li><li><b>KPIs, comissões, reporte financeiro</b></li></ul>
+      <div class="req">Hoje perde o rastreio de quem quer lente importada — motivo do CRM.</div></div>
+    <div class="mini"><h4>🎯 Funil (5 especialidades)</h4>
+      <ul><li>Catarata · Plástica (vendas+convênio)</li><li>Córnea (fila) · Retina · Glaucoma (convênio)</li></ul></div>
+    <div class="mini"><h4>🌐 Agenda Cirúrgica Externa</h4>
+      <ul><li>Parceiros enviam cirurgias ao HOG (cobrança)</li><li>HOG envia para fora</li></ul>
+      <div class="req">Impressão: Declaração de medicação (lote+validade do estoque) + cópia da NF.</div></div>
+    <div class="mini"><h4>💵 Financeiro</h4>
+      <ul><li>Caixa (2 portas) · Conciliação</li><li>Repasse (puxa do dash)</li></ul>
+      <div class="req">Tela de ajustes antes de fechar: duplicados, convênio errado, no-show c/ entrada, homônimos.</div></div>
+    <div class="mini"><h4>🚶 Recepção / Fluxo</h4>
+      <ul><li>Entrada · Encaminhar · Rastreio</li><li>Integra NextQS (fila/senha)</li></ul></div>
+    <div class="mini"><h4>🗂️ Cadastros</h4>
+      <ul><li>Médicos (medId) · Salas · Convênios</li><li>TUSS · Procedimentos · Padrões do médico</li></ul></div>
+    <div class="mini"><h4>🔒 Acesso por papel</h4>
+      <ul><li>Prontuário = clínico/gerencial</li><li>Call center vê só o <b>pedido de exames</b></li><li>Residente / repasse = só gerencial</li></ul></div>
+  </div>
+
+  <!-- 3. MÉDICOS -->
+  <h2><span class="n">3</span> Cadastro real de médicos <span style="font-size:11px;color:#6B7E90;font-weight:400;">(especialidade formal ≠ agendas que opera)</span></h2>
+  <div class="card">
+  <table>
+    <thead><tr><th>Médico</th><th>Especialidade formal</th><th>CRM</th><th>medId</th><th>Opera / agendas</th></tr></thead>
+    <tbody>
+      <tr><td>Dr. Lucas Vieira Bueno Rossi</td><td><b>Córnea</b> (transplante)</td><td>121.953/SP</td><td>lucas</td><td>Catarata (Lu Cat), córnea, MR</td></tr>
+      <tr><td>Dr. Nilson Shigueaki Furukawa</td><td><b>Retina</b></td><td>105.107/SP</td><td>nilson</td><td>Catarata (Ni Cat), retina, angio</td></tr>
+      <tr><td>Dr. Pietro Dechichi</td><td>Oftalmo</td><td>—</td><td>pietro</td><td>Catarata convênio</td></tr>
+      <tr><td>Dr. Guilherme Armbrust Araujo</td><td><b>Glaucoma</b></td><td>135.325</td><td>guilherme</td><td>Glaucoma</td></tr>
+      <tr><td>Dr. Alexandre Pereira Rueda</td><td>Glaucoma</td><td>—</td><td>rueda</td><td>Glaucoma</td></tr>
+      <tr><td>Dr. Alexandre Takashi Ishida <small>(="Ichida")</small></td><td>Oftalmo</td><td>—</td><td>ishida</td><td>Refração / rotina / PA</td></tr>
+      <tr><td>Dr. Monir Safieddine</td><td>Oftalmo Geral</td><td>—</td><td>monir</td><td>Consulta / rotina</td></tr>
+      <tr><td>Dra. Ana Carolina Visco C. de Almeida <small>(="Carol")</small></td><td><b>Plástica Ocular</b></td><td>—</td><td>anacarol</td><td>Plástica + Refração</td></tr>
+      <tr><td>Dra. Mª Carolina Andolpho</td><td>Oftalmo</td><td>—</td><td>mcarolina</td><td>Rotina / óculos</td></tr>
+      <tr><td>Dr. Eduardo Takano</td><td>Retina</td><td>225265</td><td>takano</td><td>YAG, MR, fotocoagulação</td></tr>
+      <tr><td>Dr. Renan Nishida</td><td>Retina</td><td>—</td><td>renan</td><td>MR, mapeamento</td></tr>
+      <tr><td>Dra. Maria Claudia Gallo</td><td>Oftalmo Pediatra</td><td>117199</td><td>mclaudia</td><td>Consulta</td></tr>
+      <tr><td>Dra. Georgiana M. R. Felippe</td><td>Oftalmo</td><td>—</td><td>georgiana</td><td>Catarata externo (Monte Mor)</td></tr>
+      <tr><td>Dra. Roberta Odo</td><td>Plástica (externa)</td><td>—</td><td>roberta</td><td>Aluga o CC (taxa)</td></tr>
+      <tr><td>Dr. Marcos Vinicius Espinosa</td><td>Residente</td><td>—</td><td>espinosa</td><td>—</td></tr>
+      <tr><td>Dr. Raphael Defina · Dr. Daniel Gadioli · Dra. Camila Sawatani · Dra. Eliane M. Soares</td><td>Oftalmo / diversos</td><td>—</td><td>defina · gadioli · camila · eliane</td><td>Consulta / PA</td></tr>
+      <tr><td>Anestesistas</td><td>Anestesia</td><td>—</td><td>—</td><td>Dr. João Lian Jr · Dra. Marília</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 4. FLUXOS POR ESPECIALIDADE -->
+  <h2><span class="n">4</span> Fluxos por especialidade</h2>
+  <div class="grid2">
+    <div class="mini"><h4>👁 Catarata <span class="tag t-crm">vendas + convênio</span></h4>
+      <ul><li>Consulta → <b>bio (casada c/ consultora)</b> → consultora (LIO)</li><li>Modalidade: particular · convênio-paga-lente · convênio puro</li><li>Caixa → cirurgia (HOG) → pós-op → gatilho olho 2</li></ul></div>
+    <div class="mini"><h4>✨ Plástica <span class="tag t-crm">vendas + convênio</span></h4>
+      <ul><li>1 consulta → N procedimentos indicados</li><li>Convênio puro / misto / particular → funil</li><li>Cirurgia (HOG/externa) → pós-op</li></ul></div>
+    <div class="mini"><h4>🔴 Córnea — transplante <span class="tag t-new">fila estadual</span></h4>
+      <ul><li>Indicação → lista SES-SP (RGTC) → acompanha <b>posição</b></li><li>~300/250 → exames pré-op · ~120/130 → anestesia</li><li>Oferta do órgão (1h, Dr. Lucas) → cirurgia <b>HOG ou externa</b></li></ul></div>
+    <div class="mini"><h4>🟣 Retina / Glaucoma <span class="tag t-int">~100% convênio</span></h4>
+      <ul><li>Retina: exames (MR, angio, foto, YAG) → cirurgia</li><li>Glaucoma: Guilherme / Rueda</li><li>Podem ser externas (parceiros)</li></ul></div>
+    <div class="mini"><h4>🌐 Externo / Parceiros <span class="tag t-new">cobrança</span></h4>
+      <ul><li>Parceiros enviam cirurgias ao HOG → cobrança/NF</li><li>HOG envia p/ fora (ex: Holanda de Freitas)</li><li>Declaração de medicação (lote/validade) + NF</li></ul></div>
+    <div class="mini"><h4>🔬 Exames (Ambulatório) <span class="tag t-crm">por executor</span></h4>
+      <ul><li>Técnico: retinografia / estereofoto (térreo)</li><li>Médico: MR, YAG (cons. 2), fotocoagulação (cons. 4)</li><li>Médico+equipe: angiografia</li></ul>
+      <div class="req">Agenda contínua: sala=recurso, bloco contínuo por paciente, ordem clínica calculada, dilatação não ocupa sala, preparo obrigatório c/ aceite, bio pré-op não após 15h.</div></div>
+  </div>
+
+  <!-- 5. INTEGRAÇÕES -->
+  <h2><span class="n">5</span> Integrações</h2>
+  <div class="card">
+  <table>
+    <thead><tr><th>Sistema</th><th>Função</th><th>Direção</th><th>Fonte da verdade</th><th>Como</th></tr></thead>
+    <tbody>
+      <tr><td><b>SIVOE</b></td><td>paciente, pedido de exames, visita</td><td>SIVOE → CRM</td><td>paciente/prontuário</td><td>API/webhook (a negociar)</td></tr>
+      <tr><td><b>NextQS</b></td><td>fila / senha / chamar</td><td>↔</td><td>fila</td><td>painel de senhas</td></tr>
+      <tr><td><b>DIGISAC</b></td><td>convocação / mensagens</td><td>CRM → DIGISAC</td><td>—</td><td>API</td></tr>
+      <tr><td><b>SES-SP</b></td><td>posição fila córnea (RGTC)</td><td>SES → CRM</td><td>lista estadual</td><td>consulta site</td></tr>
+      <tr><td><b>hog-saidas</b></td><td>produção cirúrgica (executor)</td><td>CRM → hog-saidas</td><td>CRM (baixa cirúrgica)</td><td>alimentar</td></tr>
+      <tr><td><b>Dash Faturamento</b></td><td>repasse por profissional</td><td>CRM → dash</td><td>regras de repasse</td><td>produção estruturada</td></tr>
+      <tr><td><b>Estoque</b></td><td>LIO / materiais / saídas</td><td>↔</td><td>estoque</td><td>integrar (LIO+cirúrgico)</td></tr>
+      <tr><td><b>OMIE</b></td><td>contas a receber</td><td>CRM → OMIE</td><td>financeiro</td><td>exportação</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="sub" style="margin-top:20px;">Fontes do levantamento: VoxComm (homolog, navegação as-is) · 3 Google Calendars (escala) · hog-saidas · PROJETO FATURAMENTO MÉDICOS · Cadastro Medicos HOG.xlsx · mockup Agendamento Externo · Protocolo Transplante de Córnea 2026.</div>
+</div>
+</body>
+</html>

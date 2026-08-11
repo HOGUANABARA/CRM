@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendamento Externo — HOG (MOCKUP v2)</title>
+<style>
+  :root{
+    --azul:#1F4E79; --azul2:#2E6DA4; --claro:#EAF2FA; --borda:#D7DFE8;
+    --verde:#1E7E34; --verdec:#E6F4EA; --verm:#B02A37; --vermc:#FBEAEA;
+    --amar:#8A6D00; --amarc:#FFF6D6; --cinza:#5A6572; --roxo:#5B3E96; --roxoc:#EFE9F9;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Segoe UI', Arial, sans-serif; background:#F4F6F9; color:#22303C; font-size:14px;}
+  header{background:var(--azul); color:#fff; padding:14px 22px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  header h1{font-size:18px; font-weight:600;}
+  .mockbadge{background:#FFC107; color:#4a3b00; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; letter-spacing:.5px;}
+  nav{background:#fff; border-bottom:1px solid var(--borda); display:flex; gap:2px; padding:0 14px; overflow-x:auto;}
+  nav button{border:none; background:none; padding:13px 14px; font-size:14px; cursor:pointer; color:var(--cinza); border-bottom:3px solid transparent; white-space:nowrap; position:relative;}
+  nav button.on{color:var(--azul); border-bottom-color:var(--azul); font-weight:600;}
+  nav button .bad{position:absolute; top:6px; right:2px; background:var(--verm); color:#fff; font-size:10px; font-weight:700; border-radius:9px; padding:1px 5px;}
+  main{max-width:1180px; margin:0 auto; padding:20px 16px 60px;}
+  .tela{display:none;} .tela.on{display:block;}
+  .card{background:#fff; border:1px solid var(--borda); border-radius:10px; padding:18px; margin-bottom:16px;}
+  .card h2{font-size:15px; color:var(--azul); margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .grid{display:grid; gap:12px;}
+  .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:1fr 1fr 1fr;} .g4{grid-template-columns:1.2fr 1fr 1fr .8fr;}
+  label{display:block; font-size:12px; font-weight:600; color:var(--cinza); margin-bottom:4px;}
+  label .req{color:var(--verm);}
+  input,select,textarea{width:100%; padding:8px 10px; border:1px solid var(--borda); border-radius:6px; font-size:14px; font-family:inherit; background:#fff;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--azul2); border-color:var(--azul2);}
+  .radios{display:flex; gap:10px; flex-wrap:wrap;}
+  .radios label.opt{display:flex; align-items:center; gap:8px; border:1.5px solid var(--borda); border-radius:8px; padding:10px 14px; cursor:pointer; font-size:13px; font-weight:500; color:#22303C; margin:0;}
+  .radios label.opt.sel{border-color:var(--azul); background:var(--claro); color:var(--azul); font-weight:600;}
+  .btn{border:none; border-radius:7px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;}
+  .btn-p{background:var(--azul); color:#fff;} .btn-p:hover{background:var(--azul2);}
+  .btn-s{background:#fff; color:var(--azul); border:1.5px solid var(--azul);}
+  .btn-g{background:var(--verde); color:#fff;}
+  .btn-r{background:#fff; color:var(--verm); border:1.5px solid var(--verm);}
+  .btn-sm{padding:5px 10px; font-size:12px; border-radius:6px;}
+  .chip{display:inline-block; padding:2px 10px; border-radius:12px; font-size:11.5px; font-weight:600;}
+  .c-ag{background:var(--amarc); color:var(--amar);} .c-ok{background:var(--verdec); color:var(--verde);}
+  .c-fal{background:var(--vermc); color:var(--verm);} .c-conf{background:var(--claro); color:var(--azul);}
+  .c-rec{background:var(--roxoc); color:var(--roxo);} .c-canc{background:#E9ECEF; color:#6c757d; text-decoration:line-through;}
+  .dir-out{color:var(--azul); font-weight:700;} .dir-in{color:var(--roxo); font-weight:700;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{background:var(--claro); color:var(--azul); text-align:left; padding:8px 9px; font-size:12px; position:sticky; top:0;}
+  td{padding:8px 9px; border-bottom:1px solid #EEF1F5; vertical-align:top;}
+  tr:hover td{background:#FAFCFE;}
+  .cond{display:none; border-left:3px solid var(--azul2); background:var(--claro); border-radius:0 8px 8px 0; padding:12px 14px; margin-top:4px;}
+  .cond.show{display:block;}
+  .cond.roxa{border-left-color:var(--roxo); background:var(--roxoc);}
+  .cond h3{font-size:13px; margin-bottom:10px;}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;}
+  .kpi{background:#fff; border:1px solid var(--borda); border-radius:10px; padding:14px 16px;}
+  .kpi .n{font-size:26px; font-weight:700; color:var(--azul);}
+  .kpi .t{font-size:12px; color:var(--cinza); margin-top:2px;}
+  .kpi.v .n{color:var(--verde);} .kpi.r .n{color:var(--verm);} .kpi.a .n{color:var(--amar);}
+  /* alertas */
+  .acards{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .acard{background:#fff; border:1px solid var(--borda); border-radius:10px; overflow:hidden;}
+  .acard .ahead{padding:11px 16px; font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:8px;}
+  .acard .acount{margin-left:auto; background:rgba(0,0,0,.12); border-radius:10px; padding:1px 9px; font-size:12px;}
+  .a-conf .ahead{background:var(--amarc); color:var(--amar);}
+  .a-rem .ahead{background:var(--vermc); color:var(--verm);}
+  .a-pag .ahead{background:var(--verdec); color:var(--verde);}
+  .a-cob .ahead{background:var(--roxoc); color:var(--roxo);}
+  .aitem{display:flex; gap:10px; align-items:center; padding:10px 16px; border-top:1px solid #EEF1F5; font-size:13px; flex-wrap:wrap;}
+  .aitem .at{flex:1; min-width:200px;}
+  .aitem .at b{display:block;}
+  .aitem .at span{color:var(--cinza); font-size:12px;}
+  .aempty{padding:14px 16px; color:var(--cinza); font-size:12.5px; font-style:italic;}
+  /* calendário */
+  .calwrap{display:grid; grid-template-columns:1.4fr 1fr; gap:16px;}
+  .calhead{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .calhead h2{font-size:16px; color:var(--azul);}
+  .calgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cdow{text-align:center; font-size:11px; font-weight:700; color:var(--cinza); padding:4px 0; text-transform:uppercase;}
+  .cday{min-height:64px; border:1px solid var(--borda); border-radius:8px; padding:5px 6px; cursor:pointer; background:#fff; position:relative; font-size:12px;}
+  .cday:hover{border-color:var(--azul2);}
+  .cday.off{background:#F4F6F9; color:#B6BFC9; cursor:default;}
+  .cday.hoje{outline:2px solid var(--amar);}
+  .cday.sel{outline:2.5px solid var(--azul); background:var(--claro);}
+  .cday .dnum{font-weight:700;}
+  .cday .dots{display:flex; flex-wrap:wrap; gap:3px; margin-top:5px;}
+  .dot{width:9px; height:9px; border-radius:50%;}
+  .dot.out{background:var(--azul2);} .dot.in{background:var(--roxo);} .dot.canc{background:#ADB5BD;}
+  .cday .more{font-size:10px; color:var(--cinza);}
+  .daylist .item{border:1px solid var(--borda); border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff;}
+  .daylist .item:hover{border-color:var(--azul); background:#FAFCFE;}
+  .daylist .item .l1{display:flex; gap:8px; align-items:center; font-weight:600; font-size:13.5px; flex-wrap:wrap;}
+  .daylist .item .l2{font-size:12px; color:var(--cinza); margin-top:3px;}
+  .leg{display:flex; gap:14px; font-size:11.5px; color:var(--cinza); margin-top:10px; align-items:center;}
+  /* modais */
+  .overlay{display:none; position:fixed; inset:0; background:rgba(15,30,50,.55); z-index:50; overflow:auto; padding:30px 12px;}
+  .overlay.show{display:block;}
+  .recibo{background:#fff; max-width:640px; margin:0 auto; border-radius:10px; overflow:hidden;}
+  .rec-head{background:var(--azul); color:#fff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;}
+  .rec-head .num{font-size:12px; opacity:.85;}
+  .rec-body{padding:20px 22px;}
+  .rec-sec{margin-bottom:14px;}
+  .rec-sec h4{font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--cinza); border-bottom:1px solid var(--borda); padding-bottom:4px; margin-bottom:8px;}
+  .rec-row{display:flex; gap:8px; padding:2.5px 0; font-size:13.5px;}
+  .rec-row .k{width:180px; color:var(--cinza); flex-shrink:0;}
+  .rec-row .v{font-weight:600;}
+  .wa-box{background:#F6F8FA; border:1px dashed var(--borda); border-radius:8px; padding:12px; font-family:Consolas,monospace; font-size:12px; white-space:pre-wrap; max-height:220px; overflow:auto; margin-top:8px;}
+  .rec-actions{display:flex; gap:10px; padding:14px 22px; border-top:1px solid var(--borda); flex-wrap:wrap; align-items:center;}
+  .copiado{background:var(--verdec); color:var(--verde); font-size:12px; font-weight:600; padding:6px 10px; border-radius:6px; display:none;}
+  .remarcar{display:none; gap:8px; align-items:center; background:var(--amarc); border-radius:8px; padding:10px 12px; margin-top:10px; flex-wrap:wrap;}
+  .remarcar.show{display:flex;}
+  /* jornada */
+  .jtl{position:relative; margin:10px 0 0 10px; padding-left:26px; border-left:2.5px solid var(--borda);}
+  .jstep{position:relative; padding:0 0 20px 6px;}
+  .jstep::before{content:''; position:absolute; left:-34px; top:2px; width:13px; height:13px; border-radius:50%; background:#fff; border:3px solid var(--borda);}
+  .jstep.done::before{border-color:var(--verde); background:var(--verde);}
+  .jstep.now::before{border-color:var(--amar); background:#fff;}
+  .jstep.bad::before{border-color:var(--verm); background:var(--verm);}
+  .jstep .jt{font-weight:700; font-size:13.5px;}
+  .jstep .jd{font-size:12px; color:var(--cinza); margin-top:2px;}
+  .filtros{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .filtros select, .filtros input{width:auto; min-width:160px;}
+  .hint{font-size:12px; color:var(--cinza); font-style:italic; margin-top:6px;}
+  @media (max-width:860px){ .g2,.g3,.g4{grid-template-columns:1fr;} .kpis{grid-template-columns:1fr 1fr;} .acards{grid-template-columns:1fr;} .calwrap{grid-template-columns:1fr;} }
+  /* ===== IMPRESSÃO: sai SOMENTE a janela do recibo, sem o bloco de WhatsApp e sem botões ===== */
+  @media print{
+    header, nav, main{display:none !important;}
+    body{background:#fff;}
+    .overlay{display:none !important;}
+    .overlay.show{display:block !important; position:static !important; background:none !important; padding:0 !important; overflow:visible !important;}
+    .recibo{max-width:100% !important; border-radius:0; box-shadow:none;}
+    .rec-head{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .rec-actions, .wa-sec, .remarcar{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🗓️ Agendamento Externo — HOG</h1>
+  <span class="mockbadge">MOCKUP v2 · DADOS DE EXEMPLO</span>
+  <span style="margin-left:auto;font-size:12px;opacity:.85">"hoje" no mockup = 10/08/2026</span>
+</header>
+<nav>
+  <button class="on" onclick="tab('painel',this)">🔔 Painel <span class="bad" id="badAlertas">6</span></button>
+  <button onclick="tab('novo',this)">➕ Novo agendamento</button>
+  <button onclick="tab('cal',this)">📅 Calendário</button>
+  <button onclick="tab('lista',this)">📋 Agendamentos</button>
+  <button onclick="tab('resumo',this)">📊 Resumo</button>
+  <button onclick="tab('jornada',this)">🚶 Jornada do paciente</button>
+</nav>
+<main>
+
+<!-- ============ PAINEL DE ALERTAS ============ -->
+<section id="tela-painel" class="tela on">
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kHoje">—</div><div class="t">Agendamentos hoje (10/08)</div></div>
+    <div class="kpi a"><div class="n" id="kConf">—</div><div class="t">Aguardando confirmação (próx. 3 dias)</div></div>
+    <div class="kpi r"><div class="n" id="kRem">—</div><div class="t">Faltas para remarcar</div></div>
+    <div class="kpi v"><div class="n">2</div><div class="t">Pagamentos do período</div></div>
+  </div>
+  <div class="acards" id="acards"></div>
+  <p class="hint">Os alertas somem quando a ação é feita (✓). No app real, "Pagar" e "Cobrar" nascem automaticamente das regras de cada parceiro (Etapa 3) e conversam com o relatório de cobrança.</p>
+</section>
+
+<!-- ============ NOVO AGENDAMENTO ============ -->
+<section id="tela-novo" class="tela">
+  <div class="card">
+    <h2>Direção do agendamento</h2>
+    <div class="radios" id="dirRadios">
+      <label class="opt sel" onclick="setDir('OUT',this)">🏥 → 🤝 &nbsp;HOG envia paciente ao parceiro externo</label>
+      <label class="opt" onclick="setDir('IN',this)">🤝 → 🏥 &nbsp;Parceiro envia cirurgia para o HOG</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Dados do agendamento</h2>
+    <div class="grid g3">
+      <div>
+        <label>Parceiro / Local parceiro <span class="req">*</span></label>
+        <select id="fParceiro" onchange="sugLocal()">
+          <option>HOLANDA</option><option>DRA. STELA</option><option>DRA. MÁRCIA</option>
+          <option>DR. HERYBERTO</option><option>DR. ANDRÉ (USG)</option><option>CLÍNICA VIZON</option>
+          <option>DRA. ELIZABETH</option><option>PINESE</option><option>VEJA BEM (OLHAR CERTO)</option>
+          <option>VISÃO FÁCIL</option><option>VERA CRUZ</option><option>LASER CAMPINAS</option>
+          <option>OUTRAS CIDADES</option><option>+ cadastrar novo…</option>
+        </select>
+      </div>
+      <div>
+        <label>Tipo <span class="req">*</span></label>
+        <select id="fTipo" onchange="mudaTipo()">
+          <option>Exame</option><option>Consulta</option><option>Cirurgia</option><option>Pré-anestésico</option>
+        </select>
+      </div>
+      <div>
+        <label>Departamento que agendou <span class="req">*</span></label>
+        <select id="fDepto"><option>Agendamento externo</option><option>Depto. cirúrgico</option><option>Outro…</option></select>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <div>
+        <label>Paciente <span class="req">*</span></label>
+        <input id="fPaciente" placeholder="Nome completo do paciente">
+      </div>
+      <div>
+        <label>Telefone do paciente</label>
+        <input placeholder="(19) 9 9999-9999">
+      </div>
+    </div>
+    <div class="grid g4" style="margin-top:12px">
+      <div>
+        <label>Procedimento <span class="req">*</span></label>
+        <input id="fProc" placeholder="ex.: OCT retina · Crosslinking · FACO" onchange="sugLocal()">
+      </div>
+      <div>
+        <label>Lateralidade <span class="req">*</span></label>
+        <select id="fLat"><option value="">— não se aplica</option><option>OD</option><option>OE</option><option>AO</option></select>
+      </div>
+      <div>
+        <label>Quantidade <span class="req">*</span></label>
+        <input id="fQtd" type="number" min="1" value="1">
+      </div>
+      <div>
+        <label>Valor tabela (R$)</label>
+        <input id="fValor" placeholder="auto (Etapa 2)" disabled>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:12px">
+      <div>
+        <label>Médico (executor) <span class="req">*</span></label>
+        <select id="fMedico" onchange="sugLocal()">
+          <option value="">— definir</option>
+          <option>Dr. Lucas Rossi</option><option>Dr. Heryberto</option><option>Dra. Stela</option>
+          <option>Dra. Márcia</option><option>Dra. Elizabeth</option><option>Dr. André</option>
+          <option>Médico do parceiro</option><option>Equipe HOG</option><option>Outro…</option>
+        </select>
+      </div>
+      <div>
+        <label>Data solicitada <span class="req">*</span></label>
+        <input type="date" id="fDataSol" value="2026-08-10">
+      </div>
+      <div>
+        <label>Data agendada <span class="req">*</span> &nbsp;·&nbsp; Hora</label>
+        <div style="display:flex;gap:6px"><input type="date" id="fDataAg"><input type="time" id="fHora" style="max-width:110px"></div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <div>
+        <label>📍 Local de realização (hospital/clínica) <span class="req">*</span></label>
+        <input id="fLocal" placeholder="ex.: Laser Campinas · Hospital Vera Cruz · HOG — Centro Cirúrgico">
+        <div class="hint" id="localHint">o hospital é sugerido pelo vínculo procedimento + médico (cadastro) — pode editar</div>
+      </div>
+      <div>
+        <label>Observações</label>
+        <input id="fObs" placeholder="preparo, encaixe, urgência…">
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloco condicional: CIRURGIA -->
+  <div class="card cond" id="blocoCirurgia">
+    <h3>🔪 Dados da cirurgia</h3>
+    <div class="grid g3">
+      <div>
+        <label>Tem anestesista? <span class="req">*</span></label>
+        <div class="radios" id="rAnes">
+          <label class="opt" onclick="tgl(this)">Não</label>
+          <label class="opt" onclick="tgl(this); mostra('anesNome')">Sim</label>
+        </div>
+        <div id="anesNome" style="display:none; margin-top:8px">
+          <label>Nome do anestesista</label>
+          <input id="fAnest" placeholder="ex.: Dr. Fulano">
+        </div>
+      </div>
+      <div>
+        <label>HOG precisa enviar material? <span class="req">*</span></label>
+        <div class="radios" id="rMat">
+          <label class="opt" onclick="tgl(this)">Não</label>
+          <label class="opt" onclick="tgl(this); mostra('matDesc')">Sim</label>
+        </div>
+        <div id="matDesc" style="display:none; margin-top:8px">
+          <label>Qual material o HOG envia?</label>
+          <input id="fMaterial" placeholder="ex.: mitomicina · sonda de Crowford · kit FACO">
+        </div>
+      </div>
+      <div>
+        <label>Precisa de pré-anestésico? <span class="req">*</span></label>
+        <div class="radios" id="rPre">
+          <label class="opt" onclick="tgl(this)">Não</label>
+          <label class="opt" onclick="tgl(this)">Sim</label>
+        </div>
+        <div class="hint">se "Sim", o Painel cria o alerta "🩺 pré-anestésico a agendar" até ele ser marcado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloco condicional: PARCEIRO → HOG -->
+  <div class="card cond roxa" id="blocoIn">
+    <h3>🏥 Cirurgia recebida de parceiro — detalhamento</h3>
+    <div class="grid g2">
+      <div>
+        <label>Detalhamento da cirurgia <span class="req">*</span></label>
+        <textarea id="fDetalhe" rows="2" placeholder="técnica, olho, particularidades do paciente…"></textarea>
+      </div>
+      <div>
+        <label>É FACO?</label>
+        <div class="radios">
+          <label class="opt" onclick="tgl(this)">Não</label>
+          <label class="opt" onclick="tgl(this); mostra('lioBox')">Sim</label>
+        </div>
+        <div id="lioBox" style="display:none; margin-top:8px">
+          <div class="grid g2">
+            <div><label>LIO — modelo <span class="req">*</span></label><input id="fLio" placeholder="ex.: Acrysof SN60WF"></div>
+            <div><label>Dioptria(s)</label><input id="fDioptria" placeholder="ex.: +21,0 D (OD)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Neste sentido, o "local" normalmente é o HOG (Centro Cirúrgico) — o recibo confirma ao parceiro data, LIO e materiais.</p>
+  </div>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button class="btn btn-p" onclick="gerarRecibo()">💾 Salvar e gerar recibo</button>
+    <span class="hint">Ao salvar, o recibo abre na hora com o texto pronto para o grupo de WhatsApp do parceiro.</span>
+  </div>
+</section>
+
+<!-- ============ CALENDÁRIO ============ -->
+<section id="tela-cal" class="tela">
+  <div class="calhead">
+    <button class="btn btn-s btn-sm" onclick="mudaMes(-1)">◀</button>
+    <h2 id="calTitulo">Agosto de 2026</h2>
+    <button class="btn btn-s btn-sm" onclick="mudaMes(1)">▶</button>
+    <span class="leg" style="margin-left:auto">
+      <span><span class="dot out" style="display:inline-block"></span> HOG → parceiro</span>
+      <span><span class="dot in" style="display:inline-block"></span> parceiro → HOG</span>
+      <span><span class="dot canc" style="display:inline-block"></span> cancelado</span>
+    </span>
+  </div>
+  <div class="calwrap">
+    <div class="card" style="padding:12px">
+      <div class="calgrid" id="calGrid"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h2 id="dayTitle">Selecione um dia</h2>
+        <div class="daylist" id="dayList"><p class="hint">Clique num dia do calendário para ver os agendamentos. Clique no agendamento para abrir os detalhes, cancelar ou trocar a data.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LISTA ============ -->
+<section id="tela-lista" class="tela">
+  <div class="filtros">
+    <select id="filParc" onchange="renderLista()">
+      <option value="">Todos os parceiros</option>
+      <option>HOLANDA</option><option>DRA. STELA</option><option>DRA. MÁRCIA</option><option>DR. HERYBERTO</option>
+      <option>DR. ANDRÉ (USG)</option><option>CLÍNICA VIZON</option><option>DRA. ELIZABETH</option><option>PINESE</option>
+      <option>VEJA BEM (OLHAR CERTO)</option><option>VISÃO FÁCIL</option><option>VERA CRUZ</option><option>LASER CAMPINAS</option>
+    </select>
+    <select id="filStatus" onchange="renderLista()">
+      <option value="">Todos os status</option><option>Agendado</option><option>Confirmado</option>
+      <option>Compareceu</option><option>Faltou</option><option>Cancelado</option>
+    </select>
+    <select id="filDir" onchange="renderLista()">
+      <option value="">Ambas as direções</option><option value="OUT">HOG → Parceiro</option><option value="IN">Parceiro → HOG</option>
+    </select>
+    <input placeholder="🔎 buscar paciente…" id="filBusca" oninput="renderLista()">
+  </div>
+  <div class="card" style="padding:0; overflow:auto; max-height:560px;">
+    <table id="tbl">
+      <thead><tr>
+        <th>Recibo</th><th>Dir.</th><th>Data agendada</th><th>Paciente</th><th>Parceiro</th>
+        <th>Procedimento</th><th>Médico</th><th>Lat.×Qtd</th><th>📍 Local</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="hint">🧾 reabre o recibo · 🔍 abre os detalhes com cancelar / trocar de data.</p>
+</section>
+
+<!-- ============ RESUMO ============ -->
+<section id="tela-resumo" class="tela">
+  <div class="filtros">
+    <select><option>Agosto/2026</option><option>Julho/2026</option><option>Junho/2026</option><option>Período personalizado…</option></select>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">16</div><div class="t">Agendamentos no mês</div></div>
+    <div class="kpi v"><div class="n">8</div><div class="t">Compareceram</div></div>
+    <div class="kpi r"><div class="n">1</div><div class="t">Faltas / desmarcados</div></div>
+    <div class="kpi a"><div class="n">7</div><div class="t">Aguardando realização</div></div>
+  </div>
+  <div class="card" style="padding:0; overflow:auto;">
+    <table>
+      <thead><tr><th>Parceiro</th><th>Agendados</th><th>Compareceram</th><th>Faltaram</th><th>Aguardando</th><th>Valor previsto (R$)</th><th>Direção</th></tr></thead>
+      <tbody>
+        <tr><td>HOLANDA</td><td>4</td><td>3</td><td>0</td><td>1</td><td>780,00</td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>DRA. STELA</td><td>3</td><td>2</td><td>0</td><td>1</td><td>750,00</td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>LASER CAMPINAS (Dr. Lucas)</td><td>2</td><td>0</td><td>0</td><td>2</td><td><i>tabela a definir</i></td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>DR. ANDRÉ (USG)</td><td>2</td><td>1</td><td>0</td><td>1</td><td><i>tabela a definir</i></td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>DRA. ELIZABETH</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1.000,00</td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>DRA. MÁRCIA</td><td>1</td><td>0</td><td>1</td><td>0</td><td><i>tabela a definir</i></td><td><span class="dir-out">HOG paga</span></td></tr>
+        <tr><td>VISÃO FÁCIL</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1.300,00</td><td><span class="dir-in">HOG recebe</span></td></tr>
+        <tr><td>VEJA BEM (OLHAR CERTO)</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1.450,00</td><td><span class="dir-in">HOG recebe</span></td></tr>
+        <tr style="font-weight:700; background:var(--claro)"><td>TOTAL</td><td>16</td><td>8</td><td>1</td><td>7</td><td>—</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">No fim do período este resumo vira o <b>relatório de cobrança</b>: um bloco por parceiro com a lista nominal (paciente, data, procedimento, lateralidade × quantidade, local, valor) — HOG a pagar ou a receber conforme a regra do parceiro (Etapa 3).</p>
+</section>
+
+<!-- ============ JORNADA ============ -->
+<section id="tela-jornada" class="tela">
+  <div class="filtros">
+    <select id="selJornada" onchange="renderJornada()">
+      <option value="0">JOSE RICARDO CRUZ RAMOS — USG (Dr. André)</option>
+      <option value="1">SANDRA REGINA FADEL — FACO (Visão Fácil → HOG)</option>
+      <option value="2">EDUARDO PICULI NUNES DE SOUZA — Consulta (Dra. Márcia)</option>
+      <option value="3">GUILHERME APARECIDO ROSA — Crosslinking (Dr. Lucas · Laser Campinas)</option>
+    </select>
+  </div>
+  <div class="card" id="jornadaCard"></div>
+</section>
+
+</main>
+
+<!-- ============ MODAL RECIBO ============ -->
+<div class="overlay" id="ovl" onclick="if(event.target===this)fechaRecibo()">
+  <div class="recibo">
+    <div class="rec-head">
+      <div>
+        <div style="font-weight:700; font-size:16px" id="recTitulo">RECIBO DE AGENDAMENTO</div>
+        <div class="num" id="recNum">AG-2026-0001</div>
+      </div>
+      <div style="text-align:right; font-size:12px">HOG — Hospital de Olhos<br>Emitido em <span id="recData"></span></div>
+    </div>
+    <div class="rec-body" id="recBody"></div>
+    <div class="rec-actions" id="recActions"></div>
+  </div>
+</div>
+
+<script>
+/* ===================== DADOS DE EXEMPLO (base real + exemplos IN + Laser Campinas) ===================== */
+const HOJE='10/08/2026';
+const AG = [
+ {n:'AG-2026-0204', dir:'OUT', parc:'LASER CAMPINAS', tipo:'Cirurgia', pac:'LARISSA MOREIRA CAMPOS', proc:'CIRURGIA REFRATIVA (PRK)', med:'Dr. Lucas Rossi', lat:'AO', qtd:2, dsol:'05/08/2026', dag:'20/08/2026', hora:'07:00', local:'Laser Campinas', quem:'Depto. cirúrgico', st:'Agendado', anest:'Não', mat:'Não', det:'', lio:'', obs:'agendado pelo depto. cirúrgico — jejum não necessário'},
+ {n:'AG-2026-0203', dir:'OUT', parc:'LASER CAMPINAS', tipo:'Cirurgia', pac:'GUILHERME APARECIDO ROSA', proc:'CROSSLINKING', med:'Dr. Lucas Rossi', lat:'OD', qtd:1, dsol:'03/08/2026', dag:'14/08/2026', hora:'08:00', local:'Laser Campinas', quem:'Depto. cirúrgico', st:'Agendado', anest:'Não', mat:'Sim — riboflavina (colírio)', det:'', lio:'', obs:'agendado pelo depto. cirúrgico'},
+ {n:'AG-2026-0201', dir:'OUT', parc:'HOLANDA', tipo:'Exame', pac:'MELISSA FILIER FONTOURA', proc:'MR BEBÊ', med:'Médico do parceiro', lat:'AO', qtd:1, dsol:'21/07/2026', dag:'13/08/2026', hora:'', local:'Clínica Holanda de Freitas — Campinas', quem:'Mari', st:'Agendado', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0200', dir:'OUT', parc:'HOLANDA', tipo:'Exame', pac:'ADHEMAR MARTINS ALVES', proc:'CAMPO VISUAL', med:'Médico do parceiro', lat:'AO', qtd:1, dsol:'31/07/2026', dag:'05/08/2026', hora:'', local:'Clínica Holanda de Freitas — Campinas', quem:'Mari', st:'Compareceu', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0199', dir:'OUT', parc:'HOLANDA', tipo:'Exame', pac:'MARIA CRISTINA CHEGUERE CRODA', proc:'CAMPO + PAQUI', med:'Médico do parceiro', lat:'AO', qtd:1, dsol:'03/08/2026', dag:'04/08/2026', hora:'', local:'Clínica Holanda de Freitas — Campinas', quem:'Mari', st:'Compareceu', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0198', dir:'OUT', parc:'DRA. STELA', tipo:'Exame', pac:'THEO SOUZA NERES', proc:'TESTE ORTÓPTICO', med:'Dra. Stela', lat:'', qtd:1, dsol:'04/08/2026', dag:'11/08/2026', hora:'09:10', local:'Consultório Dra. Stela', quem:'Mari', st:'Confirmado', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0197', dir:'OUT', parc:'DRA. STELA', tipo:'Exame', pac:'PEDRO GABRIEL ERNANDES ROSA', proc:'TESTE ORTÓPTICO', med:'Dra. Stela', lat:'', qtd:1, dsol:'04/08/2026', dag:'13/08/2026', hora:'14:40', local:'Consultório Dra. Stela', quem:'Mari', st:'Agendado', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0196', dir:'OUT', parc:'DRA. STELA', tipo:'Exame', pac:'SAMUEL FERNANDES DE OLIVEIRA LIMA', proc:'TESTE ORTÓPTICO', med:'Dra. Stela', lat:'', qtd:1, dsol:'05/08/2026', dag:'11/08/2026', hora:'13:00', local:'Consultório Dra. Stela', quem:'Mari', st:'Compareceu', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0195', dir:'OUT', parc:'DR. ANDRÉ (USG)', tipo:'Exame', pac:'JOSE RICARDO CRUZ RAMOS', proc:'ULTRASSON', med:'Dr. André', lat:'OE', qtd:1, dsol:'24/07/2026', dag:'30/07/2026', hora:'', local:'Consultório Dr. André', quem:'Mari', st:'Compareceu', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0194', dir:'OUT', parc:'DR. ANDRÉ (USG)', tipo:'Exame', pac:'JOSE RICARDO CRUZ RAMOS', proc:'ULTRASSON — repetir', med:'Dr. André', lat:'OE', qtd:1, dsol:'06/08/2026', dag:'13/08/2026', hora:'', local:'Consultório Dr. André', quem:'Mari', st:'Agendado', anest:null, mat:null, det:'', lio:'', obs:'repetição solicitada pelo médico'},
+ {n:'AG-2026-0193', dir:'OUT', parc:'DRA. ELIZABETH', tipo:'Exame', pac:'GREZIELE CORREIA PONCIANO SERAFIM', proc:'PEV', med:'Dra. Elizabeth', lat:'', qtd:1, dsol:'14/07/2026', dag:'04/08/2026', hora:'14:00', local:'Consultório Dra. Elizabeth', quem:'Mari', st:'Compareceu', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0192', dir:'OUT', parc:'DRA. ELIZABETH', tipo:'Exame', pac:'JOAQUIM CONSTANTINO FONTANA', proc:'PEV', med:'Dra. Elizabeth', lat:'', qtd:1, dsol:'06/07/2026', dag:'11/08/2026', hora:'14:00', local:'Consultório Dra. Elizabeth', quem:'Mari', st:'Confirmado', anest:null, mat:null, det:'', lio:'', obs:''},
+ {n:'AG-2026-0191', dir:'OUT', parc:'DRA. MÁRCIA', tipo:'Consulta', pac:'EDUARDO PICULI NUNES DE SOUZA', proc:'CONSULTA', med:'Dra. Márcia', lat:'', qtd:1, dsol:'03/08/2026', dag:'10/08/2026', hora:'09:00', local:'Consultório Dra. Márcia', quem:'Mari', st:'Faltou', anest:null, mat:null, det:'', lio:'', obs:'remarcar'},
+ {n:'AG-2026-0190', dir:'OUT', parc:'DR. HERYBERTO', tipo:'Cirurgia', pac:'VERA DIAS TEMPESTA', proc:'DACRIO', med:'Dr. Heryberto', lat:'OE', qtd:1, dsol:'05/08/2026', dag:'21/08/2026', hora:'', local:'Hospital Samaritano — Campinas', quem:'Mari', st:'Agendado', anest:'Sim — a definir pelo hospital', mat:'Não (sonda vai direto ao hospital)', preAnes:'Sim — agendado (AG-2026-0202, 14/08)', det:'', lio:'', obs:''},
+ {n:'AG-2026-0202', dir:'OUT', parc:'HOLANDA', tipo:'Pré-anestésico', pac:'VERA DIAS TEMPESTA', proc:'CONSULTA PRÉ-ANESTÉSICA', med:'Médico do parceiro', lat:'', qtd:1, dsol:'05/08/2026', dag:'14/08/2026', hora:'10:00', local:'Clínica Holanda de Freitas — Campinas', quem:'Mari', st:'Agendado', anest:null, mat:null, det:'', lio:'', obs:'vinculado à cirurgia DACRIO OE de 21/08 (AG-2026-0190)'},
+ {n:'AG-2026-0189', dir:'IN', parc:'VISÃO FÁCIL', tipo:'Cirurgia', pac:'SANDRA REGINA FADEL', proc:'FACO', med:'Equipe HOG', lat:'OD', qtd:1, dsol:'28/07/2026', dag:'06/08/2026', hora:'07:30', local:'HOG — Centro Cirúrgico', quem:'Mari', st:'Compareceu', anest:'Sim — equipe HOG', mat:'Não', det:'FACO OD, paciente encaminhada pelo Victor (Visão Fácil)', lio:'Acrysof SN60WF · +21,0 D', obs:''},
+ {n:'AG-2026-0188', dir:'IN', parc:'VEJA BEM (OLHAR CERTO)', tipo:'Cirurgia', pac:'PAULO ROBERTO JOSE SILVA', proc:'FACO LW', med:'Equipe HOG', lat:'AO', qtd:2, dsol:'06/08/2026', dag:'21/08/2026', hora:'11:00', local:'HOG — Centro Cirúrgico', quem:'Mari', st:'Agendado', anest:'Sim — equipe HOG', mat:'Não', det:'FACO LW em ambos os olhos, 1 semana de intervalo (2º olho a agendar)', lio:'Vivinex XY1 · +19,5 D (OD) / +20,0 D (OE)', preAnes:'PENDENTE — a agendar', obs:'confirmar 2ª data com Sr. Werner'},
+];
+
+/* Vínculo hospital ↔ procedimento ↔ médico (cadastro) */
+const VINCULOS = [
+ {med:'Dr. Lucas Rossi', proc:'CROSSLINK', local:'Laser Campinas'},
+ {med:'Dr. Lucas Rossi', proc:'REFRATIVA', local:'Laser Campinas'},
+ {med:'Dr. Heryberto', proc:'', local:'Hospital (definir por paciente)'},
+ {med:'Dra. Stela', proc:'', local:'Consultório Dra. Stela'},
+ {med:'Dra. Márcia', proc:'', local:'Consultório Dra. Márcia'},
+ {med:'Dra. Elizabeth', proc:'', local:'Consultório Dra. Elizabeth'},
+ {med:'Dr. André', proc:'', local:'Consultório Dr. André'},
+];
+const LOCAIS = {
+ 'HOLANDA':'Clínica Holanda de Freitas — Campinas', 'DRA. STELA':'Consultório Dra. Stela',
+ 'DRA. MÁRCIA':'Consultório Dra. Márcia', 'DR. HERYBERTO':'Hospital (definir por paciente)',
+ 'DR. ANDRÉ (USG)':'Consultório Dr. André', 'CLÍNICA VIZON':'Clínica Vizon',
+ 'DRA. ELIZABETH':'Consultório Dra. Elizabeth', 'PINESE':'Clínica Pinese',
+ 'VEJA BEM (OLHAR CERTO)':'HOG — Centro Cirúrgico (cirurgias) / Veja Bem (testes)',
+ 'VISÃO FÁCIL':'HOG — Centro Cirúrgico', 'VERA CRUZ':'Hospital Vera Cruz',
+ 'LASER CAMPINAS':'Laser Campinas', 'OUTRAS CIDADES':'informar cidade e clínica'
+};
+
+/* Cadastro de ENDEREÇOS por local (EXEMPLOS — a Evelise preenche os reais no cadastro) */
+const ENDERECOS = {
+ 'Laser Campinas':'Av. Exemplo, 1000 — Cambuí, Campinas/SP (endereço de exemplo — preencher no cadastro)',
+ 'Clínica Holanda de Freitas — Campinas':'Rua Exemplo, 250 — Centro, Campinas/SP (exemplo — preencher no cadastro)',
+ 'Consultório Dra. Stela':'Rua Exemplo, 45 — sala 12 (exemplo — preencher no cadastro)',
+ 'Consultório Dra. Elizabeth':'Rua Exemplo, 300 (exemplo — preencher no cadastro)',
+ 'Consultório Dr. André':'Rua Exemplo, 80 (exemplo — preencher no cadastro)',
+ 'Consultório Dra. Márcia':'Rua Exemplo, 12 (exemplo — preencher no cadastro)',
+ 'HOG — Centro Cirúrgico':'HOG — Hospital de Olhos, recepção do Centro Cirúrgico',
+ 'Hospital Samaritano — Campinas':'Hospital Samaritano, Campinas/SP (exemplo — preencher no cadastro)',
+};
+function getEndereco(local){
+  if(!local) return '';
+  if(ENDERECOS[local]) return ENDERECOS[local];
+  for(const k in ENDERECOS){ if(local.includes(k) || k.includes(local)) return ENDERECOS[k]; }
+  return '';
+}
+
+/* Cadastro de ORIENTAÇÕES por procedimento (EXEMPLOS — textos reais serão cadastrados pela Evelise) */
+const ORIENTACOES = [
+ {chave:'MR', txt:'Exame com dilatação da pupila: vir com acompanhante e não dirigir. Levar óculos escuros. (texto de exemplo)'},
+ {chave:'MAPEAMENTO', txt:'Exame com dilatação da pupila: vir com acompanhante e não dirigir. (texto de exemplo)'},
+ {chave:'OCT', txt:'Pode haver dilatação da pupila — recomendável vir com acompanhante. (texto de exemplo)'},
+ {chave:'USG', txt:'Sem preparo específico. Chegar 15 min antes. (texto de exemplo)'},
+ {chave:'ULTRASSON', txt:'Sem preparo específico. Chegar 15 min antes. (texto de exemplo)'},
+ {chave:'PEV', txt:'Comparecer com cabelos limpos e secos, sem creme ou gel. (texto de exemplo)'},
+ {chave:'ELETRO', txt:'Comparecer com cabelos limpos e secos, sem creme ou gel. (texto de exemplo)'},
+ {chave:'CROSSLINK', txt:'Não usar lentes de contato nos 3 dias anteriores. Vir com acompanhante. (texto de exemplo)'},
+ {chave:'REFRATIVA', txt:'Suspender lentes de contato conforme orientação médica. Vir com acompanhante. (texto de exemplo)'},
+ {chave:'FACO', txt:'Jejum de 8 horas. Acompanhante adulto obrigatório. Levar exames e lista de medicamentos. (texto de exemplo)'},
+ {chave:'DACRIO', txt:'Jejum de 8 horas. Acompanhante adulto obrigatório. (texto de exemplo)'},
+ {chave:'PRÉ-ANEST', txt:'Levar exames recentes, receitas e lista de todos os medicamentos em uso. (texto de exemplo)'},
+ {chave:'PRE ANEST', txt:'Levar exames recentes, receitas e lista de todos os medicamentos em uso. (texto de exemplo)'},
+ {chave:'TESTE ORT', txt:'Sem preparo específico. Crianças: vir alimentadas e descansadas. (texto de exemplo)'},
+];
+function getOrientacao(proc){ const P=(proc||'').toUpperCase(); const o=ORIENTACOES.find(o=>P.includes(o.chave)); return o?o.txt:''; }
+
+/* ===================== NAVEGAÇÃO ===================== */
+function tab(id, btn){
+  document.querySelectorAll('.tela').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tela-'+id).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(id==='lista') renderLista();
+  if(id==='jornada') renderJornada();
+  if(id==='cal') renderCal();
+  if(id==='painel') renderPainel();
+}
+
+/* ===================== HELPERS DE DATA ===================== */
+function dParse(br){ const p=br.split('/'); return new Date(+p[2], +p[1]-1, +p[0]); }
+function dBR(dt){ return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear(); }
+function fmtBR(iso){ if(!iso) return ''; const p=iso.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
+
+/* ===================== PAINEL DE ALERTAS ===================== */
+const PAGAMENTOS = [
+ {parc:'DRA. STELA', txt:'Fechamento Julho/26 — 4 testes ortópticos × R$ 250 = R$ 1.000,00', venc:'pagar até 15/08/2026 · Bethânia', feito:false},
+ {parc:'DRA. ELIZABETH', txt:'Fechamento Julho/26 — 1 PEV (500) + 1 Eletro-Reti (700) = R$ 1.200,00', venc:'pagar até 15/08/2026 · Bethânia', feito:false},
+];
+const COBRANCAS = [
+ {parc:'VISÃO FÁCIL', txt:'FACO OD — Sandra Regina Fadel (realizada 06/08) · R$ 1.300,00', venc:'entra na cobrança com venc. 15/09/2026', feito:false},
+];
+function renderPainel(){
+  const hoje=dParse(HOJE);
+  const em3=new Date(hoje); em3.setDate(em3.getDate()+3);
+  const confirmar = AG.filter(a=>a.st==='Agendado' && dParse(a.dag)>=hoje && dParse(a.dag)<=em3);
+  const remarcar  = AG.filter(a=>a.st==='Faltou');
+  const preanes   = AG.filter(a=>a.preAnes && a.preAnes.indexOf('PENDENTE')===0 && a.st!=='Cancelado');
+  const hojeList  = AG.filter(a=>a.dag===HOJE && a.st!=='Cancelado');
+  document.getElementById('kHoje').textContent=hojeList.length;
+  document.getElementById('kConf').textContent=confirmar.length;
+  document.getElementById('kRem').textContent=remarcar.length;
+  const tot = confirmar.length + remarcar.length + preanes.length + PAGAMENTOS.filter(p=>!p.feito).length + COBRANCAS.filter(c=>!c.feito).length;
+  document.getElementById('badAlertas').textContent=tot;
+  document.getElementById('badAlertas').style.display = tot? 'inline':'none';
+
+  const it=(html)=>html;
+  let h='';
+  h+=`<div class="acard a-conf"><div class="ahead">🟡 Confirmar com paciente/parceiro <span class="acount">${confirmar.length}</span></div>`;
+  h+= confirmar.length? confirmar.map(a=>it(`<div class="aitem"><div class="at"><b>${a.pac}</b><span>${a.dag}${a.hora?' '+a.hora:''} · ${a.proc} · ${a.parc} · 📍 ${a.local}</span></div>
+      <button class="btn btn-g btn-sm" onclick="acaoConfirmar('${a.n}')">✓ Confirmado</button>
+      <button class="btn btn-s btn-sm" onclick="abreDetalhe('${a.n}')">🔍</button></div>`)).join('') : '<div class="aempty">nada a confirmar nos próximos 3 dias</div>';
+  h+='</div>';
+
+  h+=`<div class="acard a-rem"><div class="ahead">🔴 Faltas — remarcar <span class="acount">${remarcar.length}</span></div>`;
+  h+= remarcar.length? remarcar.map(a=>`<div class="aitem"><div class="at"><b>${a.pac}</b><span>faltou em ${a.dag} · ${a.proc} · ${a.parc}</span></div>
+      <button class="btn btn-p btn-sm" onclick="abreDetalhe('${a.n}',true)">📅 Remarcar</button></div>`).join('') : '<div class="aempty">nenhuma falta pendente</div>';
+  h+='</div>';
+
+  h+=`<div class="acard a-conf"><div class="ahead">🩺 Pré-anestésico a agendar <span class="acount">${preanes.length}</span></div>`;
+  h+= preanes.length? preanes.map(a=>`<div class="aitem"><div class="at"><b>${a.pac}</b><span>cirurgia ${a.proc}${a.lat?' '+a.lat:''} em ${a.dag} · ${a.parc} — pré-anestésico ainda não agendado</span></div>
+      <button class="btn btn-p btn-sm" onclick="document.querySelector('nav button:nth-child(2)').click()">➕ Agendar</button>
+      <button class="btn btn-s btn-sm" onclick="abreDetalhe('${a.n}')">🔍</button></div>`).join('') : '<div class="aempty">nenhum pré-anestésico pendente</div>';
+  h+='</div>';
+
+  h+=`<div class="acard a-pag"><div class="ahead">💸 Pagar parceiros (HOG paga) <span class="acount">${PAGAMENTOS.filter(p=>!p.feito).length}</span></div>`;
+  h+= PAGAMENTOS.filter(p=>!p.feito).map((p,i)=>`<div class="aitem"><div class="at"><b>${p.parc}</b><span>${p.txt} · ${p.venc}</span></div>
+      <button class="btn btn-g btn-sm" onclick="PAGAMENTOS[${i}].feito=true;renderPainel()">✓ Pago</button></div>`).join('') || '<div class="aempty">sem pagamentos pendentes</div>';
+  h+='</div>';
+
+  h+=`<div class="acard a-cob"><div class="ahead">💰 Cobrar parceiros (HOG recebe) <span class="acount">${COBRANCAS.filter(c=>!c.feito).length}</span></div>`;
+  h+= COBRANCAS.filter(c=>!c.feito).map((c,i)=>`<div class="aitem"><div class="at"><b>${c.parc}</b><span>${c.txt} · ${c.venc}</span></div>
+      <button class="btn btn-g btn-sm" onclick="COBRANCAS[${i}].feito=true;renderPainel()">✓ Lançado</button></div>`).join('') || '<div class="aempty">sem cobranças pendentes</div>';
+  h+='</div>';
+
+  document.getElementById('acards').innerHTML=h;
+}
+function acaoConfirmar(n){ const a=AG.find(x=>x.n===n); if(a){a.st='Confirmado'; renderPainel();} }
+
+/* ===================== CALENDÁRIO ===================== */
+let calAno=2026, calMes=7; // agosto (0-based)
+let diaSel=null;
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function mudaMes(d){ calMes+=d; if(calMes<0){calMes=11;calAno--;} if(calMes>11){calMes=0;calAno++;} diaSel=null; renderCal(); }
+function renderCal(){
+  document.getElementById('calTitulo').textContent=`${MESES[calMes]} de ${calAno}`;
+  const g=document.getElementById('calGrid');
+  let h=['D','S','T','Q','Q','S','S'].map(d=>`<div class="cdow">${d}</div>`).join('');
+  const prim=new Date(calAno,calMes,1), ndias=new Date(calAno,calMes+1,0).getDate();
+  for(let i=0;i<prim.getDay();i++) h+='<div class="cday off"></div>';
+  for(let d=1; d<=ndias; d++){
+    const br=String(d).padStart(2,'0')+'/'+String(calMes+1).padStart(2,'0')+'/'+calAno;
+    const os=AG.filter(a=>a.dag===br);
+    const dots=os.slice(0,6).map(a=>`<span class="dot ${a.st==='Cancelado'?'canc':(a.dir==='OUT'?'out':'in')}"></span>`).join('');
+    h+=`<div class="cday ${br===HOJE?'hoje':''} ${br===diaSel?'sel':''}" onclick="selDia('${br}')">
+        <span class="dnum">${d}</span><div class="dots">${dots}</div>${os.length>6?`<span class="more">+${os.length-6}</span>`:''}</div>`;
+  }
+  g.innerHTML=h;
+  renderDia();
+}
+function selDia(br){ diaSel=br; renderCal(); }
+function renderDia(){
+  const box=document.getElementById('dayList'), tit=document.getElementById('dayTitle');
+  if(!diaSel){ tit.textContent='Selecione um dia'; return; }
+  const os=AG.filter(a=>a.dag===diaSel);
+  tit.textContent=`📅 ${diaSel} — ${os.length} agendamento${os.length===1?'':'s'}`;
+  box.innerHTML = os.length? os.map(a=>`
+    <div class="item" onclick="abreDetalhe('${a.n}')">
+      <div class="l1">${a.hora?a.hora+' · ':''}${a.pac} <span class="chip ${CHIP[a.st]}">${a.st}</span></div>
+      <div class="l2">${a.dir==='OUT'?'🏥→🤝':'🤝→🏥'} ${a.proc}${a.lat?' · '+a.lat:''} × ${a.qtd} · ${a.parc} · 👨‍⚕️ ${a.med} · 📍 ${a.local}</div>
+    </div>`).join('') : '<p class="hint">nenhum agendamento neste dia</p>';
+}
+
+/* ===================== FORM ===================== */
+let DIR='OUT';
+function setDir(d, el){
+  DIR=d;
+  document.querySelectorAll('#dirRadios .opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  mudaTipo();
+}
+function mudaTipo(){
+  const cir = document.getElementById('fTipo').value==='Cirurgia';
+  document.getElementById('blocoCirurgia').classList.toggle('show', cir);
+  document.getElementById('blocoIn').classList.toggle('show', DIR==='IN' && cir);
+  if(DIR==='IN'){ document.getElementById('fTipo').value='Cirurgia'; document.getElementById('blocoCirurgia').classList.add('show'); document.getElementById('blocoIn').classList.add('show'); document.getElementById('fLocal').value='HOG — Centro Cirúrgico'; }
+}
+function sugLocal(){
+  const p=document.getElementById('fParceiro').value;
+  const med=document.getElementById('fMedico').value;
+  const proc=(document.getElementById('fProc').value||'').toUpperCase();
+  let sug='', origem='';
+  const v = VINCULOS.find(v=>v.med===med && v.proc && proc.includes(v.proc)) || VINCULOS.find(v=>v.med===med && !v.proc);
+  if(DIR==='IN'){ sug='HOG — Centro Cirúrgico'; origem='direção parceiro → HOG'; }
+  else if(v){ sug=v.local; origem=`vínculo: ${med}${v.proc?' + '+v.proc:''} → ${v.local}`; }
+  else if(LOCAIS[p]){ sug=LOCAIS[p]; origem='cadastro do parceiro'; }
+  if(sug){ document.getElementById('fLocal').value=sug; document.getElementById('localHint').textContent='sugerido ('+origem+') — pode editar'; }
+}
+function tgl(el){ el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); }
+function mostra(id){ document.getElementById(id).style.display='block'; }
+
+/* ===================== RECIBO / DETALHE ===================== */
+let waText='';
+function montaCorpo(r){
+  const dirTxt = r.dir==='OUT' ? 'HOG envia paciente ao parceiro' : 'Parceiro envia cirurgia para o HOG';
+  let h=`
+  <div class="rec-sec"><h4>Agendamento</h4>
+    <div class="rec-row"><div class="k">Direção</div><div class="v">${r.dir==='OUT'?'🏥→🤝':'🤝→🏥'} ${dirTxt}</div></div>
+    <div class="rec-row"><div class="k">Parceiro</div><div class="v">${r.parc}</div></div>
+    <div class="rec-row"><div class="k">Paciente</div><div class="v">${r.pac}</div></div>
+    <div class="rec-row"><div class="k">Procedimento</div><div class="v">${r.proc} ${r.lat?('· '+r.lat):''} · qtd ${r.qtd}</div></div>
+    <div class="rec-row"><div class="k">👨‍⚕️ Médico</div><div class="v">${r.med||'—'}</div></div>
+    <div class="rec-row"><div class="k">Data solicitada</div><div class="v">${r.dsol}</div></div>
+    <div class="rec-row"><div class="k">Data agendada</div><div class="v">${r.dag}${r.hora?' às '+r.hora:''}</div></div>
+    <div class="rec-row"><div class="k">📍 Local (hospital/clínica)</div><div class="v">${r.local}</div></div>
+    ${getEndereco(r.local)?`<div class="rec-row"><div class="k">Endereço</div><div class="v" style="font-weight:400">${getEndereco(r.local)}</div></div>`:''}
+    <div class="rec-row"><div class="k">Agendado por</div><div class="v">${r.quem} (HOG)</div></div>
+    ${r.st?`<div class="rec-row"><div class="k">Status</div><div class="v"><span class="chip ${CHIP[r.st]||''}">${r.st}</span></div></div>`:''}
+  </div>`;
+  if(r.tipo==='Cirurgia'){
+    h+=`<div class="rec-sec"><h4>Cirurgia</h4>
+      <div class="rec-row"><div class="k">Anestesista</div><div class="v">${r.anest||'—'}</div></div>
+      <div class="rec-row"><div class="k">Material enviado pelo HOG</div><div class="v">${r.mat||'—'}</div></div>
+      ${r.preAnes?`<div class="rec-row"><div class="k">🩺 Pré-anestésico</div><div class="v">${r.preAnes}</div></div>`:''}
+      ${r.det?`<div class="rec-row"><div class="k">Detalhamento</div><div class="v">${r.det}</div></div>`:''}
+      ${r.lio?`<div class="rec-row"><div class="k">LIO</div><div class="v">${r.lio}</div></div>`:''}
+    </div>`;
+  }
+  const orient = getOrientacao(r.proc);
+  if(orient) h+=`<div class="rec-sec"><h4>📋 Orientações ao paciente</h4><div class="rec-row"><div class="v" style="font-weight:400">${orient}</div></div></div>`;
+  if(r.obs) h+=`<div class="rec-sec"><h4>Observações</h4><div class="rec-row"><div class="v" style="font-weight:400">${r.obs}</div></div></div>`;
+
+  waText =
+`*RECIBO DE AGENDAMENTO — HOG* 🗓️
+*${r.n}*
+━━━━━━━━━━━━━━━
+👤 *Paciente:* ${r.pac}
+🩺 *Procedimento:* ${r.proc}${r.lat?' · '+r.lat:''} · qtd ${r.qtd}
+👨‍⚕️ *Médico:* ${r.med||'—'}
+📅 *Data:* ${r.dag}${r.hora?' às '+r.hora:''}
+📍 *Local:* ${r.local}${getEndereco(r.local)?`
+🗺️ *Endereço:* ${getEndereco(r.local)}`:''}
+🤝 *Parceiro:* ${r.parc}`+
+(r.tipo==='Cirurgia'?`
+💉 *Anestesista:* ${r.anest||'—'}
+📦 *Material HOG:* ${r.mat||'—'}`:'')+
+(r.preAnes?`
+🩺 *Pré-anestésico:* ${r.preAnes}`:'')+
+(r.det?`
+🔎 *Detalhe:* ${r.det}`:'')+
+(r.lio?`
+👁️ *LIO:* ${r.lio}`:'')+
+(getOrientacao(r.proc)?`
+📋 *Orientações:* ${getOrientacao(r.proc)}`:'')+
+(r.obs?`
+📝 *Obs:* ${r.obs}`:'')+`
+━━━━━━━━━━━━━━━
+Agendado por ${r.quem} — HOG`;
+
+  h+=`<div class="rec-sec wa-sec"><h4>📲 Texto para o grupo de WhatsApp do parceiro (não sai na impressão)</h4><div class="wa-box">${waText.replace(/</g,'&lt;')}</div></div>`;
+  return h;
+}
+function botoesBase(){
+  return `<button class="btn btn-g" onclick="copiaWA()">📲 Copiar p/ WhatsApp</button>
+  <span class="copiado" id="okCopy">✓ Copiado! É só colar no grupo.</span>
+  <button class="btn btn-s" onclick="window.print()">🖨️ Imprimir</button>`;
+}
+function gerarRecibo(fromRec){
+  let r;
+  if(typeof fromRec==='object'){ r=fromRec; }
+  else{
+    const v=id=>document.getElementById(id).value;
+    const selTxt=box=>{const s=document.querySelector('#'+box+' .opt.sel'); return s?s.textContent.trim():'—';};
+    r={ n:'AG-2026-0205', dir:DIR, parc:v('fParceiro'), tipo:v('fTipo'),
+        pac:v('fPaciente')||'(paciente de exemplo)', proc:v('fProc')||'(procedimento)', med:v('fMedico')||'—',
+        lat:v('fLat'), qtd:v('fQtd')||1, dsol:fmtBR(v('fDataSol')), dag:fmtBR(v('fDataAg'))||'(a definir)',
+        hora:v('fHora'), local:v('fLocal')||'(local a informar)', quem:v('fQuem')||v('fDepto'), st:'Agendado',
+        anest: document.querySelector('#blocoCirurgia.show') ? (document.getElementById('fAnest').value?('Sim — '+document.getElementById('fAnest').value):selTxt('rAnes')) : null,
+        mat: document.querySelector('#blocoCirurgia.show') ? (document.getElementById('fMaterial').value?('Sim — '+document.getElementById('fMaterial').value):selTxt('rMat')) : null,
+        preAnes: document.querySelector('#blocoCirurgia.show') ? (selTxt('rPre')==='Sim'?'PENDENTE — a agendar':(selTxt('rPre')==='Não'?'Não precisa':'')) : '',
+        det: document.querySelector('#blocoIn.show') ? document.getElementById('fDetalhe').value : '',
+        lio: document.querySelector('#blocoIn.show') && document.getElementById('fLio').value ? (document.getElementById('fLio').value+(document.getElementById('fDioptria').value?' · '+document.getElementById('fDioptria').value:'')) : '',
+        obs:v('fObs') };
+    r.quem = v('fDepto')==='Depto. cirúrgico' ? 'Depto. cirúrgico' : (document.getElementById('fQuem')?document.getElementById('fQuem').value:'Mari');
+  }
+  document.getElementById('recTitulo').textContent='RECIBO DE AGENDAMENTO';
+  document.getElementById('recNum').textContent=r.n;
+  document.getElementById('recData').textContent=HOJE;
+  document.getElementById('recBody').innerHTML=montaCorpo(r);
+  document.getElementById('recActions').innerHTML=botoesBase()+`<button class="btn btn-s" style="margin-left:auto" onclick="fechaRecibo()">Fechar</button>`;
+  document.getElementById('ovl').classList.add('show');
+}
+/* Detalhe = recibo + ações cancelar / trocar data */
+function abreDetalhe(n, remarcando){
+  const a=AG.find(x=>x.n===n); if(!a) return;
+  document.getElementById('recTitulo').textContent='DETALHE DO AGENDAMENTO';
+  document.getElementById('recNum').textContent=a.n;
+  document.getElementById('recData').textContent=HOJE;
+  document.getElementById('recBody').innerHTML=montaCorpo(a)+`
+    <div class="remarcar ${remarcando?'show':''}" id="boxRemarcar">
+      <b>📅 Nova data:</b> <input type="date" id="novaData" style="width:auto"> <input type="time" id="novaHora" style="width:auto">
+      <button class="btn btn-p btn-sm" onclick="trocaData('${a.n}')">Confirmar troca</button>
+      <span class="hint">o recibo é reemitido e o texto novo vai para o WhatsApp do parceiro</span>
+    </div>`;
+  document.getElementById('recActions').innerHTML=
+    botoesBase()+
+    `<button class="btn btn-s" onclick="document.getElementById('boxRemarcar').classList.toggle('show')">📅 Trocar de data</button>
+     ${a.st!=='Cancelado'?`<button class="btn btn-r" onclick="cancelaAg('${a.n}')">❌ Cancelar</button>`:''}
+     <button class="btn btn-s" style="margin-left:auto" onclick="fechaRecibo()">Fechar</button>`;
+  document.getElementById('ovl').classList.add('show');
+}
+function trocaData(n){
+  const a=AG.find(x=>x.n===n); if(!a) return;
+  const nd=document.getElementById('novaData').value, nh=document.getElementById('novaHora').value;
+  if(!nd){ alert('Informe a nova data.'); return; }
+  a.dag=fmtBR(nd); if(nh) a.hora=nh;
+  a.st='Agendado';
+  a.obs=(a.obs?a.obs+' · ':'')+'remarcado em '+HOJE;
+  fechaRecibo(); renderCal(); renderLista(); renderPainel();
+  abreDetalhe(n); // reabre com dados novos e WA atualizado
+}
+function cancelaAg(n){
+  const a=AG.find(x=>x.n===n); if(!a) return;
+  if(confirm('Cancelar o agendamento de '+a.pac+' em '+a.dag+'?')){
+    a.st='Cancelado'; a.obs=(a.obs?a.obs+' · ':'')+'cancelado em '+HOJE;
+    fechaRecibo(); renderCal(); renderLista(); renderPainel();
+  }
+}
+function fechaRecibo(){ document.getElementById('ovl').classList.remove('show'); }
+function copiaWA(){
+  const done=()=>{ const ok=document.getElementById('okCopy'); if(ok) ok.style.display='inline-block'; };
+  if(navigator.clipboard){ navigator.clipboard.writeText(waText).then(done).catch(()=>{fallbackCopy(); done();}); }
+  else { fallbackCopy(); done(); }
+}
+function fallbackCopy(){
+  const ta=document.createElement('textarea'); ta.value=waText; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+/* ===================== LISTA ===================== */
+const CHIP={'Agendado':'c-ag','Confirmado':'c-conf','Compareceu':'c-ok','Faltou':'c-fal','Cancelado':'c-canc'};
+function renderLista(){
+  const fp=document.getElementById('filParc').value, fs=document.getElementById('filStatus').value,
+        fd=document.getElementById('filDir').value, fb=(document.getElementById('filBusca').value||'').toUpperCase();
+  const tb=document.querySelector('#tbl tbody'); tb.innerHTML='';
+  AG.filter(a=>(!fp||a.parc===fp)&&(!fs||a.st===fs)&&(!fd||a.dir===fd)&&(!fb||a.pac.toUpperCase().includes(fb)))
+    .forEach(a=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td style="font-family:Consolas,monospace;font-size:12px">${a.n}</td>
+      <td>${a.dir==='OUT'?'<span class="dir-out" title="HOG → Parceiro">→</span>':'<span class="dir-in" title="Parceiro → HOG">←</span>'}</td>
+      <td>${a.dag}${a.hora?'<br><span style="color:var(--cinza);font-size:11px">'+a.hora+'</span>':''}</td>
+      <td>${a.pac}</td><td>${a.parc}</td>
+      <td>${a.proc}${a.tipo==='Cirurgia'?' <span class="chip c-rec">cirurgia</span>':''}${a.lio?'<br><span style="font-size:11px;color:var(--roxo)">LIO: '+a.lio+'</span>':''}</td>
+      <td style="font-size:12px">${a.med||'—'}</td>
+      <td>${a.lat||'—'} × ${a.qtd}</td>
+      <td style="font-size:12px">${a.local}</td>
+      <td><span class="chip ${CHIP[a.st]}">${a.st}</span></td>
+      <td style="white-space:nowrap"><button class="btn btn-s btn-sm" onclick='gerarRecibo(AG.find(x=>x.n==="${a.n}"))'>🧾</button>
+      <button class="btn btn-s btn-sm" onclick='abreDetalhe("${a.n}")'>🔍</button></td>`;
+      tb.appendChild(tr);
+    });
+}
+
+/* ===================== JORNADA ===================== */
+const JORNADAS=[
+ { pac:'JOSE RICARDO CRUZ RAMOS', sub:'2 agendamentos — DR. ANDRÉ (USG) · direção HOG → parceiro', passos:[
+   {t:'Solicitado', d:'24/07/2026 — pedido do médico HOG · USG OE', s:'done'},
+   {t:'Agendado + recibo AG-2026-0195', d:'30/07/2026 · Consultório Dr. André · recibo copiado no grupo do parceiro ✓', s:'done'},
+   {t:'Compareceu', d:'30/07/2026 — exame realizado', s:'done'},
+   {t:'Repetição solicitada', d:'06/08/2026 — novo agendamento AG-2026-0194 p/ 13/08', s:'done'},
+   {t:'Aguardando realização', d:'13/08/2026 · Consultório Dr. André', s:'now'},
+   {t:'Relatório de cobrança do período', d:'entra no fechamento de Agosto/26 (regra do parceiro — Etapa 3)', s:''},
+ ]},
+ { pac:'SANDRA REGINA FADEL', sub:'FACO OD — VISÃO FÁCIL → HOG · direção parceiro → HOG', passos:[
+   {t:'Cirurgia recebida do parceiro', d:'28/07/2026 — Victor (Visão Fácil) enviou paciente p/ FACO OD', s:'done'},
+   {t:'Agendado + recibo AG-2026-0189', d:'06/08/2026 07:30 · HOG — Centro Cirúrgico · LIO Acrysof SN60WF +21,0 D · anestesista equipe HOG · recibo no grupo ✓', s:'done'},
+   {t:'Cirurgia realizada', d:'06/08/2026 — compareceu, FACO OD concluída', s:'done'},
+   {t:'Cobrança ao parceiro', d:'FACO 1.300/olho → fechamento Visão Fácil, venc. dia 15 do mês seguinte', s:'now'},
+   {t:'Pago', d:'previsto 15/09/2026', s:''},
+ ]},
+ { pac:'EDUARDO PICULI NUNES DE SOUZA', sub:'Consulta — DRA. MÁRCIA · direção HOG → parceiro', passos:[
+   {t:'Solicitado', d:'24/07/2026', s:'done'},
+   {t:'Agendado + recibo', d:'03/08/2026 11:00 · Consultório Dra. Márcia', s:'done'},
+   {t:'Compareceu', d:'03/08/2026', s:'done'},
+   {t:'Reagendado (retorno)', d:'10/08/2026 09:00 — FALTOU', s:'bad'},
+   {t:'Remarcar', d:'pendente — alerta no Painel para a Mari', s:'now'},
+ ]},
+ { pac:'GUILHERME APARECIDO ROSA', sub:'Crosslinking OD — Dr. Lucas Rossi · Laser Campinas · agendado pelo depto. cirúrgico', passos:[
+   {t:'Indicação do Dr. Lucas', d:'03/08/2026 — Crosslinking OD (ceratocone)', s:'done'},
+   {t:'Agendado pelo depto. cirúrgico + recibo AG-2026-0203', d:'14/08/2026 08:00 · Laser Campinas (vínculo procedimento+médico) · HOG envia riboflavina', s:'done'},
+   {t:'Confirmar com paciente', d:'alerta ativo no Painel (próximos 3 dias)', s:'now'},
+   {t:'Realização', d:'14/08/2026 · Laser Campinas', s:''},
+   {t:'Cobrança do período', d:'regra Laser Campinas — tabela a definir (Etapa 2/3)', s:''},
+ ]},
+];
+function renderJornada(){
+  const j=JORNADAS[+document.getElementById('selJornada').value];
+  let h=`<h2>🚶 ${j.pac}</h2><p class="hint" style="margin-bottom:14px">${j.sub}</p><div class="jtl">`;
+  j.passos.forEach(p=>{ h+=`<div class="jstep ${p.s}"><div class="jt">${p.t}</div><div class="jd">${p.d}</div></div>`; });
+  h+='</div>';
+  document.getElementById('jornadaCard').innerHTML=h;
+}
+/* hidden quem field (mantido para compatibilidade do form) */
+renderPainel(); renderJornada();
+</script>
+<select id="fQuem" style="display:none"><option>Mari</option><option>Sueli</option><option>Evelise</option></select>
+</body>
+</html>

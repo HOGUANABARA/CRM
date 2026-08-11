@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modelo de agenda contínua — Exames oftalmológicos</title>
+<style>
+*{box-sizing:border-box}
+:root{color-scheme:light;
+--surface:#fcfcfb;--surface-2:#f5f4f1;--surface-3:#eceae5;--line:#e3e2dd;--line-2:#d3d2cc;
+--ink:#0b0b0b;--ink-2:#52514e;--ink-3:#7a7975;
+--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#4a3aa7;
+--crit:#c62828;--ok:#1baf7a;}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){color-scheme:dark;
+--surface:#1a1a19;--surface-2:#232322;--surface-3:#2c2c2a;--line:#34342f;--line-2:#45453f;
+--ink:#fff;--ink-2:#c3c2b7;--ink-3:#93928a;
+--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;
+--crit:#e66767;--ok:#199e70;}}
+body{margin:0;background:var(--surface);color:var(--ink);
+font:14.5px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:30px 22px 70px}
+.eyebrow{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:650;margin:0 0 8px}
+h1{font-size:25px;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em;font-weight:680}
+.sub{color:var(--ink-2);margin:0 0 20px;max-width:78ch;font-size:14.5px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;flex-wrap:wrap}
+.tab{appearance:none;background:none;border:none;font:inherit;font-weight:600;font-size:13.5px;
+color:var(--ink-3);padding:10px 15px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--ink-2)}
+.tab.on{color:var(--s1);border-bottom-color:var(--s1)}
+.panel{display:none}.panel.on{display:block}
+h2{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:650;
+margin:30px 0 13px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2:first-child{margin-top:0}
+.card{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:17px 18px}
+.ctitle{font-size:14px;font-weight:650;margin:0 0 3px}
+.cnote{font-size:12.5px;color:var(--ink-3);margin:0 0 15px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+thead th{font-size:11.5px;color:var(--ink-3);font-weight:640;text-transform:uppercase;letter-spacing:.05em;
+border-bottom:1px solid var(--line-2);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:none}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+input[type=number],input[type=text],select{font:inherit;font-size:13.5px;padding:5px 8px;border-radius:6px;
+border:1px solid var(--line-2);background:var(--surface);color:var(--ink);width:72px}
+input[type=text]{width:100%}
+select{width:auto;min-width:120px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+@media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px}
+.tile{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.tile .n{font-size:24px;font-weight:680;letter-spacing:-.025em;line-height:1.15}
+.tile .n small{font-size:14px;font-weight:600;color:var(--ink-2)}
+.tile .k{font-size:11.5px;color:var(--ink-3);margin-top:4px;line-height:1.35}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--surface);
+border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;user-select:none;transition:.12s}
+.chip:hover{border-color:var(--s1)}
+.chip.on{background:var(--s1);border-color:var(--s1);color:#fff;font-weight:600}
+.chip.on .dot{background:#fff !important}
+.chip.off{opacity:.35;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.btn{appearance:none;font:inherit;font-weight:640;font-size:13.5px;border:none;border-radius:8px;
+padding:9px 17px;cursor:pointer;background:var(--s1);color:#fff;transition:.12s}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.35;cursor:not-allowed;filter:none}
+.btn.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line-2)}
+.btn.sm{padding:6px 12px;font-size:12.5px}
+.step{display:flex;align-items:center;gap:9px;margin:0 0 14px;flex-wrap:wrap}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--s1);color:#fff;display:flex;
+align-items:center;justify-content:center;font-size:12px;font-weight:680;flex:none}
+.sn.done{background:var(--ok)}
+.sn.idle{background:var(--surface-3);color:var(--ink-3)}
+.step h3{margin:0;font-size:14.5px;font-weight:650}
+.muted{color:var(--ink-3);font-size:12.5px}
+.day{border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--surface);
+transition:.12s;text-align:left}
+.day:hover{border-color:var(--s1)}
+.day.on{border-color:var(--s1);box-shadow:inset 0 0 0 1px var(--s1)}
+.day.none{opacity:.4;cursor:not-allowed}
+.day .dd{font-size:13.5px;font-weight:650}
+.day .dt{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.day .dv{font-size:11.5px;font-weight:640;margin-top:6px}
+.hgrid{display:flex;flex-wrap:wrap;gap:6px}
+.h{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:6px 10px;
+font-size:12.5px;font-variant-numeric:tabular-nums;cursor:pointer;transition:.1s}
+.h:hover{border-color:var(--s1);color:var(--s1)}
+.h.on{background:var(--s1);border-color:var(--s1);color:#fff;font-weight:660}
+.hourlab{font-size:11.5px;color:var(--ink-3);width:44px;flex:none;padding-top:7px;font-variant-numeric:tabular-nums}
+.hourrow{display:flex;gap:8px;margin-bottom:7px}
+.alert{border-left:3px solid var(--s4);background:var(--surface-2);border-radius:0 8px 8px 0;
+padding:11px 14px;margin:9px 0;font-size:13px}
+.alert.warn{border-left-color:var(--s2)}
+.alert.ok{border-left-color:var(--ok)}
+.alert b{display:block;margin-bottom:2px}
+.tl{position:relative;height:38px;background:var(--surface-3);border-radius:7px;overflow:hidden;flex:1}
+.blk{position:absolute;top:0;bottom:0;border-radius:5px;box-shadow:0 0 0 2px var(--surface-2);
+display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:default}
+.blk span{font-size:10.5px;font-weight:640;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);
+white-space:nowrap;padding:0 4px}
+.blk .tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+background:var(--ink);color:var(--surface);padding:5px 9px;border-radius:6px;font-size:11.5px;
+white-space:nowrap;opacity:0;pointer-events:none;transition:.12s;z-index:9;text-shadow:none;font-weight:500}
+.blk:hover .tip{opacity:1}
+.tlrow{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.tlname{width:150px;flex:none;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.axis{position:relative;height:15px;margin-left:161px;margin-top:3px}
+.axis span{position:absolute;font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;transform:translateX(-50%)}
+.blk.mini span:not(.tip){display:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 15px;margin:13px 0 0}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.ok-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:2px 7px;
+border-radius:5px;background:var(--ok);color:#fff}
+.warn-badge{background:var(--s2)}
+.foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3)}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+@media(max-width:820px){.flow{grid-template-columns:1fr 1fr}}
+.fbox{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.fbox .fn{font-size:11px;font-weight:700;color:var(--s1);letter-spacing:.06em;margin-bottom:5px}
+.fbox h4{margin:0 0 4px;font-size:13px;font-weight:650}
+.fbox p{margin:0;font-size:12.5px;color:var(--ink-2)}
+</style></head><body><div class="wrap">
+
+<p class="eyebrow">Protótipo · Modelo de agenda contínua para exames oftalmológicos</p>
+<h1>A sala é o recurso. O paciente ocupa o tempo que os exames dele exigem.</h1>
+<p class="sub">Em vez de horários fixos de 20 em 20 minutos, o dia é uma faixa contínua de tempo.
+A gestão define os parâmetros; o call center escolhe os exames e o sistema devolve os dias e horários
+que realmente cabem. Protótipo funcional — pode clicar, agendar e ver a agenda ocupar.</p>
+
+<div class="tabs">
+<button class="tab on" data-p="p1">1 · Parâmetros da grade</button>
+<button class="tab" data-p="p2">2 · Agendamento (call center)</button>
+<button class="tab" data-p="p3">3 · Agenda do dia</button>
+<button class="tab" data-p="p4">Como funciona</button>
+</div>
+
+<!-- ============ 1. PARÂMETROS ============ -->
+<div class="panel on" id="p1">
+<h2>Tabela de tempos por exame</h2>
+<div class="card">
+<p class="ctitle">Duração de sala por exame</p>
+<p class="cnote">Base: tempos mínimos do protocolo do Hospital dos Olhos Guanabara. Os campos são editáveis —
+alterar aqui muda o cálculo em todas as telas.</p>
+<table id="tTempos"><thead><tr>
+<th>Exame</th><th>Sigla</th><th>Equipamento</th><th class="num">Duração (min)</th>
+<th class="num">Ordem clínica</th><th>Dilata?</th><th>Preparo obrigatório</th>
+</tr></thead><tbody></tbody></table>
+</div>
+
+<h2>Parâmetros gerais</h2>
+<div class="grid3">
+<div class="card"><p class="ctitle">Granularidade</p><p class="cnote">Menor fração de horário oferecida.</p>
+<input type="number" id="pGran" value="5" min="5" step="5"> <span class="muted">minutos</span></div>
+<div class="card"><p class="ctitle">Buffer entre pacientes</p><p class="cnote">Troca de paciente, higiene do equipamento.</p>
+<input type="number" id="pBuf" value="5" min="0" step="5"> <span class="muted">minutos</span></div>
+<div class="card"><p class="ctitle">Antecedência de chegada</p><p class="cnote">Informada ao paciente; não ocupa sala.</p>
+<input type="number" id="pCheg" value="15" min="0" step="5"> <span class="muted">minutos</span></div>
+</div>
+
+<div class="alert" style="margin-top:14px"><b>Dilatação não ocupa sala</b>
+O tempo de espera da dilatação prende o paciente, não o equipamento. O sistema libera a sala durante a
+espera e devolve o paciente ao final — por isso ela entra como atributo do exame, não como duração.</div>
+
+<h2>Regras travadas no agendamento</h2>
+<div class="card">
+<table><thead><tr><th>Regra</th><th>Origem</th><th style="width:90px">Estado</th></tr></thead><tbody>
+<tr><td>Campo visual sempre antes de qualquer exame que dilate</td><td>Prática da equipe (cumprida em 20 de 20 casos na semana analisada)</td><td><span class="ok-badge">ATIVA</span></td></tr>
+<tr><td>Biometria de pré-operatório não pode ser agendada após 15:00</td><td>Recomendação da análise — evita o cálculo de LIO no fim do dia</td><td><span class="ok-badge">ATIVA</span></td></tr>
+<tr><td>Topografia e biometria exigem suspensão de lente de contato por 3 dias</td><td>Reclamações do SAC de 05/08</td><td><span class="ok-badge">ATIVA</span></td></tr>
+<tr><td>Guia do convênio precisa estar conferida antes de confirmar</td><td>Reclamação do SAC de 05/08 (guia com 1 olho autorizado)</td><td><span class="ok-badge">ATIVA</span></td></tr>
+<tr><td>Exames do mesmo paciente sempre em bloco contínuo</td><td>Análise: 42% dos pacientes estavam fragmentados</td><td><span class="ok-badge">ATIVA</span></td></tr>
+</tbody></table></div>
+
+<h2>Configuração dos dias</h2>
+<div class="card">
+<p class="ctitle">Semana de 10 a 14/08/2026</p>
+<p class="cnote">A gestão define, por data: janela de funcionamento, salas abertas e quais exames aquele dia aceita.
+Segunda-feira segue exclusiva para pré-operatório de catarata.</p>
+<table id="tDias"><thead><tr>
+<th>Data</th><th>Perfil do dia</th><th>Janela</th><th>Salas abertas</th><th>Exames liberados</th><th class="num">Capacidade</th>
+</tr></thead><tbody></tbody></table>
+</div>
+</div>
+
+<!-- ============ 2. AGENDAMENTO ============ -->
+<div class="panel" id="p2">
+<div class="step"><span class="sn">1</span><h3>Quais exames o paciente precisa fazer?</h3></div>
+<div class="card">
+<div class="chips" id="chipsExames"></div>
+<div id="resumoSel" style="margin-top:15px"></div>
+</div>
+
+<div class="step" style="margin-top:26px"><span class="sn idle" id="sn2">2</span><h3>Dias com disponibilidade</h3></div>
+<div class="card">
+<div class="grid3" id="listaDias" style="gap:11px"><p class="muted" style="margin:0">Selecione ao menos um exame acima.</p></div>
+</div>
+
+<div class="step" style="margin-top:26px"><span class="sn idle" id="sn3">3</span><h3>Horários livres</h3></div>
+<div class="card">
+<div id="listaHoras"><p class="muted" style="margin:0">Escolha um dia.</p></div>
+</div>
+
+<div class="step" style="margin-top:26px"><span class="sn idle" id="sn4">4</span><h3>Confirmação</h3></div>
+<div class="card" id="boxConf">
+<p class="muted" style="margin:0">Escolha um horário.</p>
+</div>
+</div>
+
+<!-- ============ 3. AGENDA DO DIA ============ -->
+<div class="panel" id="p3">
+<h2>Ocupação contínua por sala</h2>
+<div class="card">
+<div style="display:flex;align-items:center;gap:11px;margin-bottom:16px;flex-wrap:wrap">
+<span class="muted">Data:</span><select id="selDia"></select>
+<span class="muted" id="infoDia"></span>
+</div>
+<div id="timeline"></div>
+<div class="axis" id="axis"></div>
+<div class="legend" id="legenda"></div>
+</div>
+
+<h2>Indicadores do dia</h2>
+<div class="tiles" id="kpis"></div>
+
+<h2>Lista de agendamentos</h2>
+<div class="card"><table id="tAgenda"><thead><tr>
+<th>Início</th><th>Fim</th><th class="num">Min</th><th>Paciente</th><th>Exames</th><th>Sala</th><th>Chegar às</th>
+</tr></thead><tbody></tbody></table></div>
+</div>
+
+<!-- ============ 4. COMO FUNCIONA ============ -->
+<div class="panel" id="p4">
+<h2>O fluxo em quatro passos</h2>
+<div class="flow">
+<div class="fbox"><div class="fn">GESTÃO</div><h4>Define os parâmetros</h4><p>Tempo de cada exame, buffer, granularidade e as regras clínicas. Muda uma vez, vale para todo mundo.</p></div>
+<div class="fbox"><div class="fn">GESTÃO</div><h4>Abre o dia</h4><p>Para cada data: janela de funcionamento, quantas salas ficam abertas e quais exames aquele dia aceita.</p></div>
+<div class="fbox"><div class="fn">CALL CENTER</div><h4>Marca os exames</h4><p>Seleciona só o que o paciente precisa. Não escolhe horário, não calcula tempo, não decide ordem.</p></div>
+<div class="fbox"><div class="fn">SISTEMA</div><h4>Filtra e devolve</h4><p>Soma as durações, aplica as regras, varre a faixa livre de cada sala e mostra apenas o que cabe de verdade.</p></div>
+</div>
+
+<h2>O que este modelo resolve da análise dos 5 dias</h2>
+<div class="card"><table><thead><tr><th>Problema encontrado</th><th>Como o modelo resolve</th></tr></thead><tbody>
+<tr><td>9h20 por semana desperdiçadas com exame de 10 min ocupando horário de 20</td><td>O paciente ocupa exatamente o tempo dos seus exames. Um OCT solo consome 10 min, não 20.</td></tr>
+<tr><td>31 horários de 10 min inventados fora do protocolo</td><td>Deixam de existir: não há grade fixa para contornar. A faixa é contínua de 5 em 5 min.</td></tr>
+<tr><td>Terça e quinta estouravam a grade de 27 horários</td><td>Não há teto de horários — há teto de minutos. E os minutos cabem: nenhum dia da semana analisada passou de 90% da faixa.</td></tr>
+<tr><td>Combo de pré-op com 30 min de exame em horário de 20</td><td>A soma é feita pelo sistema. O combo BIO+TOPO+OCT reserva 30 min de sala, ponto.</td></tr>
+<tr><td>42% dos pacientes multi-exame fragmentados em horários distintos</td><td>O bloco é sempre contínuo — é assim que o motor procura a janela.</td></tr>
+<tr><td>Campo visual antes da dilatação dependia de quem agendava</td><td>Vira regra do sistema: a ordem é calculada, não escolhida.</td></tr>
+<tr><td>Preparo em texto livre virou 3 reclamações do SAC</td><td>Alerta obrigatório na tela de confirmação, com aceite registrado.</td></tr>
+<tr><td>Biometria caindo no último horário do dia</td><td>Bloqueio duro: o motor não oferece biometria depois das 15:00.</td></tr>
+</tbody></table></div>
+
+<h2>O que ainda precisa ser decidido pela equipe</h2>
+<div class="card"><table><thead><tr><th>Ponto</th><th>Por quê</th></tr></thead><tbody>
+<tr><td>Tempo real de cada exame, não o mínimo</td><td>A tabela usa os mínimos do protocolo. Se na prática um campo visual leva 25 min, a agenda vai atrasar do mesmo jeito. Vale cronometrar uma semana antes de travar.</td></tr>
+<tr><td>Quantos pacientes podem estar na sala ao mesmo tempo</td><td>O protótipo assume um paciente por sala. Se dois técnicos operam equipamentos diferentes em paralelo, a capacidade dobra e o modelo muda.</td></tr>
+<tr><td>Regra de encaixe</td><td>O modelo contínuo facilita encaixe, mas alguém precisa definir quem pode autorizar e em que situação.</td></tr>
+<tr><td>Reserva técnica</td><td>Vale bloquear uma faixa por dia para urgência e retorno de exame repetido, em vez de deixar a agenda lotar 100%.</td></tr>
+</tbody></table></div>
+</div>
+
+<p class="foot">Protótipo construído a partir da análise da agenda de 03 a 07/08/2026 e do protocolo
+"Exemplo de horários para marcação de exames" do Hospital dos Olhos Guanabara. Os dados de pacientes
+são fictícios. Projeto AGENDA EXAMES.</p>
+</div>
+
+<script>
+const EXAMES=[
+ {id:'CAMPO',sig:'CV',nome:'Campo visual',equip:'Campímetro',dur:20,ordem:1,dilata:false,cor:'var(--s2)',
+  preparo:['Não pode estar dilatado']},
+ {id:'TOPO', sig:'TP',nome:'Topografia / Ceratoscopia',equip:'Topógrafo',dur:10,ordem:2,dilata:false,cor:'var(--s4)',
+  preparo:['Suspender lente de contato 3 dias antes']},
+ {id:'PAQUI',sig:'PQ',nome:'Paquimetria',equip:'Paquímetro',dur:10,ordem:3,dilata:false,cor:'var(--s5)',preparo:[]},
+ {id:'MICRO',sig:'MC',nome:'Microscopia especular',equip:'Microscópio especular',dur:10,ordem:4,dilata:false,cor:'var(--s7)',preparo:[]},
+ {id:'BIO',  sig:'BI',nome:'Biometria',equip:'Biômetro',dur:10,ordem:5,dilata:false,cor:'var(--s3)',
+  preparo:['Suspender lente de contato 3 dias antes','Conferir guia: 1 ou 2 olhos autorizados']},
+ {id:'OCT',  sig:'OCT',nome:'OCT',equip:'OCT',dur:10,ordem:6,dilata:true,cor:'var(--s1)',preparo:[]},
+];
+const EX=id=>EXAMES.find(e=>e.id===id);
+const TODOS=EXAMES.map(e=>e.id);
+const LIM_BIO='15:00';
+
+const DIAS={
+ '2026-08-10':{lab:'Segunda 10/08',perfil:'Pré-operatório de catarata',ini:'07:20',fim:'16:00',
+   salas:[{nome:'Sala 1 — Exames (exclusiva pré-op)',equip:['BIO','TOPO','OCT','MICRO','PAQUI']}],
+   exames:['BIO','TOPO','OCT','MICRO','PAQUI'],intervalo:null},
+ '2026-08-11':{lab:'Terça 11/08',perfil:'Geral',ini:'07:20',fim:'16:00',
+   salas:[{nome:'Sala 1 — Exames',equip:TODOS}],exames:TODOS,intervalo:null},
+ '2026-08-12':{lab:'Quarta 12/08',perfil:'Campímetro no ambulatório',ini:'07:20',fim:'16:00',
+   salas:[{nome:'Sala 1 — Exames',equip:['OCT','TOPO','PAQUI','BIO','MICRO']},
+          {nome:'Sala 2 — Ambulatório (campímetro)',equip:['CAMPO']}],
+   exames:TODOS,intervalo:null},
+ '2026-08-13':{lab:'Quinta 13/08',perfil:'Geral',ini:'07:20',fim:'16:00',
+   salas:[{nome:'Sala 1 — Exames',equip:TODOS}],exames:TODOS,intervalo:['12:00','12:40']},
+ '2026-08-14':{lab:'Sexta 14/08',perfil:'Sem pré-operatório',ini:'07:20',fim:'16:00',
+   salas:[{nome:'Sala 1 — Exames',equip:['CAMPO','OCT','PAQUI','TOPO','MICRO']}],
+   exames:['CAMPO','OCT','PAQUI','TOPO','MICRO'],intervalo:null},
+};
+const P={gran:5,buf:5,cheg:15};
+const M=h=>{const[a,b]=h.split(':').map(Number);return a*60+b};
+const H=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const dur=ids=>ids.reduce((s,i)=>s+EX(i).dur,0);
+const ordena=ids=>[...ids].sort((a,b)=>EX(a).ordem-EX(b).ordem);
+
+let AG=[];
+function ocupacao(d,sala){
+ const c=DIAS[d],o=[];
+ AG.filter(a=>a.data===d).forEach(a=>a.plano.forEach(s=>{if(s.sala===sala)o.push([s.ini,s.fim+P.buf])}));
+ if(c.intervalo)o.push([M(c.intervalo[0]),M(c.intervalo[1])]);
+ return o;
+}
+function atribui(c,ordem,pref){
+ const out=[];
+ for(const e of ordem){
+  let s=(pref>=0&&c.salas[pref]&&c.salas[pref].equip.includes(e))?pref:c.salas.findIndex(x=>x.equip.includes(e));
+  if(s<0)return null; out.push(s);
+ }
+ return out;
+}
+function plano(d,sel,t,pref){
+ const c=DIAS[d],ordem=ordena(sel),salas=atribui(c,ordem,pref);
+ if(!salas)return null;
+ const oc={};salas.forEach(s=>{if(!(s in oc))oc[s]=ocupacao(d,s)});
+ let cur=t;const pl=[];
+ for(let i=0;i<ordem.length;i++){
+  const e=ordem[i],s=salas[i],dr=EX(e).dur;
+  if(cur+dr>M(c.fim))return null;
+  if(e==='BIO'&&cur>M(LIM_BIO))return null;
+  if(oc[s].some(([a,b])=>cur<b&&cur+dr>a))return null;
+  pl.push({id:e,sala:s,ini:cur,fim:cur+dr});cur+=dr;
+ }
+ return pl;
+}
+function disponiveis(d,sel){
+ const c=DIAS[d];if(!c||!sel.length)return[];
+ if(!sel.every(e=>c.exames.includes(e)))return[];
+ if(!sel.every(e=>c.salas.some(s=>s.equip.includes(e))))return[];
+ const res=[];
+ for(let t=M(c.ini);t<=M(c.fim);t+=P.gran){
+  for(let pr=0;pr<c.salas.length;pr++){
+   const pl=plano(d,sel,t,pr);
+   if(pl){res.push({ini:t,fim:pl[pl.length-1].fim,plano:pl});break}
+  }
+ }
+ return res;
+}
+function motivoBloqueio(d,sel){
+ const c=DIAS[d];
+ const na=sel.filter(e=>!c.exames.includes(e));
+ if(na.length)return 'Dia não faz '+na.map(e=>EX(e).nome).join(', ');
+ const ne=sel.filter(e=>!c.salas.some(s=>s.equip.includes(e)));
+ if(ne.length)return 'Sem equipamento aberto: '+ne.map(e=>EX(e).equip).join(', ');
+ return 'Sem janela livre';
+}
+function capacidade(d){
+ const c=DIAS[d];
+ const bloq=c.intervalo?M(c.intervalo[1])-M(c.intervalo[0]):0;
+ const janela=(M(c.fim)-M(c.ini)-bloq)*c.salas.length;
+ let usado=0;AG.filter(a=>a.data===d).forEach(a=>a.plano.forEach(s=>usado+=s.fim-s.ini));
+ return{janela,usado,livre:janela-usado,pct:janela?usado/janela:0};
+}
+const NOMES=['Elizabete Barbuio','Dalcelene Salviano','Lourdes Caldeira','Antonio Dedoni','Valdevinos Pereira',
+'Terezinha Sousa','Cássia Molina','Suely Bueno','Nair Teixeira','Edina Pinto','Conceição Pinardi','Maria Helena P.',
+'Ewerton de Paula','José F. Almeida','Hilda Botelho','Geraldo Oliveira','Yvone Mattos','Paulo Pasquotto',
+'Maria Zanella','Leone Tedeschi','Helenice Mattos','Carlos Martins','Helena Longo','Margarete Silva',
+'José Reimberg','Ângela Perez','João Dorta','Antonio Lemos','Genara Luz','Ana Cláudia Silveira','Levina Nascimento',
+'Ruth Costa','Joseane Lima','Luciane Negrini','Marli Santos','Sérgio Marques','Vilma Francisco','Joaquim Alves',
+'Greziele Seles','Enedina Santos','Ivaldo Santos','Oscar Ferreira','Cláudio Martim','Liliane Moura',
+'Ivone Faria','Ailton Silva','Márcia Menis','Regiane Freitas','Margareth Santos','Domingos Mondini',
+'Everson Ramos','Ana Lúcia Rodrigues','Marcos Santinon','Gislaine Silva','Élio Santos','Maria Aparecida C.'];
+const PADRAO={
+ '2026-08-10':{qtd:13,mix:[['BIO','TOPO','OCT'],['BIO','TOPO','OCT'],['BIO','OCT'],['BIO','TOPO','OCT','MICRO'],['BIO'],['BIO','TOPO'],['BIO','TOPO','OCT']]},
+ '2026-08-11':{qtd:19,mix:[['OCT'],['CAMPO','OCT'],['OCT'],['OCT','TOPO'],['CAMPO'],['OCT'],['CAMPO','PAQUI'],['OCT'],['OCT'],['CAMPO','OCT']]},
+ '2026-08-12':{qtd:22,mix:[['OCT'],['CAMPO'],['OCT','TOPO'],['CAMPO'],['OCT'],['CAMPO','OCT'],['OCT'],['CAMPO','PAQUI']]},
+ '2026-08-13':{qtd:16,mix:[['CAMPO','OCT','PAQUI'],['OCT'],['OCT'],['CAMPO'],['OCT'],['OCT','TOPO'],['CAMPO','OCT'],['OCT']]},
+ '2026-08-14':{qtd:15,mix:[['CAMPO'],['CAMPO','PAQUI'],['OCT'],['CAMPO'],['OCT','PAQUI'],['CAMPO','OCT'],['CAMPO']]},
+};
+const GAPS=[0,0,10,0,25,0,0,15,5,0,35,0,10,0,20];
+function semear(){
+ AG=[];let idx=0;
+ Object.entries(PADRAO).forEach(([d,pad])=>{
+  let minIni=M(DIAS[d].ini);
+  for(let i=0;i<pad.qtd;i++){
+   const combo=pad.mix[i%pad.mix.length];
+   const av=disponiveis(d,combo);
+   const s=av.find(x=>x.ini>=minIni);
+   if(!s)break;
+   AG.push({data:d,pac:NOMES[idx%NOMES.length],exames:s.plano.map(x=>x.id),ini:s.ini,fim:s.fim,plano:s.plano});
+   idx++;minIni=s.ini+GAPS[i%GAPS.length];
+  }
+ });
+}
+semear();
+
+/* ---------- tela 1 ---------- */
+function renderTempos(){
+ document.querySelector('#tTempos tbody').innerHTML=EXAMES.map(e=>`<tr>
+ <td><span class="dot" style="background:${e.cor}"></span>${e.nome}</td>
+ <td class="muted">${e.id}</td><td>${e.equip}</td>
+ <td class="num"><input type="number" value="${e.dur}" min="5" step="5" data-ex="${e.id}"></td>
+ <td class="num">${e.ordem}</td><td>${e.dilata?'<b>Sim</b>':'Não'}</td>
+ <td class="muted">${e.preparo.length?e.preparo.join(' · '):'—'}</td></tr>`).join('');
+ document.querySelectorAll('#tTempos input').forEach(i=>i.onchange=()=>{
+  EX(i.dataset.ex).dur=Math.max(5,+i.value||5);semear();SEL=[];DIA=null;SLOT=null;renderAll();});
+}
+function renderDias(){
+ document.querySelector('#tDias tbody').innerHTML=Object.entries(DIAS).map(([d,c])=>{
+  const k=capacidade(d);
+  return `<tr><td><b>${c.lab}</b></td><td>${c.perfil}</td>
+  <td>${c.ini}–${c.fim}${c.intervalo?` <span class="muted">(bloqueio ${c.intervalo[0]}–${c.intervalo[1]})</span>`:''}</td>
+  <td>${c.salas.map(s=>s.nome).join('<br>')}</td>
+  <td>${c.exames.map(e=>`<span class="dot" style="background:${EX(e).cor}" title="${EX(e).nome}"></span>`).join('')}
+      <span class="muted">${c.exames.length} de 6</span></td>
+  <td class="num">${Math.round(k.janela/6)/10} h<br><span class="muted">${Math.round(k.pct*100)}% usado</span></td></tr>`;
+ }).join('');
+}
+
+/* ---------- tela 2 ---------- */
+let SEL=[],DIA=null,SLOT=null;
+function renderChips(){
+ document.getElementById('chipsExames').innerHTML=EXAMES.map(e=>
+  `<div class="chip${SEL.includes(e.id)?' on':''}" data-e="${e.id}">
+   <span class="dot" style="background:${e.cor}"></span>${e.nome}
+   <span class="muted" style="${SEL.includes(e.id)?'color:#fff;opacity:.75':''}">${e.dur} min</span></div>`).join('');
+ document.querySelectorAll('#chipsExames .chip').forEach(c=>c.onclick=()=>{
+  const id=c.dataset.e;SEL=SEL.includes(id)?SEL.filter(x=>x!==id):[...SEL,id];
+  DIA=null;SLOT=null;renderAgendamento();});
+}
+function renderResumo(){
+ const b=document.getElementById('resumoSel');
+ if(!SEL.length){b.innerHTML='<p class="muted" style="margin:0">Nenhum exame selecionado.</p>';return}
+ const o=ordena(SEL),t=dur(o);
+ b.innerHTML=`<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+ <div><div class="muted">Ordem clínica calculada pelo sistema</div>
+ <div style="margin-top:5px;font-weight:600">${o.map((e,i)=>
+  `${i?'<span class="muted" style="font-weight:400"> → </span>':''}<span class="dot" style="background:${EX(e).cor}"></span>${EX(e).nome} <span class="muted" style="font-weight:400">(${EX(e).dur}′)</span>`).join('')}</div></div>
+ <div><div class="muted">Tempo de sala</div><div style="font-size:22px;font-weight:680;letter-spacing:-.02em">${t} min</div></div>
+ <div><div class="muted">Permanência estimada</div><div style="font-size:22px;font-weight:680;letter-spacing:-.02em">${t+P.cheg}${o.some(e=>EX(e).dilata)?'+':''} min</div></div>
+ </div>${o.some(e=>EX(e).dilata)?'<div class="alert" style="margin-bottom:0">Inclui exame que pode exigir dilatação. A espera não ocupa a sala, mas prende o paciente — avisar sobre a permanência maior.</div>':''}`;
+}
+function renderDiasDisp(){
+ const box=document.getElementById('listaDias');
+ document.getElementById('sn2').className='sn '+(SEL.length?'':'idle');
+ if(!SEL.length){box.innerHTML='<p class="muted" style="margin:0">Selecione ao menos um exame acima.</p>';return}
+ box.innerHTML=Object.entries(DIAS).map(([d,c])=>{
+  const av=disponiveis(d,SEL),n=av.length;
+  const nsalas=n?new Set(av[0].plano.map(x=>x.sala)).size:0;
+  return `<button class="day${n?'':' none'}${DIA===d?' on':''}" data-d="${d}"${n?'':' disabled'}>
+   <div class="dd">${c.lab}</div><div class="dt">${c.perfil}</div>
+   <div class="dv" style="color:${n?'var(--ok)':'var(--ink-3)'}">${n?n+' horários livres':motivoBloqueio(d,SEL)}</div>
+   ${n?`<div class="dt" style="margin-top:3px">1º livre: <b>${H(av[0].ini)}</b>${nsalas>1?' · usa 2 salas':''}</div>`:''}</button>`;
+ }).join('');
+ document.querySelectorAll('#listaDias .day').forEach(b=>b.onclick=()=>{DIA=b.dataset.d;SLOT=null;renderAgendamento()});
+}
+function renderHoras(){
+ const box=document.getElementById('listaHoras');
+ document.getElementById('sn3').className='sn '+(DIA?'':'idle');
+ if(!DIA){box.innerHTML='<p class="muted" style="margin:0">Escolha um dia.</p>';return}
+ const av=disponiveis(DIA,SEL),c=DIAS[DIA],porHora={};
+ av.forEach(s=>{(porHora[Math.floor(s.ini/60)]??=[]).push(s)});
+ box.innerHTML=`<p class="muted" style="margin:0 0 12px">${av.length} horários possíveis em ${c.lab},
+ de ${P.gran} em ${P.gran} minutos. Bloco de <b>${dur(SEL)} min</b>. A sala é escolhida pelo sistema.</p>`
+ +Object.keys(porHora).sort((a,b)=>a-b).map(h=>`<div class="hourrow"><div class="hourlab">${String(h).padStart(2,'0')}h</div>
+ <div class="hgrid">${porHora[h].map(s=>`<div class="h${SLOT&&SLOT.ini===s.ini?' on':''}" data-i="${s.ini}">${H(s.ini)}</div>`).join('')}</div></div>`).join('');
+ document.querySelectorAll('#listaHoras .h').forEach(e=>e.onclick=()=>{
+  SLOT=av.find(s=>s.ini===+e.dataset.i);renderAgendamento();});
+}
+function renderConf(){
+ const box=document.getElementById('boxConf');
+ document.getElementById('sn4').className='sn '+(SLOT?'':'idle');
+ if(!SLOT){box.innerHTML='<p class="muted" style="margin:0">Escolha um horário.</p>';return}
+ const c=DIAS[DIA],pl=SLOT.plano,salasUsadas=[...new Set(pl.map(x=>x.sala))];
+ const prep=[...new Set(pl.flatMap(x=>EX(x.id).preparo))];
+ box.innerHTML=`<div class="grid2">
+  <div><p class="ctitle" style="margin-bottom:8px">Agendamento</p><table><tbody>
+   <tr><td class="muted">Data</td><td><b>${c.lab}</b></td></tr>
+   <tr><td class="muted">Bloco</td><td><b>${H(SLOT.ini)} – ${H(SLOT.fim)}</b> (${SLOT.fim-SLOT.ini} min)</td></tr>
+   <tr><td class="muted">Chegar às</td><td><b>${H(SLOT.ini-P.cheg)}</b> <span class="muted">(${P.cheg} min antes)</span></td></tr>
+   <tr><td class="muted">Sala${salasUsadas.length>1?'s':''}</td><td>${salasUsadas.map(s=>c.salas[s].nome).join('<br>')}</td></tr>
+   <tr><td class="muted">Sequência</td><td>${pl.map(x=>`${H(x.ini)} – ${H(x.fim)} · <span class="dot" style="background:${EX(x.id).cor}"></span>${EX(x.id).nome}${salasUsadas.length>1?` <span class="muted">(S${x.sala+1})</span>`:''}`).join('<br>')}</td></tr>
+   </tbody></table></div>
+  <div><p class="ctitle" style="margin-bottom:8px">Avisos obrigatórios ao paciente</p>
+   ${prep.length?prep.map(p=>`<div class="alert warn"><b>Preparo</b>${p}</div>`).join(''):'<div class="alert ok"><b>Sem preparo especial</b>Nenhuma restrição prévia para estes exames.</div>'}
+   ${pl.some(x=>EX(x.id).dilata)?'<div class="alert"><b>Pode haver dilatação</b>Avisar que o paciente não deve dirigir na volta e que a permanência pode passar do tempo de sala.</div>':''}
+   ${pl.some(x=>x.id==='CAMPO')?'<div class="alert ok"><b>Ordem garantida</b>O campo visual está no início do bloco, antes de qualquer colírio que dilate.</div>':''}
+   ${pl.some(x=>x.id==='BIO')?'<div class="alert ok"><b>Biometria dentro da janela segura</b>Nenhuma biometria é oferecida depois das '+LIM_BIO+'.</div>':''}
+  </div></div>
+ <div style="margin-top:16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+  <input type="text" id="nomePac" placeholder="Nome do paciente" style="max-width:280px">
+  <button class="btn" id="btnConf">Confirmar agendamento</button>
+  <button class="btn ghost sm" id="btnLimpa">Limpar</button>
+  <span class="muted" id="msgConf"></span></div>`;
+ document.getElementById('btnConf').onclick=()=>{
+  const n=(document.getElementById('nomePac').value||'').trim()||'Paciente sem nome';
+  const d=DIA;
+  AG.push({data:d,pac:n,exames:pl.map(x=>x.id),ini:SLOT.ini,fim:SLOT.fim,plano:pl});
+  SEL=[];DIA=null;SLOT=null;renderAll();
+  document.getElementById('selDia').value=d;renderAgenda();
+  document.querySelector('.tab[data-p="p3"]').click();
+ };
+ document.getElementById('btnLimpa').onclick=()=>{SEL=[];DIA=null;SLOT=null;renderAll()};
+}
+function renderAgendamento(){renderChips();renderResumo();renderDiasDisp();renderHoras();renderConf()}
+
+/* ---------- tela 3 ---------- */
+function renderSelDia(){
+ const s=document.getElementById('selDia');
+ if(!s.options.length){s.innerHTML=Object.entries(DIAS).map(([d,c])=>`<option value="${d}">${c.lab} — ${c.perfil}</option>`).join('');
+  s.onchange=renderAgenda;}
+}
+function renderAgenda(){
+ const d=document.getElementById('selDia').value,c=DIAS[d];
+ const ini=M(c.ini),fim=M(c.fim),span=fim-ini;
+ document.getElementById('infoDia').textContent=`${c.ini}–${c.fim} · ${c.salas.length} sala${c.salas.length>1?'s':''} · granularidade ${P.gran} min`;
+ document.getElementById('timeline').innerHTML=c.salas.map((sala,si)=>{
+  let blocos='';
+  AG.filter(a=>a.data===d).forEach(a=>a.plano.forEach(x=>{
+   if(x.sala!==si)return;
+   const L=100*(x.ini-ini)/span,W=100*(x.fim-x.ini)/span;
+   blocos+=`<div class="blk${W<3.4?' mini':''}" style="left:${L}%;width:${W}%;background:${EX(x.id).cor}">
+    <span>${EX(x.id).sig}</span><span class="tip">${a.pac} · ${H(x.ini)}–${H(x.fim)} · ${EX(x.id).nome}</span></div>`;
+  }));
+  const bloq=c.intervalo?`<div class="blk" style="left:${100*(M(c.intervalo[0])-ini)/span}%;width:${100*(M(c.intervalo[1])-M(c.intervalo[0]))/span}%;background:var(--line-2)">
+   <span style="color:var(--ink-2);text-shadow:none">bloqueio</span></div>`:'';
+  let us=0;AG.filter(a=>a.data===d).forEach(a=>a.plano.forEach(x=>{if(x.sala===si)us+=x.fim-x.ini}));
+  const bl=c.intervalo?M(c.intervalo[1])-M(c.intervalo[0]):0;
+  const pc=Math.round(100*us/(span-bl));
+  return `<div class="tlrow"><div class="tlname">${sala.nome}<br><span class="muted" style="font-weight:400">${us} min · ${pc}% ocupada</span></div><div class="tl">${bloq}${blocos}</div></div>`;
+ }).join('');
+ let eixo='';for(let t=Math.ceil(ini/60)*60;t<=fim;t+=60)eixo+=`<span style="left:${100*(t-ini)/span}%">${H(t)}</span>`;
+ document.getElementById('axis').innerHTML=eixo;
+ document.getElementById('legenda').innerHTML=EXAMES.map(e=>
+  `<span class="lg"><span class="dot" style="background:${e.cor}"></span>${e.nome}</span>`).join('')
+  +'<span class="lg muted">Cada bloco é um exame. Passe o mouse para ver o paciente.</span>';
+ const k=capacidade(d),ag=AG.filter(a=>a.data===d);
+ const nEx=ag.reduce((s,a)=>s+a.exames.length,0);
+ document.getElementById('kpis').innerHTML=`
+ <div class="tile"><div class="n">${ag.length}</div><div class="k">pacientes agendados</div></div>
+ <div class="tile"><div class="n">${nEx}</div><div class="k">procedimentos</div></div>
+ <div class="tile"><div class="n">${k.usado}<small> min</small></div><div class="k">de sala ocupados</div></div>
+ <div class="tile"><div class="n">${Math.round(k.pct*100)}<small>%</small></div><div class="k">da capacidade do dia</div></div>
+ <div class="tile"><div class="n">${k.livre}<small> min</small></div><div class="k">livres ≈ ${Math.floor(k.livre/(EX('OCT').dur+P.buf))} OCTs ou ${Math.floor(k.livre/(EX('CAMPO').dur+P.buf))} campos visuais</div></div>`;
+ document.querySelector('#tAgenda tbody').innerHTML=ag.slice().sort((a,b)=>a.ini-b.ini).map(a=>{
+  const su=[...new Set(a.plano.map(x=>x.sala))];
+  return `<tr><td><b>${H(a.ini)}</b></td><td>${H(a.fim)}</td><td class="num">${a.fim-a.ini}</td>
+   <td>${a.pac}</td><td>${a.exames.map(e=>`<span class="dot" style="background:${EX(e).cor}"></span>${e}`).join(' ')}</td>
+   <td class="muted">${su.map(s=>'S'+(s+1)).join(' → ')}</td><td class="muted">${H(a.ini-P.cheg)}</td></tr>`;
+ }).join('')||'<tr><td colspan="7" class="muted">Nenhum agendamento neste dia.</td></tr>';
+}
+
+/* ---------- geral ---------- */
+function renderAll(){renderTempos();renderDias();renderAgendamento();renderSelDia();renderAgenda()}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+ document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id===t.dataset.p));
+});
+['pGran','pBuf','pCheg'].forEach(id=>document.getElementById(id).onchange=e=>{
+ const k={pGran:'gran',pBuf:'buf',pCheg:'cheg'}[id];P[k]=Math.max(0,+e.target.value||0);
+ if(k==='gran')P.gran=Math.max(5,P.gran);
+ semear();SEL=[];DIA=null;SLOT=null;renderAll();});
+renderAll();
+</script></body></html>

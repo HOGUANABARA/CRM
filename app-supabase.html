@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG — App conectado (Supabase)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;font-size:13px;}
+  header{background:#0D2137;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  header .logo{font-size:16px;font-weight:700;}
+  header .sub{font-size:10px;color:#5A8EB5;text-transform:uppercase;letter-spacing:1px;}
+  #status{margin-left:auto;font-size:12px;padding:4px 12px;border-radius:12px;font-weight:600;}
+  .st-ok{background:#134f2c;color:#7bf0a8;} .st-err{background:#5a1a1f;color:#ffb3b8;} .st-load{background:#3a3f18;color:#f4e08a;}
+  nav{background:#fff;border-bottom:1px solid #DDE3EB;padding:0 14px;display:flex;gap:2px;overflow-x:auto;}
+  nav button{border:none;background:none;padding:12px 14px;font-size:13px;font-weight:600;color:#6B7E90;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+  nav button.on{color:#2B9BE8;border-bottom-color:#2B9BE8;}
+  main{padding:18px 22px;max-width:1200px;margin:0 auto;}
+  h1{font-size:17px;color:#0D2137;margin-bottom:4px;}
+  .hint{color:#6B7E90;font-size:12px;margin-bottom:14px;}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+  .tile{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:14px 16px;}
+  .tile .n{font-size:26px;font-weight:700;color:#0D2137;}
+  .tile .k{font-size:11px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:16px;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#6B7E90;font-size:10.5px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;}
+  td{padding:8px 10px;border-bottom:1px solid #EEF1F5;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600;background:#DCF0FD;color:#0A5E96;}
+  .empty{padding:20px;text-align:center;color:#9AAAB8;font-style:italic;}
+  code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:11px;}
+</style>
+</head>
+<body>
+<header>
+  <div><span class="logo">👁 HOG</span> <span class="sub">App conectado · Supabase</span></div>
+  <span id="status" class="st-load">conectando…</span>
+</header>
+<nav id="nav"></nav>
+<main id="main"><p class="hint">Carregando…</p></main>
+
+<script>
+const SB_URL='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
+const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
+
+async function sb(path){
+  const r=await fetch(SB_URL+'/'+path,{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
+  if(!r.ok) throw new Error(r.status+': '+await r.text());
+  return r.json();
+}
+function status(cls,txt){const s=document.getElementById('status');s.className=cls;s.textContent=txt;}
+function tbl(rows,cols){
+  if(!rows.length) return '<div class="empty">Nenhum registro — rode o seed (supabase-schema.sql) para popular.</div>';
+  let h='<table><thead><tr>'+cols.map(c=>'<th>'+c.t+'</th>').join('')+'</tr></thead><tbody>';
+  h+=rows.map(r=>'<tr>'+cols.map(c=>'<td>'+(c.f?c.f(r[c.k],r):(r[c.k]??'—'))+'</td>').join('')+'</tr>').join('');
+  return h+'</tbody></table>';
+}
+
+const TABS={
+  dashboard:{label:'Painel',render:async()=>{
+    const [med,exa,sal,fun,esp,pac,lio,con]=await Promise.all(
+      ['medicos','exames','salas','funil_catarata','espera_cirurgica','pacientes','lios','convenios'].map(t=>sb(t+'?select=id')));
+    const tiles=[['Médicos',med.length],['Exames (catálogo)',exa.length],['Salas',sal.length],['LIO',lio.length],
+      ['Convênios',con.length],['Funil catarata',fun.length],['Espera cirúrgica',esp.length],['Pacientes',pac.length]];
+    return '<h1>Painel</h1><div class="hint">Dados lidos ao vivo do Supabase (projeto hfjudertusjeinnzwfeu).</div><div class="tiles">'+
+      tiles.map(t=>'<div class="tile"><div class="n">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join('')+'</div>';
+  }},
+  medicos:{label:'Médicos',render:async()=>{
+    const rows=await sb('medicos?select=*&order=nome');
+    return '<h1>Médicos</h1><div class="hint">Cadastro real (medId canônico).</div><div class="panel">'+
+      tbl(rows,[{k:'nome',t:'Médico'},{k:'especialidade',t:'Especialidade'},{k:'crm',t:'CRM'},{k:'id',t:'medId',f:v=>'<code>'+v+'</code>'},{k:'papel',t:'Papel'}])+'</div>';
+  }},
+  agendas:{label:'Agendas lógicas',render:async()=>{
+    const rows=await sb('agendas_logicas?select=*,medicos(nome)&order=id');
+    return '<h1>Agendas lógicas (padrões)</h1><div class="hint">Médico × tipo × local, com regras da camada 4.</div><div class="panel">'+
+      tbl(rows,[{k:'nome',t:'Agenda'},{k:'medicos',t:'Médico',f:v=>v?v.nome:'—'},{k:'tipo',t:'Tipo'},{k:'local',t:'Local'},{k:'regras',t:'Regras',f:v=>'<code>'+JSON.stringify(v)+'</code>'}])+'</div>';
+  }},
+  exames:{label:'Exames',render:async()=>{
+    const rows=await sb('exames?select=*&order=ordem');
+    return '<h1>Catálogo de Exames</h1><div class="hint">Agenda contínua: duração por exame, ordem clínica, dilatação, preparo.</div><div class="panel">'+
+      tbl(rows,[{k:'sigla',t:'Sigla'},{k:'nome',t:'Exame'},{k:'equipamento',t:'Equipamento'},{k:'duracao_min',t:'Min',f:v=>v+' min'},{k:'ordem',t:'Ordem'},{k:'dilata',t:'Dilata?',f:v=>v?'<b>Sim</b>':'Não'},{k:'preparo',t:'Preparo'}])+'</div>';
+  }},
+  lios:{label:'LIO',render:async()=>{
+    const rows=await sb('lios?select=*&order=valor_venda.desc');
+    return '<h1>Catálogo de LIO</h1><div class="panel">'+
+      tbl(rows,[{k:'nome',t:'LIO'},{k:'categoria',t:'Categoria'},{k:'valor_venda',t:'Valor venda',f:v=>'R$ '+Number(v).toLocaleString('pt-BR')},{k:'custo',t:'Custo',f:v=>'R$ '+Number(v).toLocaleString('pt-BR')}])+'</div>';
+  }},
+  funil:{label:'Funil catarata',render:async()=>{
+    const rows=await sb('funil_catarata?select=*,pacientes(nome),lios(nome),ma:medicos!funil_catarata_medico_atendeu_fkey(nome),mo:medicos!funil_catarata_medico_opera_fkey(nome)');
+    return '<h1>Funil de Catarata</h1><div class="hint">Cada olho é um prospecto. Status LIO: Import / Convênio / Particular.</div><div class="panel">'+
+      tbl(rows,[{k:'pacientes',t:'Paciente',f:v=>v?v.nome:'—'},{k:'olho',t:'Olho'},{k:'etapa',t:'Etapa'},{k:'status_lio',t:'Status LIO',f:v=>'<span class="tag">'+(v||'—')+'</span>'},{k:'lios',t:'LIO',f:v=>v?v.nome:'—'},{k:'valor',t:'Valor',f:v=>v?'R$ '+Number(v).toLocaleString('pt-BR'):'—'},{k:'previsao',t:'Previsão'},{k:'observacao',t:'Observação'}])+'</div>';
+  }},
+  espera:{label:'Espera cirúrgica',render:async()=>{
+    const rows=await sb('espera_cirurgica?select=*,pacientes(nome),medicos(nome)&order=entrou_em');
+    return '<h1>Espera Cirúrgica</h1><div class="panel">'+
+      tbl(rows,[{k:'pacientes',t:'Paciente',f:v=>v?v.nome:'—'},{k:'tipo',t:'Tipo'},{k:'procedimento',t:'Procedimento'},{k:'medicos',t:'Médico',f:v=>v?v.nome:'—'},{k:'entrou_em',t:'Entrou em'},{k:'prioridade',t:'Prioridade'}])+'</div>';
+  }},
+  pacientes:{label:'Pacientes',render:async()=>{
+    const rows=await sb('pacientes?select=*,convenios(nome)&order=nome');
+    return '<h1>Pacientes</h1><div class="panel">'+
+      tbl(rows,[{k:'nome',t:'Nome'},{k:'nascimento',t:'Nascimento'},{k:'telefone',t:'Telefone'},{k:'convenios',t:'Convênio',f:v=>v?v.nome:'—'},{k:'nao_sobe_escada',t:'Não sobe escada',f:v=>v?'Sim':'—'}])+'</div>';
+  }}
+};
+
+let current='dashboard';
+function buildNav(){
+  document.getElementById('nav').innerHTML=Object.entries(TABS).map(([k,v])=>
+    '<button data-t="'+k+'" class="'+(k===current?'on':'')+'">'+v.label+'</button>').join('');
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{current=b.dataset.t;buildNav();load();});
+}
+async function load(){
+  const m=document.getElementById('main');
+  m.innerHTML='<p class="hint">Carregando…</p>';
+  try{ m.innerHTML=await TABS[current].render(); status('st-ok','● conectado'); }
+  catch(e){ m.innerHTML='<div class="panel"><h1>Erro ao ler o Supabase</h1><div class="hint">'+e.message+'</div></div>'; status('st-err','● erro de conexão'); }
+}
+buildNav(); load();
+</script>
+</body>
+</html>
