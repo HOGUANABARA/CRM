@@ -211,6 +211,8 @@ Segunda-feira segue exclusiva para pré-operatório de catarata.</p>
 <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px;flex-wrap:wrap">
 <span class="muted">Data:</span><select id="selDia"></select>
 <span class="muted" id="infoDia"></span>
+<button class="btn sm" onclick="imprimirAgenda()">🖨 Imprimir</button>
+<button class="btn ghost sm" onclick="exportarCSV()">📄 Excel (CSV)</button>
 </div>
 <div id="timeline"></div>
 <div class="axis" id="axis"></div>
@@ -267,6 +269,7 @@ são fictícios. Projeto AGENDA EXAMES.</p>
 const SB_URL='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
 const SBH={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
+let PACIENTES=[];
 async function sbGet(p){const r=await fetch(SB_URL+'/'+p,{headers:SBH});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function sbPost(t,o){const r=await fetch(SB_URL+'/'+t,{method:'POST',headers:{...SBH,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json();}
 const _CORES={CAMPO:'var(--s2)',TOPO:'var(--s4)',PAQUI:'var(--s5)',MICRO:'var(--s7)',BIO:'var(--s3)',OCT:'var(--s1)'};
@@ -276,6 +279,7 @@ async function carregaSupabase(){
   if(ex&&ex.length) EXAMES=ex.map(e=>({id:e.id,sig:e.sigla,nome:e.nome,equip:e.equipamento,dur:e.duracao_min,ordem:e.ordem,dilata:e.dilata,cor:_CORES[e.id]||'var(--s1)',preparo:e.preparo?[e.preparo]:[]}));
   const cfg=await sbGet('exame_dia_config?select=*&order=data');
   if(cfg&&cfg.length){DIAS={};cfg.forEach(c=>{DIAS[c.data]={lab:_lab(c.data),perfil:c.perfil,ini:c.ini,fim:c.fim,salas:c.salas,exames:c.exames,intervalo:c.intervalo};});}
+  PACIENTES=await sbGet('pacientes?select=id,nome&order=nome').catch(function(){return [];});
   await recarregaAG();
 }
 async function recarregaAG(){
@@ -284,9 +288,20 @@ async function recarregaAG(){
 }
 async function salvarAgendamento(o){
   const salaNome=o.plano.map(x=>DIAS[o.data].salas[x.sala].nome).join(' / ');
-  await sbPost('exame_agendamentos',{data:o.data,paciente_nome:o.pac,exames:o.exames,ini:o.ini,fim:o.fim,sala:salaNome,chegar_as:H(o.ini-P.cheg),plano:o.plano});
+  await sbPost('exame_agendamentos',{data:o.data,paciente_id:o.paciente_id||null,paciente_nome:o.pac,exames:o.exames,ini:o.ini,fim:o.fim,sala:salaNome,chegar_as:H(o.ini-P.cheg),plano:o.plano});
   await recarregaAG();
 }
+function _agdDia(){const d=document.getElementById('selDia').value;
+  return AG.filter(a=>a.data===d).sort((a,b)=>a.ini-b.ini).map(a=>({cheg:H(a.ini-P.cheg),ini:H(a.ini),fim:H(a.fim),pac:a.pac||'',
+   exames:(a.exames||[]).map(e=>{const x=EX(e);return x?x.sig:e;}).join('+'),
+   sala:[...new Set((a.plano||[]).map(x=>DIAS[d]&&DIAS[d].salas[x.sala]?DIAS[d].salas[x.sala].nome:''))].filter(Boolean).join(' / ')}));}
+function imprimirAgenda(){const d=document.getElementById('selDia').value;const rows=_agdDia();
+  const html='<h2 style="font-family:sans-serif">Agenda de Exames — '+((DIAS[d]&&DIAS[d].lab)||d)+'</h2><table border="1" cellpadding="6" style="border-collapse:collapse;font-family:sans-serif;font-size:13px"><tr><th>Chegar</th><th>Início</th><th>Fim</th><th>Paciente</th><th>Exames</th><th>Sala</th></tr>'+rows.map(r=>'<tr><td>'+r.cheg+'</td><td>'+r.ini+'</td><td>'+r.fim+'</td><td>'+r.pac+'</td><td>'+r.exames+'</td><td>'+r.sala+'</td></tr>').join('')+'</table>';
+  const w=window.open('','_blank');if(!w){alert('Permita popups para imprimir.');return;}w.document.write('<html><head><title>Agenda de Exames</title></head><body>'+html+'</body></html>');w.document.close();w.focus();setTimeout(function(){w.print();},300);}
+function exportarCSV(){const d=document.getElementById('selDia').value;const rows=_agdDia();
+  const head=['Chegar','Inicio','Fim','Paciente','Exames','Sala'];
+  const csv=[head.join(';')].concat(rows.map(r=>[r.cheg,r.ini,r.fim,r.pac,r.exames,r.sala].map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(';'))).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='agenda-exames-'+d+'.csv';document.body.appendChild(a);a.click();a.remove();}
 /* ============================================ */
 let EXAMES=[
  {id:'CAMPO',sig:'CV',nome:'Campo visual',equip:'Campímetro',dur:20,ordem:1,dilata:false,cor:'var(--s2)',
@@ -509,14 +524,28 @@ function renderConf(){
    ${pl.some(x=>x.id==='BIO')?'<div class="alert ok"><b>Biometria dentro da janela segura</b>Nenhuma biometria é oferecida depois das '+LIM_BIO+'.</div>':''}
   </div></div>
  <div style="margin-top:16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
-  <input type="text" id="nomePac" placeholder="Nome do paciente" style="max-width:280px">
+  <select id="pacSel" style="max-width:240px" onchange="document.getElementById('novoPac').style.display=(this.value==='__novo'?'inline-flex':'none')">
+   <option value="">— selecione o paciente —</option>
+   ${PACIENTES.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('')}
+   <option value="__novo">➕ Cadastrar novo paciente</option>
+  </select>
+  <span id="novoPac" style="display:none;gap:6px;align-items:center">
+   <input type="text" id="npNome" placeholder="Nome do novo paciente" style="max-width:190px">
+   <input type="text" id="npTel" placeholder="Telefone" style="max-width:120px">
+  </span>
   <button class="btn" id="btnConf">Confirmar agendamento</button>
   <button class="btn ghost sm" id="btnLimpa">Limpar</button>
   <span class="muted" id="msgConf"></span></div>`;
  document.getElementById('btnConf').onclick=async()=>{
-  const n=(document.getElementById('nomePac').value||'').trim()||'Paciente sem nome';
-  const d=DIA; const rec={data:d,pac:n,exames:pl.map(x=>x.id),ini:SLOT.ini,fim:SLOT.fim,plano:pl};
-  const mc=document.getElementById('msgConf'); if(mc)mc.textContent='salvando…';
+  const mc=document.getElementById('msgConf');
+  let pacId=null,n='';const selv=document.getElementById('pacSel').value;
+  if(selv==='__novo'){ n=(document.getElementById('npNome').value||'').trim(); if(!n){if(mc)mc.textContent='digite o nome do novo paciente';return;}
+    try{const np=await sbPost('pacientes',{nome:n,telefone:(document.getElementById('npTel').value||'').trim()});pacId=np[0].id;PACIENTES.push({id:pacId,nome:n});}
+    catch(e){if(mc)mc.textContent='erro ao cadastrar paciente: '+e.message;return;} }
+  else if(selv){ pacId=selv; n=(PACIENTES.find(p=>p.id===selv)||{}).nome||''; }
+  else { if(mc)mc.textContent='selecione ou cadastre o paciente'; return; }
+  const d=DIA; const rec={data:d,pac:n,paciente_id:pacId,exames:pl.map(x=>x.id),ini:SLOT.ini,fim:SLOT.fim,plano:pl};
+  if(mc)mc.textContent='salvando…';
   try{ await salvarAgendamento(rec); if(mc)mc.textContent='salvo no banco ✔'; }
   catch(e){ AG.push(rec); if(mc)mc.textContent='salvo local (libere permissões no Supabase)'; }
   SEL=[];DIA=null;SLOT=null;renderAll();
