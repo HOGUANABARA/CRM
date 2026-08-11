@@ -263,7 +263,32 @@ são fictícios. Projeto AGENDA EXAMES.</p>
 </div>
 
 <script>
-const EXAMES=[
+/* ====== Camada Supabase (dados reais) ====== */
+const SB_URL='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
+const SBH={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
+async function sbGet(p){const r=await fetch(SB_URL+'/'+p,{headers:SBH});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,o){const r=await fetch(SB_URL+'/'+t,{method:'POST',headers:{...SBH,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json();}
+const _CORES={CAMPO:'var(--s2)',TOPO:'var(--s4)',PAQUI:'var(--s5)',MICRO:'var(--s7)',BIO:'var(--s3)',OCT:'var(--s1)'};
+function _lab(d){try{const dt=new Date(d+'T12:00:00');const w=dt.toLocaleDateString('pt-BR',{weekday:'long'});return w.charAt(0).toUpperCase()+w.slice(1)+' '+d.slice(8)+'/'+d.slice(5,7);}catch(e){return d;}}
+async function carregaSupabase(){
+  const ex=await sbGet('exames?select=*&order=ordem');
+  if(ex&&ex.length) EXAMES=ex.map(e=>({id:e.id,sig:e.sigla,nome:e.nome,equip:e.equipamento,dur:e.duracao_min,ordem:e.ordem,dilata:e.dilata,cor:_CORES[e.id]||'var(--s1)',preparo:e.preparo?[e.preparo]:[]}));
+  const cfg=await sbGet('exame_dia_config?select=*&order=data');
+  if(cfg&&cfg.length){DIAS={};cfg.forEach(c=>{DIAS[c.data]={lab:_lab(c.data),perfil:c.perfil,ini:c.ini,fim:c.fim,salas:c.salas,exames:c.exames,intervalo:c.intervalo};});}
+  await recarregaAG();
+}
+async function recarregaAG(){
+  const rows=await sbGet('exame_agendamentos?select=*&order=data,ini');
+  AG=(rows||[]).map(r=>({id:r.id,data:r.data,pac:r.paciente_nome,exames:r.exames,ini:r.ini,fim:r.fim,plano:r.plano}));
+}
+async function salvarAgendamento(o){
+  const salaNome=o.plano.map(x=>DIAS[o.data].salas[x.sala].nome).join(' / ');
+  await sbPost('exame_agendamentos',{data:o.data,paciente_nome:o.pac,exames:o.exames,ini:o.ini,fim:o.fim,sala:salaNome,chegar_as:H(o.ini-P.cheg),plano:o.plano});
+  await recarregaAG();
+}
+/* ============================================ */
+let EXAMES=[
  {id:'CAMPO',sig:'CV',nome:'Campo visual',equip:'Campímetro',dur:20,ordem:1,dilata:false,cor:'var(--s2)',
   preparo:['Não pode estar dilatado']},
  {id:'TOPO', sig:'TP',nome:'Topografia / Ceratoscopia',equip:'Topógrafo',dur:10,ordem:2,dilata:false,cor:'var(--s4)',
@@ -278,7 +303,7 @@ const EX=id=>EXAMES.find(e=>e.id===id);
 const TODOS=EXAMES.map(e=>e.id);
 const LIM_BIO='15:00';
 
-const DIAS={
+let DIAS={
  '2026-08-10':{lab:'Segunda 10/08',perfil:'Pré-operatório de catarata',ini:'07:20',fim:'16:00',
    salas:[{nome:'Sala 1 — Exames (exclusiva pré-op)',equip:['BIO','TOPO','OCT','MICRO','PAQUI']}],
    exames:['BIO','TOPO','OCT','MICRO','PAQUI'],intervalo:null},
@@ -488,10 +513,12 @@ function renderConf(){
   <button class="btn" id="btnConf">Confirmar agendamento</button>
   <button class="btn ghost sm" id="btnLimpa">Limpar</button>
   <span class="muted" id="msgConf"></span></div>`;
- document.getElementById('btnConf').onclick=()=>{
+ document.getElementById('btnConf').onclick=async()=>{
   const n=(document.getElementById('nomePac').value||'').trim()||'Paciente sem nome';
-  const d=DIA;
-  AG.push({data:d,pac:n,exames:pl.map(x=>x.id),ini:SLOT.ini,fim:SLOT.fim,plano:pl});
+  const d=DIA; const rec={data:d,pac:n,exames:pl.map(x=>x.id),ini:SLOT.ini,fim:SLOT.fim,plano:pl};
+  const mc=document.getElementById('msgConf'); if(mc)mc.textContent='salvando…';
+  try{ await salvarAgendamento(rec); if(mc)mc.textContent='salvo no banco ✔'; }
+  catch(e){ AG.push(rec); if(mc)mc.textContent='salvo local (libere permissões no Supabase)'; }
   SEL=[];DIA=null;SLOT=null;renderAll();
   document.getElementById('selDia').value=d;renderAgenda();
   document.querySelector('.tab[data-p="p3"]').click();
@@ -556,5 +583,5 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
  const k={pGran:'gran',pBuf:'buf',pCheg:'cheg'}[id];P[k]=Math.max(0,+e.target.value||0);
  if(k==='gran')P.gran=Math.max(5,P.gran);
  semear();SEL=[];DIA=null;SLOT=null;renderAll();});
-renderAll();
+(async()=>{ try{ await carregaSupabase(); }catch(e){ console.error('Supabase:',e.message); } renderAll(); })();
 </script></body></html>
