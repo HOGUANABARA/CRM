@@ -464,27 +464,25 @@
     <!-- ================= AGENDA DE EXAMES ================= -->
     <div class="tab-content" id="tab-agenda-exames">
       <div class="panel">
-        <h2>Agenda de Exames <span class="pill">total + por sala</span></h2>
-        <div class="hint">Visão total ou por tipo de exame. Retinografia, angiografia e biometria de contato podem ser feitas no térreo.</div>
+        <h2>Agenda de Exames <span class="pill">exames por técnico · modelo contínuo</span></h2>
+        <div class="hint"><strong>Modelo de agendamento contínuo</strong> (o que montamos): a <strong>sala é o recurso</strong> e o paciente ocupa o tempo que os exames dele exigem — <strong>bloco contínuo</strong>, ordem clínica calculada, biometria não após 15h, preparo obrigatório. O call center escolhe os exames e o sistema devolve os horários que cabem. Agenda da <strong>empresa toda</strong>.</div>
+        <div class="note-blue"><strong>Separação por quem executa:</strong> aqui ficam os <strong>exames por TÉCNICO</strong> (sala de exames: biometria, OCT, topografia, paquimetria, microscopia, campo visual · e retinografia). Os <strong>exames por MÉDICO</strong> (MR/Mapeamento de retina, YAG, Fotocoagulação, Angiografia) consomem a agenda do médico → são agendados no <strong>Mapa de Ocupação do Ambulatório</strong>, não aqui.</div>
+        <div style="margin:12px 0;"><button class="btn btn-green btn-sm" onclick="window.open('demo-agenda-exames.html','_blank')">🟢 Abrir agendamento de exames (funcional, ao vivo no Supabase)</button></div>
         <div class="chips">
-          <button class="fbtn active">Total</button>
-          <button class="fbtn">1 · Sala de Exame</button>
-          <button class="fbtn">2 · Retinografia</button>
-          <button class="fbtn">3 · Angiografia</button>
-          <button class="fbtn">4 · MR (Mapeamento de Retina)</button>
-          <button class="fbtn">5 · Fotocoagulação</button>
-          <button class="fbtn">6 · YAG</button>
+          <button class="fbtn active">Todos (técnico)</button>
+          <button class="fbtn">Sala de Exames (bio · OCT · topo · campo · paqui · micro)</button>
+          <button class="fbtn">Retinografia</button>
         </div>
         <table>
-          <thead><tr><th>Data/Hora</th><th>Paciente</th><th>Exame</th><th>Sala</th><th>Médico</th><th>Status</th></tr></thead>
+          <thead><tr><th>Data/Hora</th><th>Chegar</th><th>Paciente</th><th>Exames (bloco contínuo)</th><th>Sala</th><th>Status</th></tr></thead>
           <tbody>
-            <tr><td>10/08 08:00</td><td>Aparecida C. de Souza</td><td><span class="tag tag-teal">Retinografia</span></td><td>Térreo</td><td>Dr. Nilson</td><td><span class="tag tag-gray">Agendado</span></td></tr>
-            <tr><td>10/08 09:30</td><td>Otília Vasques</td><td><span class="tag tag-purple">Angiografia</span></td><td>Térreo</td><td>Dr. Nilson</td><td><span class="tag tag-green">Realizado</span></td></tr>
-            <tr><td>11/08 14:00</td><td>Wanda Reis</td><td><span class="tag tag-blue">MR — Mapeamento</span></td><td>Sala Exames (sup.)</td><td>Dra. Ana C.</td><td><span class="tag tag-gray">Agendado</span></td></tr>
-            <tr><td>13/08 10:00</td><td>Sebastião Prado</td><td><span class="tag tag-amber">Fotocoagulação</span></td><td>Sala Exames (sup.)</td><td>Dra. Ana C.</td><td><span class="tag tag-gray">Agendado</span></td></tr>
-            <tr><td>14/08 11:00</td><td>Vilma Pontes</td><td><span class="tag tag-red">YAG</span></td><td>Sala Exames (sup.)</td><td>Dr. Lucas</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+            <tr><td>10/08 07:20</td><td>07:05</td><td>Aparecida C. de Souza</td><td><span class="tag tag-teal">BIO + TOPO + OCT</span> · 30 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+            <tr><td>10/08 08:00</td><td>07:45</td><td>Maria Aparecida</td><td><span class="tag tag-teal">BIO</span> · 10 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+            <tr><td>10/08 09:30</td><td>09:15</td><td>Otília Vasques</td><td><span class="tag tag-teal">Retinografia</span></td><td>Térreo</td><td><span class="tag tag-green">Realizado</span></td></tr>
+            <tr><td>13/08 10:00</td><td>09:45</td><td>Sebastião Prado</td><td><span class="tag tag-teal">CAMPO + OCT</span> · 30 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
           </tbody>
         </table>
+        <div class="modal-mock">💡 Este é o mesmo motor da tela funcional (contínuo, salas, durações, combos, preparo). Os <strong>pré-op de catarata</strong> (bio/oct/topo) são agendados aqui pelo call center; a <strong>consultora consome</strong> essa fatia pelas parametrizações.</div>
       </div>
     </div>
 
