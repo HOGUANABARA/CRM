@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG — Sistema Completo v4 (Mockup Final)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2B3C; display: flex; height: 100vh; overflow: hidden; font-size: 13px; }
+
+  .sidebar { width: 244px; min-width: 244px; background: #0D2137; display: flex; flex-direction: column; color: #fff; overflow-y: auto; }
+  .sidebar-logo { padding: 16px 20px 12px; border-bottom: 1px solid #1A3A56; }
+  .sidebar-logo .name { font-size: 16px; font-weight: 700; }
+  .sidebar-logo .sub { font-size: 10px; color: #5A8EB5; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sidebar-section { padding: 12px 12px 3px; font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: #3E6B8A; font-weight: 700; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 6px 16px; cursor: pointer; color: #8BAFC9; font-size: 12px; border-left: 3px solid transparent; }
+  .nav-item:hover { background: #1A3A56; color: #fff; }
+  .nav-item.active { background: #1A3A56; color: #fff; border-left-color: #2B9BE8; }
+  .nav-item .icon { font-size: 13px; width: 16px; text-align: center; }
+  .nav-item.sub { padding: 5px 16px 5px 40px; font-size: 11px; color:#6E93B0; }
+  .nav-item.sub .icon { font-size: 9px; }
+  .badge { margin-left: auto; background: #E63946; color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+  .badge-amber { background: #F4A261; color: #1A2B3C; }
+  .badge-blue { background: #2B9BE8; color: #fff; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid #1A3A56; color: #5A8EB5; font-size: 10px; line-height:1.5; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: #fff; border-bottom: 1px solid #DDE3EB; padding: 10px 24px; display: flex; align-items: center; gap: 14px; }
+  .topbar h1 { font-size: 15px; font-weight: 600; color: #0D2137; }
+  .global-search { flex: 1; max-width: 440px; position: relative; }
+  .global-search input { width: 100%; padding: 8px 12px 8px 32px; border: 1px solid #DDE3EB; border-radius: 8px; font-size: 12px; background: #F5F7FA; }
+  .global-search::before { content: '🔍'; position: absolute; left: 10px; top: 8px; font-size: 12px; }
+  .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; }
+  .btn-primary { background: #2B9BE8; color: #fff; }
+  .btn-outline { background: #fff; color: #2B9BE8; border: 1px solid #2B9BE8; }
+  .btn-green { background: #1A9E4A; color: #fff; }
+  .btn-red { background: #E63946; color: #fff; }
+  .btn-gray { background: #EEF1F5; color: #4A5E70; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .content { flex: 1; overflow-y: auto; padding: 18px 24px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .panel { background: #fff; border: 1px solid #DDE3EB; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+  .panel h2 { font-size: 13px; margin-bottom: 12px; color: #0D2137; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .panel h2 .pill { font-size:9px; text-transform:uppercase; letter-spacing:.5px; background:#EDF3F9; color:#2B6CA3; padding:2px 8px; border-radius:10px; font-weight:700; }
+  .hint { color: #6B7E90; font-size: 11.5px; margin-bottom: 10px; line-height:1.55; }
+  .cols2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  @media (max-width: 1100px){ .cols2{ grid-template-columns:1fr; } }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #F5F7FA; padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase; color: #6B7E90; border-bottom: 1px solid #DDE3EB; }
+  td { padding: 8px 12px; border-bottom: 1px solid #EEF1F5; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+
+  .tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+  .tag-gray { background: #EEF1F5; color: #4A5E70; }
+  .tag-blue { background: #DCF0FD; color: #0A5E96; }
+  .tag-green { background: #D4F7E1; color: #0F6A30; }
+  .tag-red { background: #FDDDE0; color: #C0122A; }
+  .tag-amber { background: #FEF0DC; color: #9A5700; }
+  .tag-purple { background: #EDE3FB; color: #5B2C9E; }
+  .tag-teal { background: #D6F3F0; color: #0B6B62; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .form-grid label, .fld label { font-size: 10.5px; color: #6B7E90; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-grid input, .form-grid select, .form-grid textarea, .fld input, .fld select { width: 100%; padding: 8px 10px; border: 1px solid #DDE3EB; border-radius: 6px; font-size: 12px; }
+
+  .lio-check { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #DDE3EB; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+  .lio-check input { width: auto; }
+  .lio-check .price { margin-left: auto; font-weight: 600; color: #0D2137; }
+
+  .temp-selector { display: flex; gap: 8px; }
+  .temp-opt { flex: 1; text-align: center; padding: 8px; border: 1px solid #DDE3EB; border-radius: 6px; cursor: pointer; font-size: 11.5px; }
+  .temp-opt.sel-quente { background: #FDDDE0; border-color: #E63946; font-weight: 600; }
+
+  .chips { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .chips .fbtn { padding: 6px 14px; border-radius: 20px; border: 1px solid #DDE3EB; background: #fff; font-size: 11.5px; cursor: pointer; }
+  .chips .fbtn.active { background: #0D2137; color: #fff; border-color: #0D2137; }
+
+  .funil-cols { display: flex; gap: 10px; overflow-x: auto; }
+  .funil-col { min-width: 168px; flex: 1; background: #F5F7FA; border-radius: 8px; padding: 10px; }
+  .funil-col h3 { font-size: 10px; text-transform: uppercase; color: #6B7E90; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .funil-card { background: #fff; border: 1px solid #DDE3EB; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 11px; cursor: pointer; }
+  .funil-card .fname { font-weight: 600; color: #0D2137; margin-bottom: 3px; font-size: 11.5px; }
+  .funil-card .fmeta { color: #6B7E90; font-size: 10px; }
+
+  .alerta { border-left: 4px solid; border-radius: 0 6px 6px 0; padding: 10px 14px; margin-bottom: 8px; font-size: 12px; display:flex; align-items:center; gap:10px; }
+  .alerta .a-body { flex:1; }
+  .alerta.red { background: #FFF2F3; border-color: #E63946; }
+  .alerta.amber { background: #FFF8F0; border-color: #F4A261; }
+  .alerta.blue { background: #EEF6FD; border-color: #2B9BE8; }
+  .alerta.green { background: #EEFAF2; border-color: #1A9E4A; }
+
+  .view-toggle { display: flex; gap: 4px; }
+  .view-toggle .vbtn { padding: 5px 12px; border: 1px solid #DDE3EB; background: #fff; font-size: 11px; cursor: pointer; }
+  .view-toggle .vbtn:first-child { border-radius: 6px 0 0 6px; }
+  .view-toggle .vbtn:last-child { border-radius: 0 6px 6px 0; }
+  .view-toggle .vbtn.active { background: #0D2137; color: #fff; border-color: #0D2137; }
+
+  .modal-mock { background: #FFF8F0; border: 1px dashed #F4A261; border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 11.5px; line-height:1.55; }
+  .note-blue { background:#EEF6FD; border:1px dashed #2B9BE8; border-radius:8px; padding:12px 14px; font-size:11.5px; line-height:1.55; }
+
+  /* ===== MAPA DE OCUPAÇÃO — grade semanal ===== */
+  .filtros { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .filtros select { padding:6px 10px; border:1px solid #DDE3EB; border-radius:6px; font-size:12px; background:#fff; }
+  .ms { position:relative; }
+  .ms > summary { list-style:none; cursor:pointer; padding:6px 10px; border:1px solid #DDE3EB; border-radius:6px; font-size:12px; background:#fff; white-space:nowrap; }
+  .ms > summary::-webkit-details-marker { display:none; }
+  .ms[open] > summary { border-color:#2B9BE8; }
+  .ms-panel { position:absolute; z-index:20; top:112%; left:0; min-width:230px; max-height:270px; overflow-y:auto; background:#fff; border:1px solid #DDE3EB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.14); padding:8px; }
+  .ms-actions { display:flex; gap:6px; margin-bottom:6px; }
+  .ms-actions button { flex:1; padding:4px; font-size:11px; border:1px solid #DDE3EB; border-radius:5px; background:#F5F7FA; cursor:pointer; }
+  .ms-panel label { display:flex; align-items:center; gap:8px; padding:4px 6px; font-size:12px; cursor:pointer; border-radius:5px; }
+  .ms-panel label:hover { background:#F5F7FA; }
+  .ms-panel label input { width:auto; }
+  .grade { display:grid; grid-template-columns: 62px repeat(6, 1fr); gap:5px; }
+  .grade .gh { font-size:10px; text-transform:uppercase; color:#6B7E90; text-align:center; padding:6px 2px; font-weight:700; }
+  .grade .gh small { display:block; color:#9AAAB8; font-weight:500; }
+  .grade .glabel { font-size:10px; text-transform:uppercase; color:#6B7E90; font-weight:700; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .cell { background:#FAFBFC; border:1px solid #EEF1F5; border-radius:6px; min-height:64px; padding:4px; display:flex; flex-direction:column; gap:4px; }
+  .blk { border-left:4px solid #B7C2CD; border-radius:4px; padding:4px 6px; font-size:10px; line-height:1.25; position:relative; }
+  .blk .who { font-weight:700; color:#0D2137; }
+  .blk .sub { color:#5A6B7B; font-size:9px; }
+  .blk .bd { position:absolute; top:3px; right:4px; font-size:10px; }
+  .t-manha { background:#FDEEDD; } .t-tarde { background:#E4F5EA; } .t-cir { background:#DEF3F0; }
+  .t-exame { background:#E7EEFB; } .t-livre { background:#EFE6FB; }
+  .t-bloq { background:#FBE3E6; background-image:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(192,18,42,.08) 5px,rgba(192,18,42,.08) 10px); }
+  .e-prog { border-left-color:#9AA7B4; } .e-liber { border-left-color:#F4A261; } .e-agend { border-left-color:#2B9BE8; }
+  .e-bloq { border-left-color:#E63946; } .e-livre { border-left-color:#8A63C4; }
+
+  .legend { display:flex; gap:22px; flex-wrap:wrap; margin-top:14px; padding-top:14px; border-top:1px solid #EEF1F5; }
+  .legend .lg { font-size:10.5px; }
+  .legend .lg b { display:block; text-transform:uppercase; letter-spacing:.5px; color:#6B7E90; font-size:9px; margin-bottom:5px; }
+  .legend .chip { display:inline-flex; align-items:center; gap:5px; margin-right:10px; color:#4A5E70; }
+  .legend .sw { width:20px; height:12px; border-radius:3px; display:inline-block; }
+  .legend .swb { width:14px; height:12px; border-radius:3px; border-left:4px solid; display:inline-block; background:#F3F5F8; }
+
+  /* score / fechamento */
+  .score-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .score-tile { border:1px solid #DDE3EB; border-radius:8px; padding:12px 14px; }
+  .score-tile .n { font-size:22px; font-weight:700; color:#0D2137; }
+  .score-tile .l { font-size:10.5px; color:#6B7E90; text-transform:uppercase; letter-spacing:.4px; }
+  .score-tile.good { border-color:#1A9E4A; background:#F1FBF5; }
+  .score-tile.bad { border-color:#E63946; background:#FFF3F4; }
+  details.bucket { border:1px solid #DDE3EB; border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  details.bucket > summary { list-style:none; cursor:pointer; padding:10px 14px; display:flex; align-items:center; gap:10px; font-size:12px; font-weight:600; color:#0D2137; background:#F8FAFC; }
+  details.bucket > summary::-webkit-details-marker { display:none; }
+  details.bucket > summary .cnt { background:#0D2137; color:#fff; border-radius:10px; font-size:10px; padding:1px 8px; }
+  details.bucket.zero > summary .cnt { background:#1A9E4A; }
+  details.bucket.alert > summary { background:#FFF3F4; }
+  details.bucket.alert > summary .cnt { background:#E63946; }
+  details.bucket .bk-body { padding:6px 14px 12px; }
+  details.bucket .chev { margin-left:auto; color:#9AAAB8; font-size:11px; }
+
+  /* modal reserva */
+  .blk, .cell { cursor: pointer; }
+  .blk:hover { filter: brightness(0.97); box-shadow: 0 0 0 2px rgba(43,155,232,.35); }
+  .cell:hover { box-shadow: inset 0 0 0 1px #C9D6E2; }
+  .modal-overlay { position: fixed; inset:0; background: rgba(13,33,55,.45); display:none; align-items:flex-start; justify-content:center; z-index:50; padding:44px 16px; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:10px; width:100%; max-width:560px; box-shadow:0 12px 44px rgba(0,0,0,.28); max-height:86vh; overflow-y:auto; }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #EEF1F5; position:sticky; top:0; background:#fff; }
+  .modal-head span { font-size:14px; font-weight:700; color:#0D2137; }
+  .modal-head button.x { background:none; border:none; font-size:16px; cursor:pointer; color:#6B7E90; }
+  .modal-body { padding:16px 18px; }
+  .slot-view { display:none; } .slot-view.on { display:block; }
+  .act-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .ctx-line { background:#F5F7FA; border:1px solid #E4EAF0; border-radius:6px; padding:8px 10px; font-size:11.5px; color:#3C4E60; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo"><div class="name">👁 HOG</div><div class="sub">Sistema de Gestão</div></div>
+
+  <div class="sidebar-section">Principal</div>
+  <div class="nav-item active" onclick="showTab('dashboard', this)"><span class="icon">⊞</span> Painel Geral</div>
+
+  <div class="sidebar-section">Ambulatório</div>
+  <div class="nav-item" onclick="showTab('mapa-amb', this)"><span class="icon">🗓️</span> Mapa de Ocupação</div>
+  <div class="nav-item" onclick="showTab('recepcao', this)"><span class="icon">🚶</span> Recepção</div>
+  <div class="nav-item" onclick="showTab('autorefrator', this)"><span class="icon">👓</span> Autorefrator</div>
+  <div class="nav-item" onclick="showTab('agenda-medica', this)"><span class="icon">📋</span> Agenda Médica (estação)</div>
+  <div class="nav-item" onclick="showTab('agenda-exames', this)"><span class="icon">🔬</span> Agenda de Exames</div>
+  <div class="nav-item" onclick="showTab('lista-espera', this)"><span class="icon">⏳</span> Lista de Espera <span class="badge badge-blue">8</span></div>
+
+  <div class="sidebar-section">Centro Cirúrgico</div>
+  <div class="nav-item" onclick="showTab('mapa-cc', this)"><span class="icon">🗓️</span> Mapa de Ocupação</div>
+  <div class="nav-item" onclick="showTab('agenda-cirurgica', this)"><span class="icon">🔪</span> Agenda Cirúrgica</div>
+  <div class="nav-item" onclick="showTab('espera-cirurgica', this)"><span class="icon">⏳</span> Espera Cirúrgica <span class="badge">33</span></div>
+  <div class="nav-item" onclick="showTab('estoque', this)"><span class="icon">📦</span> Estoque / Materiais</div>
+  <div class="nav-item" onclick="showTab('checagem', this)"><span class="icon">⚠️</span> Checagem D-3 <span class="badge badge-amber">4</span></div>
+  <div class="nav-item" onclick="showTab('pre-op', this)"><span class="icon">🧑‍⚕️</span> Pré-Op (Enfermagem)</div>
+  <div class="nav-item" onclick="showTab('agenda-posop', this)"><span class="icon">🩹</span> Agenda Pós-Op</div>
+
+  <div class="sidebar-section">Consultora Cirúrgica</div>
+  <div class="nav-item" onclick="showTab('prospectos', this)"><span class="icon">🧲</span> Prospectos</div>
+  <div class="nav-item" onclick="showTab('atendimento', this)"><span class="icon">🖥️</span> Atendimento Pré-Cirúrgico</div>
+  <div class="nav-item" onclick="showTab('agenda-bio', this)"><span class="icon">🔬</span> Agenda de Bio</div>
+  <div class="nav-item" onclick="showTab('agenda-consultora', this)"><span class="icon">💼</span> Agenda da Consultora <span class="badge badge-amber">2</span></div>
+  <div class="nav-item" onclick="showTab('pre-agenda', this)"><span class="icon">📝</span> Pré-Agenda Cirúrgica</div>
+  <div class="nav-item" onclick="showTab('fechamento', this)"><span class="icon">✅</span> Fechamento do Dia</div>
+
+  <div class="sidebar-section">Funil (por especialidade)</div>
+  <div class="nav-item" onclick="showTab('funil', this)"><span class="icon">🎯</span> Funil de Vendas</div>
+
+  <div class="sidebar-section">Financeiro</div>
+  <div class="nav-item" onclick="showTab('caixa', this)"><span class="icon">💵</span> Caixa <span class="badge">3</span></div>
+  <div class="nav-item" onclick="showTab('aprovacao', this)"><span class="icon">💬</span> Aprovação de Desconto <span class="badge badge-amber">2</span></div>
+  <div class="nav-item" onclick="showTab('conciliacao', this)"><span class="icon">✅</span> Conciliação</div>
+
+  <div class="sidebar-section">Gestão</div>
+  <div class="nav-item" onclick="showTab('cadastros', this)"><span class="icon">🗂️</span> Cadastros</div>
+  <div class="nav-item" onclick="showTab('padroes-medico', this)"><span class="icon">📐</span> Padrões do Médico</div>
+  <div class="nav-item" onclick="showTab('relatorios', this)"><span class="icon">📊</span> Relatórios</div>
+  <div class="nav-item" onclick="showTab('configuracoes', this)"><span class="icon">⚙️</span> Configurações</div>
+
+  <div class="sidebar-footer">🔌 <b>Integrações previstas:</b><br>NextQS (senhas / chamar paciente)<br>SIVOE (prontuário)<br>App de estoque/materiais do CC</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">Painel Geral</h1>
+    <div class="global-search"><input placeholder="Buscar paciente, agenda médica, exame, prevista ou cirúrgica..."></div>
+  </div>
+  <div class="content">
+
+    <!-- ================= PAINEL GERAL ================= -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div style="display:flex; gap:10px; margin-bottom:14px; align-items:center; flex-wrap:wrap;">
+        <div class="chips" style="margin-bottom:0;"><button class="fbtn active">Todos</button><button class="fbtn">Dr. Nilson</button><button class="fbtn">Dr. Lucas</button></div>
+        <span style="font-size:11px; color:#6B7E90;">Período:</span>
+        <input type="date" value="2026-07-01" style="padding:6px 10px; border:1px solid #DDE3EB; border-radius:6px; font-size:12px;">
+        <span style="font-size:11px; color:#6B7E90;">até</span>
+        <input type="date" value="2026-07-31" style="padding:6px 10px; border:1px solid #DDE3EB; border-radius:6px; font-size:12px;">
+        <button class="btn btn-primary btn-sm">Aplicar</button>
+      </div>
+      <div class="score-grid" style="margin-bottom:16px;">
+        <div class="score-tile"><div class="n">62</div><div class="l">Passou em consulta</div></div>
+        <div class="score-tile good"><div class="n">18</div><div class="l">Já operou (ganho total)</div></div>
+        <div class="score-tile bad"><div class="n">9</div><div class="l">Virou convênio (perdas)</div></div>
+        <div class="score-tile"><div class="n">R$ 68.400</div><div class="l">Venda bruta (LIOs)</div></div>
+        <div class="score-tile" style="border-color:#2B9BE8;"><div class="n" style="color:#2B9BE8;">27</div><div class="l">Prospectos abertos · R$ 97.200 prováveis</div></div>
+      </div>
+      <div class="panel">
+        <h2>Alertas de tratativa <span class="pill">nenhum paciente parado</span></h2>
+        <div class="alerta red"><div class="a-body"><strong>2 pacientes sem histórico registrado</strong> na agenda médica de hoje — a consultora precisa classificar todos.</div><span class="tag tag-red">Obrigatório</span></div>
+        <div class="alerta amber"><div class="a-body"><strong>3 pacientes parados há +7 dias na etapa Orçamento</strong> — gerar recontato</div><button class="btn btn-outline btn-sm">Ver</button></div>
+        <div class="alerta amber"><div class="a-body"><strong>Ariovaldo Lopes — biometria vencida em 20/07</strong> — bloqueado p/ Agenda Cirúrgica. Reagendar exame ou liberar com senha da consultora.</div></div>
+      </div>
+      <div class="cols2">
+        <div class="panel">
+          <h2>Liberação de agenda → Lista de Espera <span class="pill">camada 2</span></h2>
+          <div class="alerta blue"><div class="a-body">Coordenação liberou <strong>3 dias em “Catarata · Dr. Nilson”</strong> — <strong>8 pacientes na Lista de Espera</strong> aguardando contato.</div><button class="btn btn-primary btn-sm" onclick="showTab('lista-espera', null)">Contatar</button></div>
+        </div>
+        <div class="panel">
+          <h2>Fechamento do dia — Consultora <span class="pill">score</span></h2>
+          <div class="alerta amber"><div class="a-body"><strong>2 pacientes “sem tratativa”</strong> na agenda de catarata de hoje — meta é zero.</div><button class="btn btn-primary btn-sm" onclick="showTab('fechamento', null)">Abrir fechamento</button></div>
+          <div class="alerta amber"><div class="a-body"><strong>1 cirurgia amanhã sem sala definida</strong> — sala é obrigatória até a data</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MAPA DE OCUPAÇÃO — AMBULATÓRIO ================= -->
+    <div class="tab-content" id="tab-mapa-amb">
+      <div class="panel">
+        <h2>Mapa de Ocupação — Ambulatório <span class="pill">camadas 1 + 2</span></h2>
+        <div class="hint">Informações em <strong>eixos independentes</strong>: <strong>fundo</strong> = turno · <strong>barra lateral</strong> = estado · <strong>ícones</strong> = hora-extra/bloqueio/sala.<br><strong>A reserva começa aqui:</strong> clique numa <em>sala livre</em> para reservar, numa <em>ocupada</em> para gerenciar (editar, liberar, ceder, bloquear) ou numa <em>bloqueada</em> para ver o motivo / reabrir como hora extra.<br><strong>Vista híbrida:</strong> o bloco mostra a ocupação do turno (ex: 14/16); ao clicar num bloco ocupado ele <strong>expande os horários</strong> daquele turno (encaixe / bloco / plantão).</div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+          <label style="font-size:10.5px;color:#6B7E90;text-transform:uppercase;letter-spacing:.5px;">Dia pesquisado</label>
+          <input type="date" value="2026-08-10" style="padding:6px 10px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;">
+          <span style="font-size:12px;font-weight:600;color:#0D2137;">Segunda-feira · Semana 33</span>
+        </div>
+        <div class="score-grid" style="margin-bottom:12px;">
+          <div class="score-tile"><div class="n">6</div><div class="l">Médicos escalados no dia</div></div>
+          <div class="score-tile"><div class="n">8</div><div class="l">Atendimentos ambulatório</div></div>
+          <div class="score-tile"><div class="n">1</div><div class="l">Cirurgia no CC</div></div>
+          <div class="score-tile bad"><div class="n">8</div><div class="l">Salas ainda a definir</div></div>
+        </div>
+        <div class="panel" style="background:#F8FAFC; border-style:dashed; margin-bottom:14px; padding:12px 14px;">
+          <label style="font-size:10.5px;color:#6B7E90;text-transform:uppercase;letter-spacing:.5px;">Escala do dia — importada da Grade HOG (Manhã · Tarde · CC) · seg 10/08/2026</label>
+          <table style="margin-top:6px;">
+            <thead><tr><th>Médico</th><th>Turno</th><th>Agenda / obs.</th><th>Sala</th><th>Ocupação</th></tr></thead>
+            <tbody>
+              <tr><td>Dr. Monir</td><td>Manhã</td><td>Consulta</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-red">Lotada 18/18</span></td></tr>
+              <tr><td>Dr. Alexandre Ichida</td><td>Manhã</td><td>Refração / P.A</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">9/12</span></td></tr>
+              <tr><td>Dra. Rebeca Crossara <span class="tag tag-purple">🎓 Residente</span></td><td>Manhã</td><td>Consulta · repasse → preceptor</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">6/10</span></td></tr>
+              <tr><td>Dr. Renan Nishida</td><td>Manhã</td><td>MR + P.A</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-amber">10/10</span></td></tr>
+              <tr><td>Dr. Eduardo Takano</td><td>Tarde</td><td>YAG + P.A</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">5/8</span></td></tr>
+              <tr><td>Dr. Alexandre Ichida</td><td>Tarde</td><td>Refração / P.A</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">7/12</span></td></tr>
+              <tr><td>Dra. Rebeca Crossara <span class="tag tag-purple">🎓 Residente</span></td><td>Tarde</td><td>Consulta · repasse → preceptor</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">4/10</span></td></tr>
+              <tr><td>Dr. Renan Nishida</td><td>Tarde</td><td>Mapeamento de retina</td><td><span class="tag tag-amber">a definir</span></td><td><span class="tag tag-green">6/10</span></td></tr>
+              <tr><td>Dra. Roberta Odo</td><td>Cirúrgico</td><td>Cirurgia plástica · <span class="tag tag-amber">aluga CC (taxa)</span></td><td>Centro Cirúrgico</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="hint" style="margin-top:8px;">⚠️ A Grade do Google traz <strong>médico + turno</strong>, mas <strong>não traz sala nem ocupação</strong> — o sistema novo adiciona <strong>sala (obrigatória até a data)</strong>, conta a ocupação e marca <strong>Lotada</strong> quando enche. A marca <strong>🎓 Residente</strong> e o repasse ao preceptor só aparecem no <strong>perfil gerencial</strong> — nunca nas telas de agendamento.</div>
+        </div>
+        <div class="filtros">
+          <details class="ms">
+            <summary>👤 Médicos: todos ▾</summary>
+            <div class="ms-panel">
+              <div class="ms-actions"><button onclick="msAll(this,true)">Todos</button><button onclick="msAll(this,false)">Nenhum</button></div>
+              <label><input type="checkbox" checked> Dr. Nilson</label>
+              <label><input type="checkbox" checked> Dr. Lucas</label>
+              <label><input type="checkbox" checked> Dr. Pietro Dechichi</label>
+              <label><input type="checkbox" checked> Dr. Eduardo Takano</label>
+              <label><input type="checkbox" checked> Dr. Guilherme</label>
+              <label><input type="checkbox" checked> Dr. Alexandre Rueda</label>
+              <label><input type="checkbox" checked> Dr. Alexandre Ichida</label>
+              <label><input type="checkbox" checked> Dr. Renan Nishida</label>
+              <label><input type="checkbox" checked> Dr. Monir</label>
+              <label><input type="checkbox" checked> Dra. Ana Carolina</label>
+              <label><input type="checkbox" checked> Dra. Mª Carolina Andolpho</label>
+              <label><input type="checkbox" checked> Dra. Maria Claudia</label>
+              <label><input type="checkbox" checked> Dra. Rebeca Crossara 🎓</label>
+              <label><input type="checkbox" checked> Dra. Roberta Odo (externa)</label>
+            </div>
+          </details>
+          <details class="ms">
+            <summary>🏠 Salas: todas ▾</summary>
+            <div class="ms-panel">
+              <div class="ms-actions"><button onclick="msAll(this,true)">Todas</button><button onclick="msAll(this,false)">Nenhuma</button></div>
+              <label><input type="checkbox" checked> Consultório 1 (sup.)</label>
+              <label><input type="checkbox" checked> Consultório 2 (sup.)</label>
+              <label><input type="checkbox" checked> Consultório 3 (sup.)</label>
+              <label><input type="checkbox" checked> Consultório Térreo</label>
+              <label><input type="checkbox" checked> Sala de Exames</label>
+              <label><input type="checkbox" checked> Centro Cirúrgico</label>
+              <label><input type="checkbox" checked> Sala Consultora Cirúrgica</label>
+              <label><input type="checkbox" checked> Atendimentos Gerais</label>
+            </div>
+          </details>
+          <select><option>Todas as agendas</option><option>Ni Cat (Catarata Nilson)</option><option>Lu Cat (Catarata Lucas)</option><option>Cat Convênio (Pietro)</option><option>Refração Dra. Carol</option><option>EDU Retina</option><option>Glaucoma (Guilherme)</option><option>MR NI</option><option>Angio</option><option>YAG</option><option>Fotocoagulação</option></select>
+          <select style="margin-left:auto;"><option>Agrupar por: Turno</option><option>Agrupar por: Médico</option><option>Agrupar por: Especialidade</option><option>Agrupar por: Sala</option><option>Agrupar por: Agenda lógica</option></select>
+          <div class="view-toggle"><button class="vbtn">Dia</button><button class="vbtn active">Semana</button><button class="vbtn">Mês</button></div>
+        </div>
+        <div class="grade">
+          <div class="glabel"></div>
+          <div class="gh">Seg<small>10</small></div><div class="gh">Ter<small>11</small></div><div class="gh">Qua<small>12</small></div>
+          <div class="gh">Qui<small>13</small></div><div class="gh">Sex<small>14</small></div><div class="gh">Sáb<small>15</small></div>
+          <div class="glabel">Manhã</div>
+          <div class="cell">
+            <div class="blk t-manha e-agend"><span class="who">Dr. Monir</span><span class="sub">Consulta · <b style="color:#C0122A;">LOTADA</b></span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. A. Ichida</span><span class="sub">Refração / PA</span></div>
+            <div class="blk t-exame e-agend"><span class="who">Renan Nishida</span><span class="sub">MR + PA</span></div>
+            <div class="blk t-manha e-agend"><span class="bd">🎓</span><span class="who">Dra. Rebeca</span><span class="sub">Residente</span></div>
+          </div>
+          <div class="cell">
+            <div class="blk t-manha e-agend"><span class="who">Dr. A. Ichida</span><span class="sub">Refração / PA</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. Guilherme</span><span class="sub">Glaucoma</span></div>
+            <div class="blk t-bloq e-bloq"><span class="bd">⛔</span><span class="who">Dr. Lucas</span><span class="sub">Férias</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. Monir</span><span class="sub">Consulta</span></div>
+          </div>
+          <div class="cell"><div class="blk t-bloq e-bloq"><span class="bd">⛔</span><span class="who">Feriado</span><span class="sub">Dia do Evangélico</span></div></div>
+          <div class="cell">
+            <div class="blk t-manha e-agend"><span class="who">Eduardo Takano</span><span class="sub">Retina</span></div>
+            <div class="blk t-manha e-liber"><span class="who">Dr. João Lian</span><span class="sub">Anestesista · n/v</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. Monir</span><span class="sub">Consulta</span></div>
+            <div class="blk t-manha e-agend"><span class="bd">🎓</span><span class="who">Dra. Rebeca</span><span class="sub">Residente</span></div>
+          </div>
+          <div class="cell">
+            <div class="blk t-manha e-agend"><span class="who">Alexandre Rueda</span><span class="sub">Glaucoma</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. Nilson</span><span class="sub">Pós-op</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Ana Carolina</span><span class="sub">Plástica</span></div>
+            <div class="blk t-manha e-agend"><span class="who">Dr. Monir</span><span class="sub">Consulta</span></div>
+          </div>
+          <div class="cell"><div class="blk t-manha e-liber"><span class="bd">⚡</span><span class="who">Dr. Monir</span><span class="sub">n/v talvez · h. extra</span></div></div>
+          <div class="glabel">Tarde</div>
+          <div class="cell">
+            <div class="blk t-exame e-agend"><span class="who">Dr. Eduardo</span><span class="sub">YAG + PA</span></div>
+            <div class="blk t-exame e-agend"><span class="who">Renan Nishida</span><span class="sub">Mapeam. retina</span></div>
+            <div class="blk t-tarde e-agend"><span class="who">Dr. A. Ichida</span><span class="sub">Refração / PA</span></div>
+            <div class="blk t-tarde e-agend"><span class="bd">🎓</span><span class="who">Dra. Rebeca</span><span class="sub">Residente</span></div>
+          </div>
+          <div class="cell">
+            <div class="blk t-tarde e-agend"><span class="who">Dr. A. Ichida</span><span class="sub">Refração / PA</span></div>
+            <div class="blk t-exame e-agend"><span class="who">Dr. Nilson</span><span class="sub">Angiografia</span></div>
+            <div class="blk t-tarde e-agend"><span class="who">Ana Carolina</span><span class="sub">Rotina / Óculos</span></div>
+            <div class="blk t-livre e-livre"><span class="who">Sala vaga</span><span class="sub">—</span></div>
+          </div>
+          <div class="cell"><div class="blk t-bloq e-bloq"><span class="bd">⛔</span><span class="who">Feriado</span><span class="sub">tarde fechada</span></div></div>
+          <div class="cell">
+            <div class="blk t-tarde e-agend"><span class="who">Dr. Nilson</span><span class="sub">Catarata</span></div>
+            <div class="blk t-bloq e-bloq"><span class="bd">⛔</span><span class="who">Dr. Lucas</span><span class="sub">Férias</span></div>
+            <div class="blk t-tarde e-agend"><span class="who">Maria Claudia</span><span class="sub">Consulta</span></div>
+            <div class="blk t-tarde e-agend"><span class="who">Eduardo Takano</span><span class="sub">PA · +1 vaga</span></div>
+          </div>
+          <div class="cell">
+            <div class="blk t-exame e-agend"><span class="who">Eduardo Takano</span><span class="sub">Mapa (retina)</span></div>
+            <div class="blk t-tarde e-agend"><span class="who">Daniel Gadioli</span><span class="sub">PA</span></div>
+            <div class="blk t-exame e-agend"><span class="who">Retinografia</span><span class="sub">Térreo</span></div>
+          </div>
+          <div class="cell"><div class="blk t-livre e-livre"><span class="who">Sala livre</span><span class="sub">—</span></div></div>
+        </div>
+        <div class="legend">
+          <div class="lg"><b>Turno (fundo)</b>
+            <span class="chip"><span class="sw t-manha"></span>Manhã</span><span class="chip"><span class="sw t-tarde"></span>Tarde</span>
+            <span class="chip"><span class="sw t-exame"></span>Exame</span><span class="chip"><span class="sw t-livre"></span>Sala vaga</span></div>
+          <div class="lg"><b>Estado (barra)</b>
+            <span class="chip"><span class="swb e-prog"></span>Pré-programado</span><span class="chip"><span class="swb e-liber"></span>Liberado</span>
+            <span class="chip"><span class="swb e-agend"></span>Agendado</span><span class="chip"><span class="swb e-bloq"></span>Bloqueado / Férias</span></div>
+          <div class="lg"><b>Marcas</b><span class="chip">⚡ hora extra</span><span class="chip">⛔ bloqueio</span><span class="chip">🔒 médico em 2 lugares</span><span class="chip">🎓 residente <i>(só gerencial)</i></span><span class="chip"><b style="color:#C0122A;">LOTADA</b> agenda cheia</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= RECEPÇÃO ================= -->
+    <div class="tab-content" id="tab-recepcao">
+      <div class="panel">
+        <h2>Recepção — chegada &amp; encaminhamento <span class="pill">integra NextQS</span></h2>
+        <div class="hint">A recepção marca a <strong>chegada (Entrada)</strong> e <strong>encaminha</strong> para autorefrator / sala de espera (térreo ou superior) — a senha/fila é gerida pelo <strong>NextQS</strong>. Quem ainda não deu entrada fica com o botão <strong>Entrada</strong> (faltou até agora). “Escada” roteia quem não sobe para o térreo.</div>
+        <div class="filtros"><div class="view-toggle"><button class="vbtn active">Manhã</button><button class="vbtn">Tarde</button><button class="vbtn">Dia</button></div><select><option>Todos os médicos</option><option>Dr. Monir</option><option>Dr. Nilson</option></select></div>
+        <table>
+          <thead><tr><th>Chegada</th><th>Agenda</th><th>Paciente</th><th>Escada</th><th>Status</th><th>Encaminhar para</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>07:09</td><td>07:09</td><td>Marcia A. de Carvalho <span class="tag tag-purple">Beneficência</span></td><td>—</td><td><span class="tag tag-green">Entrou</span></td><td><select style="padding:3px 6px;font-size:11px;"><option>Autorefrator</option><option>Sala espera superior</option><option>Sala espera térreo</option></select></td><td><button class="btn btn-outline btn-sm" onclick="showTab('rastreio', null)">🔎 Rastreio</button></td></tr>
+            <tr style="opacity:.65"><td>—</td><td>07:45</td><td>Jessica S. Gonzaga</td><td>—</td><td><span class="tag tag-gray">Não chegou</span></td><td>—</td><td><button class="btn btn-primary btn-sm">Entrada</button></td></tr>
+            <tr><td>07:30</td><td>07:30</td><td>Nelson Berenguer <span class="tag tag-amber">não sobe escada</span></td><td><span class="tag tag-red">Térreo</span></td><td><span class="tag tag-blue">Aguardando</span></td><td><select style="padding:3px 6px;font-size:11px;"><option selected>Sala espera térreo</option><option>Autorefrator</option></select></td><td><button class="btn btn-outline btn-sm" onclick="showTab('rastreio', null)">🔎 Rastreio</button></td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock">🔔 <strong>NextQS:</strong> ao encaminhar, o sistema chama a senha e mostra no painel de senhas. O paciente “anda” pelas estações e tudo fica no <strong>Rastreio</strong>.</div>
+      </div>
+    </div>
+
+    <!-- ================= AUTOREFRATOR ================= -->
+    <div class="tab-content" id="tab-autorefrator">
+      <div class="panel">
+        <h2>Autorefrator — fila de pré-triagem</h2>
+        <div class="hint">Pacientes encaminhados pela recepção. Chamada via <strong>NextQS</strong>. Ao concluir, o paciente volta para a fila do médico.</div>
+        <table>
+          <thead><tr><th>Chegada</th><th>Paciente</th><th>Senha</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>07:12</td><td>Marcia A. de Carvalho</td><td>A-032</td><td><span class="tag tag-amber">Na fila</span></td><td><button class="btn btn-primary btn-sm">🔔 Chamar senha</button> <button class="btn btn-outline btn-sm">Concluir → médico</button></td></tr>
+          </tbody>
+        </table>
+        <div class="hint" style="margin-top:8px;">Tela vazia = ninguém encaminhado ainda. A recepção alimenta esta fila.</div>
+      </div>
+    </div>
+
+    <!-- ================= ESTAÇÃO DO MÉDICO ================= -->
+    <div class="tab-content" id="tab-agenda-medica">
+      <div class="panel">
+        <h2>Estação do Médico — Dr. Monir <span class="pill">10/08/2026</span></h2>
+        <div class="hint"><strong>Iniciar</strong> abre o prontuário no <strong>SIVOE</strong> (API); ao salvar, grava a <strong>visita</strong> (faturamento). Ao <strong>Finalizar</strong>, o médico indica os <strong>exames solicitados</strong> — que viram <em>pedido de exames</em> na ficha (o call center marca, sem ver o prontuário). <strong>Rastreio</strong> mostra onde o paciente esteve.</div>
+        <div class="filtros"><div class="view-toggle"><button class="vbtn active">Manhã</button><button class="vbtn">Tarde</button></div><select><option>Dr. Monir</option><option>Dr. Nilson</option><option>Dr. Lucas</option></select></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Rastreio</th><th>Escada</th><th>Status</th><th>Chegada</th><th>Agenda</th><th>Paciente</th><th>Atendimento</th><th>Ação</th></tr></thead>
+          <tbody>
+            <tr><td><button class="btn btn-outline btn-sm" onclick="showTab('rastreio', null)">🔎</button></td><td>—</td><td><span class="tag tag-green">Finalizado</span></td><td>07:09</td><td>07:09</td><td>Marcia A. de Carvalho</td><td>Consulta Óculos</td><td><button class="btn btn-outline btn-sm">Prontuário 🔒</button> <button class="btn btn-outline btn-sm">Anotações</button></td></tr>
+            <tr><td><button class="btn btn-outline btn-sm" onclick="showTab('rastreio', null)">🔎</button></td><td>—</td><td><span class="tag tag-amber">Aguardando</span></td><td>07:40</td><td>07:45</td><td>Jessica S. Gonzaga</td><td>Consulta</td><td><button class="btn btn-green btn-sm">▶ Iniciar → SIVOE</button></td></tr>
+            <tr><td><button class="btn btn-outline btn-sm" onclick="showTab('rastreio', null)">🔎</button></td><td><span class="tag tag-red">Térreo</span></td><td><span class="tag tag-blue">Em atendimento</span></td><td>08:00</td><td>08:00</td><td>Nelson Berenguer</td><td>Catarata</td><td><button class="btn btn-primary btn-sm">Continuar</button> <button class="btn btn-red btn-sm">Finalizar</button></td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="modal-mock"><strong>Ao Finalizar:</strong> abre “exames solicitados” (bio, retinografia, OCT…) → vira o pedido de exames na ficha. <strong>Encaminhar</strong> manda o paciente para a próxima estação (Consultora / Exames). <strong>Prontuário 🔒</strong> = acesso por papel (clínico/gerencial).</div>
+      </div>
+    </div>
+
+    <!-- ================= RASTREIO ================= -->
+    <div class="tab-content" id="tab-rastreio">
+      <div class="panel" style="max-width:660px;">
+        <h2>🔎 Rastreio do Paciente — Antonia Aparecida Paiao</h2>
+        <div class="hint">Onde o paciente esteve hoje e a linha do tempo (quem/quando). Serve para saber <strong>onde ele está agora</strong>.</div>
+        <table>
+          <thead><tr><th>Hora</th><th>Usuário</th><th>Ação</th></tr></thead>
+          <tbody>
+            <tr><td>07:25</td><td>Letícia</td><td>Entrada do paciente (recepção)</td></tr>
+            <tr><td>07:40</td><td>NextQS</td><td>Chamado p/ Autorefrator (senha A-032)</td></tr>
+            <tr><td>08:16</td><td>Pedro</td><td>Atendimento iniciado (médico → SIVOE)</td></tr>
+            <tr><td>08:30</td><td>Pedro</td><td>Atendimento finalizado · exames solicitados: OCT, Retinografia</td></tr>
+            <tr><td>08:32</td><td>Sistema</td><td>Encaminhado → Consultora (Aline)</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;"><button class="btn btn-gray btn-sm" onclick="showTab('agenda-medica', null)">← Voltar à estação do médico</button></div>
+      </div>
+    </div>
+
+    <!-- ================= AGENDA DE EXAMES ================= -->
+    <div class="tab-content" id="tab-agenda-exames">
+      <div class="panel">
+        <h2>Agenda de Exames <span class="pill">exames por técnico · modelo contínuo</span></h2>
+        <div class="hint"><strong>Modelo de agendamento contínuo</strong> (o que montamos): a <strong>sala é o recurso</strong> e o paciente ocupa o tempo que os exames dele exigem — <strong>bloco contínuo</strong>, ordem clínica calculada, biometria não após 15h, preparo obrigatório. O call center escolhe os exames e o sistema devolve os horários que cabem. Agenda da <strong>empresa toda</strong>.</div>
+        <div class="note-blue"><strong>Separação por quem executa:</strong> aqui ficam os <strong>exames por TÉCNICO</strong> (sala de exames: biometria, OCT, topografia, paquimetria, microscopia, campo visual · e retinografia). Os <strong>exames por MÉDICO</strong> (MR/Mapeamento de retina, YAG, Fotocoagulação, Angiografia) consomem a agenda do médico → são agendados no <strong>Mapa de Ocupação do Ambulatório</strong>, não aqui.</div>
+        <div style="margin:12px 0;"><button class="btn btn-green btn-sm" onclick="window.open('demo-agenda-exames.html','_blank')">🟢 Abrir agendamento de exames (funcional, ao vivo no Supabase)</button></div>
+        <div class="chips">
+          <button class="fbtn active">Todos (técnico)</button>
+          <button class="fbtn">Sala de Exames (bio · OCT · topo · campo · paqui · micro)</button>
+          <button class="fbtn">Retinografia</button>
+        </div>
+        <table>
+          <thead><tr><th>Data/Hora</th><th>Chegar</th><th>Paciente</th><th>Exames (bloco contínuo)</th><th>Sala</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>10/08 07:20</td><td>07:05</td><td>Aparecida C. de Souza</td><td><span class="tag tag-teal">BIO + TOPO + OCT</span> · 30 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+            <tr><td>10/08 08:00</td><td>07:45</td><td>Maria Aparecida</td><td><span class="tag tag-teal">BIO</span> · 10 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+            <tr><td>10/08 09:30</td><td>09:15</td><td>Otília Vasques</td><td><span class="tag tag-teal">Retinografia</span></td><td>Térreo</td><td><span class="tag tag-green">Realizado</span></td></tr>
+            <tr><td>13/08 10:00</td><td>09:45</td><td>Sebastião Prado</td><td><span class="tag tag-teal">CAMPO + OCT</span> · 30 min</td><td>Sala de Exames</td><td><span class="tag tag-gray">Agendado</span></td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock">💡 Este é o mesmo motor da tela funcional (contínuo, salas, durações, combos, preparo). Os <strong>pré-op de catarata</strong> (bio/oct/topo) são agendados aqui pelo call center; a <strong>consultora consome</strong> essa fatia pelas parametrizações.</div>
+      </div>
+    </div>
+
+    <!-- ================= LISTA DE ESPERA ================= -->
+    <div class="tab-content" id="tab-lista-espera">
+      <div class="panel">
+        <h2>Lista de Espera <span class="pill">sem data liberada</span></h2>
+        <div class="hint">Pacientes que querem agendar mas não há dias liberados. Fila por <strong>ordem de chegada, por médico/procedimento</strong>, com <strong>flag de urgência</strong> no topo. Ao liberar dias, entram na fila de contato do call center.</div>
+        <div class="alerta blue"><div class="a-body"><strong>3 dias liberados em “Catarata · Dr. Nilson”</strong> → 8 pacientes a contatar (urgências primeiro).</div><button class="btn btn-primary btn-sm">Iniciar contatos</button></div>
+        <table>
+          <thead><tr><th>#</th><th>Paciente</th><th>Agenda desejada</th><th>Entrou em</th><th>Prioridade</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Otília Vasques</td><td>Catarata · Dr. Nilson</td><td>28/07</td><td><span class="tag tag-red">Urgência</span></td><td><button class="btn btn-green btn-sm">Contatar → agendar</button></td></tr>
+            <tr><td>2</td><td>Sebastião Prado</td><td>Catarata · Dr. Nilson</td><td>02/08</td><td><span class="tag tag-gray">Normal</span></td><td><button class="btn btn-outline btn-sm">Contatar</button></td></tr>
+            <tr><td>3</td><td>Wanda Reis</td><td>Catarata · Dr. Nilson</td><td>05/08</td><td><span class="tag tag-gray">Normal</span></td><td><button class="btn btn-outline btn-sm">Contatar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= MAPA DE OCUPAÇÃO — CENTRO CIRÚRGICO ================= -->
+    <div class="tab-content" id="tab-mapa-cc">
+      <div class="panel">
+        <h2>Mapa de Ocupação — Centro Cirúrgico <span class="pill">1 sala cirúrgica</span></h2>
+        <div class="hint">Mesma lógica de clique do ambulatório: reservar/ gerenciar / bloquear. Aqui a capacidade é a <strong>vaga cirúrgica do médico</strong> no CC. Também mostra a origem (HOG / externa).</div>
+        <div class="filtros">
+          <select><option>Todos os médicos</option><option>Dr. Nilson</option><option>Dra. Carol</option></select>
+          <select><option>Origem: todas</option><option>HOG</option><option>Externa</option></select>
+          <div class="view-toggle" style="margin-left:auto;"><button class="vbtn">Dia</button><button class="vbtn active">Semana</button><button class="vbtn">Mês</button></div>
+        </div>
+        <div class="grade">
+          <div class="glabel"></div>
+          <div class="gh">Seg<small>10</small></div><div class="gh">Ter<small>11</small></div><div class="gh">Qua<small>12</small></div>
+          <div class="gh">Qui<small>13</small></div><div class="gh">Sex<small>14</small></div><div class="gh">Sáb<small>15</small></div>
+          <div class="glabel">Cirúrgico</div>
+          <div class="cell"><div class="blk t-cir e-agend"><span class="who">Dr. Nilson</span><span class="sub">Catarata · 6 vagas</span></div></div>
+          <div class="cell"><div class="blk t-cir e-agend"><span class="bd">🔒</span><span class="who">Dr. Nilson</span><span class="sub">CC · também Cons. 2</span></div></div>
+          <div class="cell"><div class="blk t-bloq e-bloq"><span class="who">Feriado</span></div></div>
+          <div class="cell"><div class="blk t-cir e-liber"><span class="who">Dra. Ana C.</span><span class="sub">a liberar</span></div></div>
+          <div class="cell"><div class="blk t-cir e-agend"><span class="who">Dra. Carol</span><span class="sub">Plástica · 4 vagas</span></div></div>
+          <div class="cell"><div class="blk t-livre e-livre"><span class="who">CC livre</span></div></div>
+        </div>
+        <div class="legend"><div class="lg"><b>Turno</b><span class="chip"><span class="sw t-cir"></span>Cirúrgico</span><span class="chip"><span class="sw t-livre"></span>Livre</span></div>
+          <div class="lg"><b>Estado</b><span class="chip"><span class="swb e-agend"></span>Agendado</span><span class="chip"><span class="swb e-liber"></span>Liberado</span><span class="chip"><span class="swb e-bloq"></span>Bloqueado</span></div></div>
+      </div>
+    </div>
+
+    <!-- ================= AGENDA CIRÚRGICA ================= -->
+    <div class="tab-content" id="tab-agenda-cirurgica">
+      <div class="filtros">
+        <div class="view-toggle"><button class="vbtn active">Dia</button><button class="vbtn">Semana</button><button class="vbtn">Mês</button></div>
+        <select><option>Todos os médicos</option><option>Dr. Nilson</option><option>Dr. Lucas</option><option>Dra. Carol</option></select>
+        <select><option>Origem: todas</option><option>Particular</option><option>Convênio</option></select>
+        <select><option>Local: todos</option><option>HOG</option><option>Externa</option></select>
+        <button class="btn btn-outline btn-sm">🖨 Relação p/ centro cirúrgico</button>
+      </div>
+      <div class="panel">
+        <h2>Dr. Nilson — 20/08/2026 <span class="pill">agenda única · 6/8 vagas</span><span class="pill">inclui agenda definitiva da consultora</span></h2>
+        <div class="hint">Particular e convênio dividem <strong>as mesmas vagas</strong> (sem overbooking). Só Particular / Convênio-paga-lente passa pela checagem financeira; convênio puro pula. Toda LIO dá baixa no estoque. <strong>Cada cirurgia gera tratativa de pós-op</strong> (data + impressão do aviso ao paciente + campo “pós-op fora do HOG”).</div>
+        <table>
+          <thead><tr><th>Hora</th><th>Paciente</th><th>Origem</th><th>Lat.</th><th>Olho</th><th>LIO · Marca · Dioptria</th><th>Bio</th><th>Pagto</th><th>Pós-op</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>07:00</td><td>Maria Aparecida</td><td><span class="tag tag-teal">LIO Import</span></td><td>OD</td><td>1</td><td>Monotórica · Alcon · +21,5</td><td>10/07</td><td><span class="tag tag-amber">A receber</span></td><td><span class="tag tag-gray">Definir data</span></td><td><button class="btn btn-outline btn-sm" onclick="showTab('ficha', null)">📄 Ficha</button></td></tr>
+            <tr><td>07:45</td><td>Paulo Ferreira</td><td><span class="tag tag-blue">Particular</span></td><td>OD</td><td>1</td><td>Asférica · J&amp;J · +20,0</td><td>02/07</td><td><span class="tag tag-green">Pago</span></td><td><span class="tag tag-blue">28/07 · HOG</span></td><td><button class="btn btn-outline btn-sm" onclick="showTab('ficha', null)">📄 Ficha</button></td></tr>
+            <tr><td>08:30</td><td>Lucinda Ramalho</td><td><span class="tag tag-purple">LIO Convênio</span></td><td>OE</td><td>1</td><td>Monofocal · Alcon · +21,0</td><td>28/06</td><td><span class="tag tag-gray">Pula checagem</span></td><td><span class="tag tag-amber">Fora do HOG</span></td><td><button class="btn btn-outline btn-sm">📄 Ficha</button></td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock">
+          <strong>Edição:</strong> horário/data → livre. Valor, LIO ou lateralidade → exige senha + trilha de auditoria.<br>
+          <strong>Bio vencida:</strong> não entra sem senha da consultora. &nbsp;•&nbsp; <strong>Sala:</strong> obrigatória até a data. &nbsp;•&nbsp; <strong>Pós-op:</strong> após agendamento definir horários, o CC imprime os avisos para entregar ao paciente.
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ESTOQUE / MATERIAIS ================= -->
+    <div class="tab-content" id="tab-estoque">
+      <div class="panel">
+        <h2>Estoque / Saídas / Materiais — CC <span class="pill">integração com app externo</span></h2>
+        <div class="hint">LIO reservada ao escolher a lente; baixa efetiva no dia da cirurgia. Materiais e saídas sincronizam com o app de estoque do centro cirúrgico.</div>
+        <table>
+          <thead><tr><th>Item</th><th>Lote</th><th>Dioptria</th><th>Validade</th><th>Status</th><th>Reservado p/</th></tr></thead>
+          <tbody>
+            <tr><td>Monotórica Alcon</td><td>L-2291</td><td>+21,5</td><td>03/2027</td><td><span class="tag tag-amber">Reservada</span></td><td>Maria Aparecida · 20/08</td></tr>
+            <tr><td>Asférica J&amp;J</td><td>L-1180</td><td>+20,0</td><td>11/2026</td><td><span class="tag tag-green">Disponível</span></td><td>—</td></tr>
+            <tr><td>Monofocal Alcon</td><td>L-2044</td><td>+21,0</td><td>05/2026</td><td><span class="tag tag-red">Vence em breve</span></td><td>Lucinda · 20/08</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; display:flex; gap:8px;"><button class="btn btn-outline btn-sm">🔄 Sincronizar app de estoque</button><button class="btn btn-primary btn-sm">🖨 Relação de saídas do dia</button></div>
+      </div>
+    </div>
+
+    <!-- ================= ESPERA CIRÚRGICA ================= -->
+    <div class="tab-content" id="tab-espera-cirurgica">
+      <div class="panel">
+        <h2>Agenda de Espera Cirúrgica <span class="pill">por tipo · outro departamento</span></h2>
+        <div class="hint">Casos aguardando <strong>data cirúrgica</strong> — convênio 100% (catarata, plástica) e filas próprias. Cada tipo tem sua lista, por <strong>ordem de chegada + urgência</strong>. Quando abre vaga cirúrgica do médico, o departamento puxa daqui.</div>
+        <div class="chips">
+          <button class="fbtn active">Catarata convênio · 12</button>
+          <button class="fbtn">Plástica · 7</button>
+          <button class="fbtn">Córnea (fila estadual) · 4</button>
+          <button class="fbtn">Retina · 5</button>
+          <button class="fbtn">Glaucoma · 3</button>
+          <button class="fbtn">Externo / parceiros · 2</button>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Paciente</th><th>Convênio</th><th>Procedimento</th><th>Médico</th><th>Entrou em</th><th>Prioridade</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Santo Silva</td><td><span class="tag tag-purple">Beneficência</span></td><td>Facectomia OD</td><td>Dr. Pietro</td><td>28/07</td><td><span class="tag tag-red">Urgência</span></td><td><button class="btn btn-green btn-sm">Agendar cirurgia</button></td></tr>
+            <tr><td>2</td><td>Lucinda Ramalho</td><td><span class="tag tag-purple">Bene Vital 400</span></td><td>Facectomia OE</td><td>Dr. Pietro</td><td>01/08</td><td><span class="tag tag-gray">Normal</span></td><td><button class="btn btn-outline btn-sm">Agendar</button></td></tr>
+            <tr><td>3</td><td>Valdomiro Della Coleta</td><td><span class="tag tag-purple">Bene Vital 400</span></td><td>Facectomia OD</td><td>Dr. Pietro</td><td>05/08</td><td><span class="tag tag-gray">Normal</span></td><td><button class="btn btn-outline btn-sm">Agendar</button></td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock">A fila de <strong>Córnea</strong> tem <strong>posição externa (SES-SP)</strong> e etapas próprias (exames por posição, oferta do órgão) — ver módulo Transplante de Córnea. Cirurgia pode ser <strong>HOG ou externa</strong>.</div>
+      </div>
+    </div>
+
+    <!-- ================= MODELO DE ORÇAMENTO ================= -->
+    <div class="tab-content" id="tab-orcamento-modelo">
+      <div class="panel" style="max-width:720px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          <div><strong style="font-size:16px; color:#0D2137;">👁 Hospital dos Olhos Guanabara</strong><div class="hint" style="margin:2px 0 0;">Orçamento de Lente Intraocular — documento informativo</div></div>
+          <div style="text-align:right; font-size:11px; color:#6B7E90;">Campinas/SP<br>Emitido em 07/08/2026<br>Validade: 30 dias</div>
+        </div>
+        <hr style="border:none; border-top:2px solid #0D2137; margin:6px 0 14px;">
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div><label>Paciente</label><div style="font-weight:600;">Aparecida Cristina de Souza</div></div>
+          <div><label>Olho</label><div>OD (direito)</div></div>
+          <div><label>Médico</label><div>Dr. Nilson</div></div>
+        </div>
+        <table>
+          <thead><tr><th>Opção de LIO</th><th>Descrição</th><th style="text-align:right;">Valor</th></tr></thead>
+          <tbody>
+            <tr><td>Monofocal Asférica</td><td>Visão de longe</td><td style="text-align:right;">R$ 2.750</td></tr>
+            <tr><td><strong>Monotórica</strong></td><td>Corrige astigmatismo</td><td style="text-align:right;"><strong>R$ 3.600</strong></td></tr>
+            <tr><td>Premium Estendido</td><td>Longe + intermediária</td><td style="text-align:right;">R$ 7.500</td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock" style="margin-top:14px;">Documento <strong>informativo</strong>, sem peso financeiro. Condições de pagamento e reserva da lente são tratadas no Caixa. Layout em papel timbrado configurável em <strong>Configurações → Modelos</strong>.</div>
+        <div style="margin-top:12px; display:flex; gap:8px;"><button class="btn btn-primary btn-sm">🖨 Imprimir</button><button class="btn btn-outline btn-sm">📄 PDF</button><button class="btn btn-gray btn-sm" onclick="showTab('atendimento', null)">← Voltar ao atendimento</button></div>
+      </div>
+    </div>
+
+    <!-- ================= CHECAGEM D-3 ================= -->
+    <div class="tab-content" id="tab-checagem">
+      <div class="panel"><h2>Checagem D-3</h2>
+        <div class="hint">Relatório automático 3 dias antes da cirurgia para separar as lentes e montar a relação do CC. Não exige confirmação manual.</div>
+        <table>
+          <thead><tr><th>Cirurgia</th><th>Paciente</th><th>Lente/dioptria</th><th>Pendências</th></tr></thead>
+          <tbody>
+            <tr><td>20/08 · Dr. Nilson</td><td>Maria Aparecida</td><td>Monotórica +21,5</td><td><span class="tag tag-amber">Falta pagamento</span></td></tr>
+            <tr><td>20/08 · Dr. Nilson</td><td>Paulo Ferreira</td><td>Asférica +20,0</td><td><span class="tag tag-green">OK</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= PRÉ-OP ENFERMAGEM ================= -->
+    <div class="tab-content" id="tab-pre-op">
+      <div class="panel"><h2>Pré-Operatório — Enfermagem</h2>
+        <div class="hint">Checklist de enfermagem antes da cirurgia. Independente da checagem financeira e da D-3.</div>
+        <table>
+          <thead><tr><th>Paciente</th><th>Cirurgia</th><th>Exames pré-op</th><th>Jejum</th><th>Termo</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Maria Aparecida</td><td>20/08 07:00</td><td><span class="tag tag-green">OK</span></td><td><span class="tag tag-green">Sim</span></td><td><span class="tag tag-amber">Pendente</span></td><td><span class="tag tag-amber">Em preparo</span></td></tr>
+            <tr><td>Paulo Ferreira</td><td>15/07 · realizada</td><td><span class="tag tag-green">OK</span></td><td><span class="tag tag-green">Sim</span></td><td><span class="tag tag-green">Sim</span></td><td><span class="tag tag-green">Liberado</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= AGENDA POS-OP ================= -->
+    <div class="tab-content" id="tab-agenda-posop">
+      <div class="panel"><h2>Agenda de Pós-Operatório</h2>
+        <div class="hint">Toda cirurgia gera tratativa para <strong>definir a data do pós-op</strong>. O agendamento indica os horários, o CC imprime os avisos para entregar ao paciente. Campo para marcar <strong>pós-op fora do HOG</strong>. No dia do pós-op o paciente entra automaticamente na Agenda da Consultora (tratar olho 2).</div>
+        <div class="form-grid">
+          <div><label>Paciente</label><select><option>Moacir Monteiro (operou OD em 10/07)</option></select></div>
+          <div><label>Data/hora do pós-op</label><input type="datetime-local" value="2026-08-11T07:40"></div>
+          <div><label>Médico do pós-op</label><select><option>Dra. Carol</option><option>Dr. Nilson (cirurgião)</option></select></div>
+          <div><label>Sala</label><select><option>Consultório 1 (sup.)</option><option>Consultório Térreo</option></select></div>
+          <div><label>Pós-op fora do HOG?</label><select><option>Não — HOG</option><option>Sim — outro serviço</option></select></div>
+          <div style="grid-column: span 2;"><label>Observação</label><input value="Entregar orientações pós-cirúrgicas impressas"></div>
+        </div>
+        <button class="btn btn-primary btn-sm">Agendar + imprimir aviso ao paciente</button>
+      </div>
+    </div>
+
+    <!-- ================= PROSPECTOS ================= -->
+    <div class="tab-content" id="tab-prospectos">
+      <div class="panel">
+        <h2>Prospectos <span class="pill">todos na agenda de catarata</span></h2>
+        <div class="hint">Base de todas as pessoas que passaram/estão na agenda de catarata. É daqui que a consultora trabalha os casos e alimenta o funil. Clique para abrir a janela de atendimento.</div>
+        <div class="chips"><button class="fbtn active">Todos</button><button class="fbtn">Sem tratativa</button><button class="fbtn">Em orçamento</button><button class="fbtn">Decidiu operar</button><button class="fbtn">Só convênio</button></div>
+        <table>
+          <thead><tr><th>Paciente</th><th>Consulta</th><th>Médico</th><th>Situação atual</th><th>Temperatura</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Aparecida C. de Souza</td><td>07/08</td><td>Dr. Nilson</td><td><span class="tag tag-amber">Em orçamento</span></td><td>🔥 Quente</td><td><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+            <tr><td>Maria Aparecida</td><td>05/07</td><td>Dr. Nilson</td><td><span class="tag tag-blue">Decidiu LIO</span></td><td>🌡 Morno</td><td><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+            <tr><td>Célia Simi</td><td>10/08</td><td>Dr. Nilson</td><td><span class="tag tag-red">Sem tratativa</span></td><td>—</td><td><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= ATENDIMENTO PRÉ-CIRÚRGICO ================= -->
+    <div class="tab-content" id="tab-atendimento">
+      <div class="panel" style="border: 2px solid #2B9BE8;">
+        <h2>🖥️ Atendimento Pré-Cirúrgico — Aparecida Cristina de Souza <span class="tag tag-blue">OD · Olho 1 · Dr. Nilson · 07/08/2026</span></h2>
+        <div class="hint">Aqui a <strong>consultora (Aline)</strong> registra TUDO do caso — alimenta o Fechamento do Dia e o funil. Monta o orçamento das LIOs indicadas e <strong>imprime pelo modelo padrão do sistema</strong>, e agenda os exames pré-op.</div>
+        <div class="form-grid">
+          <div><label>Lateralidade (1ª visita)</label><select><option>OD — primeiro olho</option><option>OE — primeiro olho</option><option>Olho único</option></select></div>
+          <div><label>Temperatura</label><div class="temp-selector"><div class="temp-opt sel-quente">🔥 Quente</div><div class="temp-opt">🌡 Morno</div><div class="temp-opt">❄ Frio</div></div></div>
+          <div><label>Situação do caso (Fechamento)</label><select><option>Passou com a consultora</option><option>Decidiu operar 100% convênio</option><option>Agendou exames pré-op</option><option>Sem indicação cirúrgica</option><option>Não quer operar agora</option></select></div>
+        </div>
+        <label style="font-size:10.5px; color:#6B7E90; text-transform:uppercase; letter-spacing:0.5px;">Opções de LIO indicadas — monta o orçamento (informativo)</label>
+        <div style="margin: 6px 0 12px;">
+          <div class="lio-check"><input type="checkbox" checked> Monofocal Asférica <span class="price">R$ 2.750</span></div>
+          <div class="lio-check"><input type="checkbox" checked> Monotórica <span class="price">R$ 3.600</span></div>
+          <div class="lio-check"><input type="checkbox"> Premium Estendido <span class="price">R$ 7.500</span></div>
+        </div>
+        <div class="form-grid">
+          <div><label>Agendar exames pré-op (motor contínuo)</label><input type="datetime-local" value="2026-08-12T09:00"></div>
+          <div style="grid-column: span 2;"><label>Instruções / histórico (obrigatório)</label><textarea rows="2">Interessada na monotórica, vai conversar com a filha. Retorno combinado: 14/08.</textarea></div>
+        </div>
+        <div style="border-top: 2px dashed #DDE3EB; margin: 14px 0; padding-top: 14px;">
+          <label style="font-size:10.5px; color:#0F6A30; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">✅ Decisão da LIO (quando decidir — aqui entra a dioptria)</label>
+          <div class="form-grid" style="margin-top:8px;">
+            <div><label>Status da LIO</label><select><option>LIO Import — (convênio)</option><option>LIO Convênio — (convênio)</option><option>Particular</option></select></div>
+            <div><label>Convênio</label><select><option>Bene Vital 400</option><option>Beneficência</option><option>Particular HOG</option></select></div>
+            <div><label>LIO vendida</label><select><option>— ainda não decidiu —</option><option selected>Monotórica — R$ 3.600</option></select></div>
+            <div><label>Dioptria</label><input placeholder="+__,_" value="+21,5"></div>
+            <div><label>Valor ao paciente</label><input value="R$ 3.600,00"></div>
+          </div>
+          <div style="border:1px solid #F4A261; background:#FFF8F0; border-radius:8px; padding:12px; margin:10px 0;">
+            <label style="font-size:10.5px; color:#9A5700; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">💳 Pagador e Nota Fiscal (obrigatório)</label>
+            <div class="form-grid" style="margin-top:8px;">
+              <div><label>Quem é o pagador</label><select><option>O próprio paciente</option><option>Outra pessoa</option><option>Sem preferência</option></select></div>
+              <div><label>Quem recebe a Nota Fiscal</label><select><option>O próprio paciente</option><option>Outra pessoa</option><option>Sem preferência</option></select></div>
+              <div><label>Grau de parentesco (se outra pessoa)</label><input placeholder="Ex: filha, cônjuge..."></div>
+            </div>
+          </div>
+          <button class="btn btn-green btn-sm">Confirmar decisão → reserva LIO no estoque</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="showTab('orcamento-modelo', null)">🖨 Imprimir orçamento (modelo padrão)</button>
+          <button class="btn btn-outline btn-sm">📅 Agendar exames pré-op</button>
+          <button class="btn btn-outline btn-sm">💾 Salvar atendimento</button>
+          <button class="btn btn-outline btn-sm">💵 Liberar p/ recebimento sem data</button>
+          <button class="btn btn-red btn-sm">Convênio 100% → agenda de espera</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= AGENDA BIO ================= -->
+    <div class="tab-content" id="tab-agenda-bio">
+      <div class="panel"><h2>Agenda de Biometria</h2>
+        <div class="hint">Biometria de contato pode ser feita no térreo. Validade de 6 meses — vencida bloqueia a agenda cirúrgica.</div>
+        <div class="filtros"><div class="view-toggle"><button class="vbtn active">Dia</button><button class="vbtn">Semana</button><button class="vbtn">Mês</button></div><select><option>Status: todos</option><option>Agendada</option><option>Realizada</option><option>Vencida</option></select><select><option>Sala: todas</option><option>Térreo</option></select></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Data/Hora</th><th>Paciente</th><th>Sala</th><th>Status</th><th>Validade</th><th>Observação</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>12/08 09:00</td><td>Aparecida C. de Souza</td><td>Térreo</td><td><span class="tag tag-gray">Agendada</span></td><td>—</td><td><input style="padding:3px 6px;font-size:11px;width:150px;" placeholder="obs..." value="Suspender LC 3 dias antes"></td><td><button class="btn btn-outline btn-sm">Marcar realizada</button></td></tr>
+            <tr><td>10/07 08:30</td><td>Maria Aparecida</td><td>Térreo</td><td><span class="tag tag-green">Realizada</span></td><td><span class="tag tag-green">Até 10/01/27</span></td><td><input style="padding:3px 6px;font-size:11px;width:150px;" placeholder="obs..."></td><td>—</td></tr>
+            <tr><td>20/01 10:00</td><td>Ariovaldo Lopes</td><td>Térreo</td><td><span class="tag tag-green">Realizada</span></td><td><span class="tag tag-red">Vencida 20/07</span></td><td><input style="padding:3px 6px;font-size:11px;width:150px;" placeholder="obs..." value="Religar à jornada"></td><td><button class="btn btn-outline btn-sm">Reagendar</button></td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= AGENDA CONSULTORA ================= -->
+    <div class="tab-content" id="tab-agenda-consultora">
+      <div class="panel"><h2>Agenda da Consultora — Aline <span class="pill">dia do exame = transferência automática</span></h2>
+        <div class="hint"><strong>No dia dos exames pré-op, TODOS os pacientes daquela agenda entram aqui automaticamente</strong> — a Aline abre o atendimento e <strong>explica a LIO indicada + fecha a venda</strong>, ou atualiza o status. <strong>Nenhum paciente pode ficar sem informação.</strong> Também aparecem pacientes de pós-op do olho 1 (tratar olho 2).</div>
+        <div class="alerta amber"><div class="a-body"><strong>4 pacientes fizeram exame pré-op hoje</strong> e foram transferidos para a Aline — <strong>1 ainda sem tratativa</strong>.</div><button class="btn btn-primary btn-sm">Ver</button></div>
+        <table>
+          <thead><tr><th>Paciente</th><th>Origem</th><th>Status</th><th>Última tratativa</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Aparecida C. de Souza</td><td><span class="tag tag-teal">Exame pré-op hoje</span></td><td><span class="tag tag-blue">Bio realizada — fechar LIO</span></td><td>07/08 · Aline</td><td><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+            <tr style="background:#FFF3F4;"><td>José Almeida</td><td><span class="tag tag-teal">Exame pré-op hoje</span></td><td><span class="tag tag-red">Sem tratativa</span></td><td>—</td><td><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Registrar agora</button></td></tr>
+            <tr><td>Moacir Monteiro</td><td><span class="tag tag-purple">Pós-op olho 1</span></td><td>Tratar olho 2</td><td>Baixa OD 10/07</td><td><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+          </tbody>
+        </table>
+        <div class="modal-mock">No fechamento da venda: <strong>LIO Import / Particular</strong> → Caixa → Pré-agenda → Agenda cirúrgica. &nbsp;•&nbsp; <strong>LIO Convênio (100%)</strong> → <strong>Agenda de Espera cirúrgica</strong> (tratada por outro departamento).</div>
+      </div>
+    </div>
+
+    <!-- ================= PRÉ-AGENDA ================= -->
+    <div class="tab-content" id="tab-pre-agenda">
+      <div class="panel"><h2>Pré-Agenda Cirúrgica <span class="pill">dupla aprovação</span></h2>
+        <div class="hint">Rascunho da consultora. Ao fechar, confirma <strong>LIO + valor + condições</strong> e envia p/ Agenda Cirúrgica — vai <strong>direto ao Caixa</strong> com flag “a receber”. Registra <strong>quem atendeu</strong> e <strong>quem vai operar</strong> (podem ser diferentes e mudar). Cada caso tem uma <strong>previsão</strong> (data marcada ou mês previsto) — ou <strong>“aguardar”</strong> se o paciente quer esperar — <strong>sempre com observação</strong>. Coluna <strong>Pré-op entregue?</strong>: quem não entregou é organizado por prioridade.</div>
+        <div class="filtros">
+          <select><option>Atendeu: todos</option><option>Dr. Nilson</option><option>Dr. Lucas</option><option>Dr. Pietro Dechichi</option><option>Dra. Ana Carolina</option></select>
+          <select><option>Opera: todos</option><option>Dr. Nilson</option><option>Dr. Lucas</option><option>Dr. Pietro Dechichi</option></select>
+          <select><option>Previsão: todas</option><option>Com data marcada</option><option>Só mês previsto</option><option>Aguardando (quer esperar)</option></select>
+          <select><option>Status LIO: todos</option><option>LIO Import</option><option>LIO Convênio</option><option>Particular</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Prio.</th><th>Paciente</th><th>Atendeu</th><th>Opera</th><th>Previsão da cirurgia</th><th>Modalidade</th><th>LIO</th><th>Valor</th><th>Pré-op?</th><th>Observação</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>—</td><td>Maria Aparecida</td><td>Dr. Nilson</td><td><select style="padding:3px 6px;font-size:11px;"><option>Dr. Nilson</option><option>Dr. Lucas</option><option>Dr. Pietro</option></select></td>
+              <td><select style="padding:3px 6px;font-size:11px;"><option selected>📅 Data: 20/08/2026</option><option>Mês: Ago/26</option><option>Aguardar — quer esperar</option></select></td>
+              <td><span class="tag tag-teal">LIO Import</span></td><td>Monotórica</td><td>R$ 3.600</td><td><span class="tag tag-green">Sim</span></td>
+              <td><input style="padding:3px 6px;font-size:11px;width:160px;" value="Filha confirma até 12/08"></td>
+              <td><button class="btn btn-green btn-sm">✓ Confirmar → Agenda + Caixa</button></td></tr>
+            <tr style="background:#FFF8F0;"><td><span class="tag tag-red">1</span></td><td>José Almeida</td><td>Dr. Nilson</td><td><select style="padding:3px 6px;font-size:11px;"><option selected>Dr. Lucas</option><option>Dr. Nilson</option><option>Dr. Pietro</option></select> <span class="tag tag-amber">trocou</span></td>
+              <td><select style="padding:3px 6px;font-size:11px;"><option selected>Aguardar — quer esperar</option><option>Mês: Set/26</option><option>📅 Marcar data…</option></select></td>
+              <td><span class="tag tag-blue">Particular</span></td><td>Tórica</td><td>R$ 3.800</td><td><span class="tag tag-red">Não</span></td>
+              <td><input style="padding:3px 6px;font-size:11px;width:160px;" value="Vai decidir após retorno 14/08"></td>
+              <td><button class="btn btn-outline btn-sm">Tratar pré-op</button></td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="modal-mock"><strong>Atendeu ≠ Opera:</strong> o paciente pode operar com médico diferente do que fez a consulta. A troca do operador é registrada (trilha de auditoria) e o <strong>repasse segue o executor</strong> (quem operou), alimentando o hog-saidas/faturamento.</div>
+      </div>
+    </div>
+
+    <!-- ================= FECHAMENTO DO DIA ================= -->
+    <div class="tab-content" id="tab-fechamento">
+      <div class="panel">
+        <h2>Fechamento do Dia — Consultora <span class="pill">score · meta: 0 sem tratativa</span></h2>
+        <div class="hint">Espelho do dia: cada paciente da agenda de catarata precisa cair em uma situação. É um <strong>parâmetro de score</strong> da consultora — o objetivo é <strong>nenhum caso sem informação</strong>. Cada bucket é um dropdown; clique num paciente para abrir a janela de atendimento e ajustar.</div>
+        <div class="score-grid">
+          <div class="score-tile"><div class="n">18</div><div class="l">Agenda de catarata do dia</div></div>
+          <div class="score-tile good"><div class="n">16</div><div class="l">Passaram com a consultora</div></div>
+          <div class="score-tile bad"><div class="n">2</div><div class="l">Sem tratativa (meta 0)</div></div>
+        </div>
+
+        <details class="bucket" open><summary>Passou com a consultora <span class="cnt">16</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody>
+            <tr><td>Aparecida C. de Souza</td><td><span class="tag tag-amber">Em orçamento</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+            <tr><td>Maria Aparecida</td><td><span class="tag tag-blue">Decidiu LIO</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr>
+          </tbody></table></div>
+        </details>
+        <details class="bucket"><summary>Decidiu operar 100% pelo convênio <span class="cnt">4</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody><tr><td>Santo Silva</td><td><span class="tag tag-purple">LIO Convênio</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr></tbody></table></div>
+        </details>
+        <details class="bucket"><summary>Agendou exames pré-operatórios <span class="cnt">5</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody><tr><td>Wanda Reis</td><td><span class="tag tag-teal">MR + Retinografia</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr></tbody></table></div>
+        </details>
+        <details class="bucket"><summary>Não tem indicação cirúrgica <span class="cnt">2</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody><tr><td>Vilma Pontes</td><td><span class="tag tag-gray">Acompanhamento</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr></tbody></table></div>
+        </details>
+        <details class="bucket"><summary>Não quer operar agora <span class="cnt">3</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody><tr><td>Sebastião Prado</td><td><span class="tag tag-amber">Reabordar em 30 dias</span></td><td style="text-align:right;"><button class="btn btn-outline btn-sm" onclick="showTab('atendimento', null)">Abrir atendimento</button></td></tr></tbody></table></div>
+        </details>
+        <details class="bucket alert" open><summary>⚠️ Sem tratativa <span class="cnt">2</span><span class="chev">detalhes ▾</span></summary>
+          <div class="bk-body"><table><tbody>
+            <tr><td>Célia Simi</td><td><span class="tag tag-red">Nada registrado</span></td><td style="text-align:right;"><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Registrar agora</button></td></tr>
+            <tr><td>Nelson Berenguer</td><td><span class="tag tag-red">Nada registrado</span></td><td style="text-align:right;"><button class="btn btn-primary btn-sm" onclick="showTab('atendimento', null)">Registrar agora</button></td></tr>
+          </tbody></table></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ================= FUNIL ================= -->
+    <div class="tab-content" id="tab-funil">
+      <div class="chips">
+        <button class="fbtn active">Catarata</button><button class="fbtn">Plástica</button><button class="fbtn">Córnea</button><button class="fbtn">Retina</button><button class="fbtn">Glaucoma</button>
+      </div>
+      <div class="note-blue" style="margin-bottom:12px;">
+        <strong>Perfil por especialidade:</strong> Catarata = vendas + convênio · Plástica = vendas + convênio · Córnea = maioria convênio (alguns casos não cobertos) · Retina = ~100% convênio · Glaucoma = ~100% convênio.
+        Especialidades muito “convênio” podem usar <strong>Agenda Cirúrgica Externa</strong>.
+      </div>
+      <div class="hint">Cada olho/caso é um prospecto. <strong>Valor provável = valor da LIO/procedimento escolhido</strong>. <strong>Ganho parcial = pagou</strong> (baixa do Caixa) · <strong>Ganho total = operou</strong>. Pagamento e cirurgia são trilhas paralelas.</div>
+      <div class="funil-cols">
+        <div class="funil-col"><h3>Consulta feita <span>4</span></h3><div style="font-size:9.5px;color:#C0122A;margin-bottom:6px;">⏱ SLA 3 dias</div>
+          <div class="funil-card"><div class="fname">Célia Simi · OD 1</div><div class="fmeta">Dr. Nilson · há 1 dia</div></div>
+          <div class="funil-card" style="border-color:#E63946;"><div class="fname">Nelson Berenguer · OD 1</div><div class="fmeta" style="color:#C0122A;">⚠️ 5 dias — SLA</div></div></div>
+        <div class="funil-col"><h3>Bio agendada <span>3</span></h3><div style="font-size:9.5px;color:#C0122A;margin-bottom:6px;">⏱ data passou?</div>
+          <div class="funil-card"><div class="fname">Linete Costa · OE 1</div><div class="fmeta">Bio 12/08</div></div></div>
+        <div class="funil-col"><h3>Orçamento <span>6</span></h3><div style="font-size:9.5px;color:#9A5700;margin-bottom:6px;">📅 combinar retorno</div>
+          <div class="funil-card"><div class="fname">Aparecida Souza · OD 1</div><div class="fmeta">🔥 retorno: 14/08</div></div></div>
+        <div class="funil-col"><h3>Decidiu LIO <span>2</span></h3><div style="font-size:9.5px;color:#6B7E90;margin-bottom:6px;">💵 aguarda pagto (Caixa)</div>
+          <div class="funil-card"><div class="fname">Maria Aparecida · OD 1</div><div class="fmeta">Monotórica R$ 3.600</div></div></div>
+        <div class="funil-col"><h3>Ganho parcial <span>3</span></h3><div style="font-size:9.5px;color:#6B7E90;margin-bottom:6px;">pagou algo</div>
+          <div class="funil-card"><div class="fname">José Almeida · OE 1</div><div class="fmeta">R$ 1.200 de 3.800</div></div></div>
+        <div class="funil-col"><h3>Ganho total <span>5</span></h3><div style="font-size:9.5px;color:#6B7E90;margin-bottom:6px;">operou</div>
+          <div class="funil-card"><div class="fname">Paulo Ferreira · OD 1</div><div class="fmeta">Operou 15/07</div></div></div>
+        <div class="funil-col"><h3>Perda <span>2</span></h3>
+          <div class="funil-card"><div class="fname">Santo Silva · OD 1</div><div class="fmeta">LIO Convênio (100%)</div></div></div>
+      </div>
+    </div>
+
+    <!-- ================= CAIXA ================= -->
+    <div class="tab-content" id="tab-caixa">
+      <div class="panel">
+        <h2>Caixa — cirurgias a pagar <span class="pill">2 portas de entrada</span></h2>
+        <div class="hint">Lista de todos em pendência. O caixa vê <strong>toda a jornada</strong> e o <strong>telefone</strong> para facilitar contato.</div>
+        <table>
+          <thead><tr><th>Paciente</th><th>Telefone</th><th>Entrada</th><th>LIO</th><th>Valor (lente)</th><th>Pago</th><th>Saldo</th><th>Cirurgia</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Maria Aparecida</td><td>(19) 98765-4321</td><td><span class="tag tag-blue">Via pré-agenda</span></td><td>Monotórica</td><td>R$ 3.600</td><td>R$ 0</td><td style="color:#C0122A;font-weight:600;">R$ 3.600</td><td>20/08</td><td><button class="btn btn-primary btn-sm">Abrir caixa</button></td></tr>
+            <tr><td>José Almeida</td><td>(19) 99111-2020</td><td><span class="tag tag-amber">Sem data — pend. agend.</span></td><td>Tórica</td><td>R$ 3.800</td><td>R$ 1.200</td><td style="color:#C0122A;font-weight:600;">R$ 2.600</td><td>—</td><td><button class="btn btn-primary btn-sm">Abrir caixa</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel" style="border: 2px solid #1A9E4A;">
+        <h2>💵 Fechamento — Maria Aparecida <span class="tag tag-teal">LIO Import · Bene Vital 400</span></h2>
+        <div class="hint">Na LIO Import, o Caixa recebe <strong>só a lente</strong> (o convênio cobre a cirurgia). Múltiplas formas na mesma transação. Base: planilha de fechamento de LIO.</div>
+        <div class="form-grid">
+          <div><label>Forma 1</label><select><option>PIX</option><option>Dinheiro</option><option>Stone CAO</option><option>Stone F2</option><option>Cheque</option></select></div>
+          <div><label>Valor 1</label><input value="R$ 2.000,00"></div>
+          <div><label>Forma 2</label><select><option>Stone F2</option></select></div>
+          <div><label>Valor 2</label><input value="R$ 1.600,00"></div>
+          <div><label>Parcelas</label><input value="3x"></div>
+          <div><label>Desconto</label><input value="R$ 0,00"></div>
+        </div>
+        <div class="note-blue">⚠️ Repasse médico e comissão <strong>não aparecem aqui</strong> — calculados no CRM (tabela existente) e exibidos na Conciliação.</div>
+        <div style="display:flex; gap:8px; margin-top:10px;"><button class="btn btn-green btn-sm">Finalizar e gerar recibo</button><button class="btn btn-outline btn-sm">📄 Exportar planilha OMIE</button></div>
+      </div>
+    </div>
+
+    <!-- ================= CONCILIAÇÃO ================= -->
+    <div class="tab-content" id="tab-conciliacao">
+      <div class="panel">
+        <h2>Conciliação Financeira — pós-recebimento</h2>
+        <div class="hint">Conferência da jornada (LIO, valor recebido, data). Gera a planilha no formato do <strong>repasse médico</strong>. O financeiro dá o check ou abre tratativa.</div>
+        <table>
+          <thead><tr><th>Paciente</th><th>LIO</th><th>Recebido</th><th>Cirurgia</th><th>Repasse (CRM)</th><th>Conferência</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Paulo Ferreira</td><td>Asférica · +20,0</td><td>R$ 2.750 ✓</td><td>15/07 ✓</td><td>calculado ✓</td><td><span class="tag tag-green">OK</span></td><td><button class="btn btn-green btn-sm">✅ Check final</button></td></tr>
+            <tr><td>José Almeida</td><td>Tórica · s/ dioptria ⚠️</td><td>R$ 1.200 de 3.800</td><td>sem data</td><td>—</td><td><span class="tag tag-red">Inconsistência</span></td><td><button class="btn btn-red btn-sm">Abrir tratativa</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= APROVAÇÃO DE DESCONTO ================= -->
+    <div class="tab-content" id="tab-aprovacao">
+      <div class="panel">
+        <h2>Solicitação de Condição Diferenciada — Aparecida Feltrin de Pontes <span class="pill">SLA · 2 relógios</span></h2>
+        <div class="hint">OD · Monofocal Asférica Vision Line Premium · Fica registrado no card (substitui o e-mail). Comercial e financeiro veem todo o detalhamento e o tempo de resposta.</div>
+        <div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
+          <div><div style="font-size:10px; text-transform:uppercase; color:#6B7E90;">Relógio 1 — aguardando financeiro</div><span class="tag tag-green" style="font-size:13px; padding:4px 10px;">⏱ 02h14 (parado)</span></div>
+          <span style="font-size:20px; color:#C4CDD6;">→</span>
+          <div><div style="font-size:10px; text-transform:uppercase; color:#6B7E90;">Relógio 2 — resposta → fechamento</div><span class="tag tag-amber" style="font-size:13px; padding:4px 10px;">⏱ 00h47 (correndo)</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Detalhamento financeiro — cálculo automático (taxas + impostos + repasse por LIO)</h2>
+        <div style="overflow-x:auto;"><table>
+          <thead><tr><th>Item</th><th style="text-align:right;">À vista</th><th style="text-align:right;">5x</th><th style="text-align:right;">10x</th></tr></thead>
+          <tbody>
+            <tr><td>Valor bruto (com NF)</td><td style="text-align:right;">3.082,00</td><td style="text-align:right;">3.350,00</td><td style="text-align:right;">3.490,00</td></tr>
+            <tr><td>Taxa cartão antecip. 9,69%am</td><td style="text-align:right; color:#C0122A;">—</td><td style="text-align:right; color:#C0122A;">-220,77</td><td style="text-align:right; color:#C0122A;">-338,18</td></tr>
+            <tr><td>Custo lente</td><td style="text-align:right; color:#C0122A;">-120,00</td><td style="text-align:right; color:#C0122A;">-120,00</td><td style="text-align:right; color:#C0122A;">-120,00</td></tr>
+            <tr><td>Comissão</td><td style="text-align:right; color:#C0122A;">-50,00</td><td style="text-align:right; color:#C0122A;">-50,00</td><td style="text-align:right; color:#C0122A;">-50,00</td></tr>
+            <tr><td>Custo mat. médico</td><td style="text-align:right; color:#C0122A;">-260,00</td><td style="text-align:right; color:#C0122A;">-260,00</td><td style="text-align:right; color:#C0122A;">-260,00</td></tr>
+            <tr><td>Impostos 11,35%</td><td style="text-align:right; color:#C0122A;">-349,81</td><td style="text-align:right; color:#C0122A;">-380,23</td><td style="text-align:right; color:#C0122A;">-396,12</td></tr>
+            <tr><td>Repasse cirurgião (da LIO)</td><td style="text-align:right; color:#C0122A;">-750,00</td><td style="text-align:right; color:#C0122A;">-750,00</td><td style="text-align:right; color:#C0122A;">-750,00</td></tr>
+            <tr style="background:#F0FBF4;"><td><strong>Líquido p/ empresa</strong></td><td style="text-align:right; font-weight:700; color:#0F6A30;">1.552,19</td><td style="text-align:right; font-weight:700; color:#0F6A30;">1.569,01</td><td style="text-align:right; font-weight:700; color:#0F6A30;">1.575,70</td></tr>
+          </tbody>
+        </table></div>
+        <div class="hint" style="margin-top:8px;">Taxas de maquininha, impostos e repasse por LIO vêm dos <strong>Cadastros → Parâmetros financeiros</strong>. O repasse médico não aparece para o comercial.</div>
+        <div style="margin-top:10px;"><button class="btn btn-green btn-sm">✅ Aprovar e enviar ao comercial</button></div>
+      </div>
+
+      <div class="panel">
+        <h2>Fechamento do comercial</h2>
+        <div class="hint">O comercial marca qual opção o paciente decidiu → para o Relógio 2 e notifica o financeiro.</div>
+        <table>
+          <thead><tr><th>Opção</th><th>Valor</th><th>Decisão do paciente</th></tr></thead>
+          <tbody>
+            <tr><td>À vista</td><td>R$ 3.082</td><td><button class="btn btn-outline btn-sm">Selecionar</button></td></tr>
+            <tr style="background:#F0FBF4;"><td><strong>5x</strong></td><td>R$ 3.350</td><td><span class="tag tag-green">✓ Fechado</span></td></tr>
+            <tr><td>10x</td><td>R$ 3.490</td><td><button class="btn btn-outline btn-sm">Selecionar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Registro no card (auditoria)</h2>
+        <div class="modal-mock" style="border-color:#2B9BE8; background:#F8FAFC;">
+          <strong>23/07 18:58</strong> · Comercial abriu solicitação — menor valor Asférica Premium<br>
+          <strong>23/07 21:12</strong> · Financeiro respondeu 3 opções · Relógio 1: 02h14<br>
+          <strong>23/07 21:59</strong> · Comercial fechou 5x R$ 3.350 · Relógio 2: 00h47 · financeiro notificado
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FICHA ================= -->
+    <div class="tab-content" id="tab-ficha">
+      <div class="panel" style="border: 2px solid #0D2137;">
+        <h2>📄 Ficha do Paciente — Maria Aparecida <span class="tag tag-teal">Bene Vital 400 · LIO Import</span></h2>
+        <div class="hint">Abre a partir de <strong>qualquer agenda</strong>. Alterações de LIO, valor ou lateralidade exigem senha.</div>
+        <div class="form-grid">
+          <div><label>Nome</label><input value="Maria Aparecida"></div>
+          <div><label>Nascimento</label><input value="12/03/1951"></div>
+          <div><label>Telefone</label><input value="(19) 98765-4321"></div>
+          <div><label>Convênio</label><select><option>Bene Vital 400</option><option>Beneficência</option><option>Particular HOG</option></select></div>
+          <div><label>Status da LIO</label><select><option>LIO Import — (convênio)</option><option>LIO Convênio — (convênio)</option><option>Particular</option></select></div>
+          <div><label>Lateralidade 🔒</label><select><option>OD — olho 1</option></select></div>
+          <div><label>LIO vendida 🔒</label><select><option>Monotórica</option></select></div>
+          <div><label>Dioptria 🔒</label><input value="+21,5"></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="tag tag-blue">Funil: Decidiu LIO</span><span class="tag tag-amber">Pagamento: a receber</span>
+          <span class="tag tag-blue">Cirurgia: 20/08 · Dr. Nilson</span><span class="tag tag-green">Bio válida</span>
+        </div>
+        <div class="modal-mock">🔒 Campos com cadeado pedem senha e registram trilha de auditoria. Histórico completo de atendimentos aparece abaixo.</div>
+      </div>
+    </div>
+
+    <!-- ================= CADASTROS ================= -->
+    <div class="tab-content" id="tab-cadastros">
+      <div class="panel"><h2>Cadastros <span class="pill">tabelas base</span></h2>
+        <div class="hint">Médicos · Usuários (papéis) · <strong>Salas</strong> (4 consultórios, CC, exames) · Convênios · Tipos de LIO · Tabela de valores · <strong>Tabela de repasse médico</strong> · <strong>Especialidades</strong> (Catarata, Plástica, Córnea, Retina, Glaucoma) · Tipos de exame (Retinografia, Angiografia, MR, Fotocoagulação, YAG) · Catálogo Plástica · Estoque de LIO. O convênio do paciente aparece em todas as telas.</div>
+      </div>
+      <div class="panel">
+        <h2>Médicos (pessoas) <span class="pill">importado do VoxComm</span></h2>
+        <div class="note-blue">No sistema atual a lista "Médicos" mistura 3 coisas. Aqui ficam só as <strong>pessoas</strong>. As <strong>agendas lógicas</strong> (Ni Cat, Refração Carol, MR NI…) estão em <strong>Padrões do Médico</strong>. As gambiarras <strong>"Z…"</strong> (ZZ Tratativas, ZZ Arquivo, Z Pré-Cirúrgico…) deixam de existir — viram estados/etapas do sistema.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;">
+          <span class="tag tag-gray">Dr. Alexandre</span><span class="tag tag-gray">Dr. Alexandre Ichida</span><span class="tag tag-gray">Dr. André Ayres</span><span class="tag tag-gray">Dr. Augusto B. Sant'anna</span><span class="tag tag-gray">Dr. Daniel Gadioli</span><span class="tag tag-gray">Dr. Defina</span><span class="tag tag-gray">Dr. Eduardo Takano</span><span class="tag tag-gray">Dr. Estênio Bazzo</span><span class="tag tag-gray">Dr. Guilherme</span><span class="tag tag-gray">Dr. Lucas</span><span class="tag tag-gray">Dr. Marcos</span><span class="tag tag-gray">Dr. Mario</span><span class="tag tag-gray">Dr. Monir</span><span class="tag tag-gray">Dr. Nilson</span><span class="tag tag-gray">Dr. Pietro Dechichi</span><span class="tag tag-gray">Dr. Renan Nishida</span><span class="tag tag-gray">Dr. Thiago Lima</span><span class="tag tag-gray">Dra. Ana Carolina</span><span class="tag tag-gray">Dra. Beatriz Ferreira</span><span class="tag tag-gray">Dra. Camila</span><span class="tag tag-gray">Dra. Daniela Kubota</span><span class="tag tag-gray">Dra. Eliane</span><span class="tag tag-gray">Dra. Georgiana</span><span class="tag tag-gray">Dra. Julia Donadelli</span><span class="tag tag-gray">Dra. Maria Claudia</span><span class="tag tag-gray">Dra. Mª Carolina Andolpho</span><span class="tag tag-gray">Dra. Rebeca Crosara</span><span class="tag tag-gray">Dra. Victoria Sampaio</span><span class="tag tag-purple">Anestesista · Dr. João Lian Jr</span><span class="tag tag-purple">Anestesista · Dra. Marília</span>
+        </div>
+        <div class="hint">Próximo passo: vincular cada médico às suas <strong>especialidades</strong> e <strong>agendas lógicas</strong> (quem opera catarata, quem faz retina/plástica/córnea/glaucoma, quem atende externo).</div>
+      </div>
+    </div>
+
+    <!-- ================= PADRÕES DO MÉDICO ================= -->
+    <div class="tab-content" id="tab-padroes-medico">
+      <div class="panel">
+        <h2>Padrões do Médico <span class="pill">alimenta camadas 1 e 4</span></h2>
+        <div class="hint">Cada linha é uma <strong>agenda lógica</strong> — o que no VoxComm aparece disfarçado de "médico" (Ni Cat, Lu Cat, Refração Carol, MR NI, Angio, YAG…). Aqui vira um padrão parametrizado que a coordenação seleciona ao reservar no Mapa; as regras são aplicadas automaticamente no agendamento.</div>
+        <table>
+          <thead><tr><th>Agenda lógica</th><th>Médico</th><th>Tipo</th><th>Local</th><th>Regras (camada 4)</th><th>Convênios</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ni Cat</strong></td><td>Dr. Nilson</td><td>Catarata</td><td>HOG</td><td>≥55 · máx.2 escada · encaixe · 16/per · 15min</td><td>Bene Vital, Beneficência</td></tr>
+            <tr><td><strong>Lu Cat</strong></td><td>Dr. Lucas</td><td>Catarata (particular)</td><td>HOG</td><td>≥55 · encaixe · 14/per</td><td>Bene Vital</td></tr>
+            <tr><td><strong>Cat Convênio</strong></td><td>Dr. Pietro Dechichi</td><td>Catarata (convênio)</td><td>HOG</td><td>encaixe · cota convênio</td><td>Convênios</td></tr>
+            <tr><td><strong>Glaucoma</strong></td><td>Dr. Guilherme</td><td>Glaucoma</td><td>HOG</td><td>plantão</td><td>Maioria convênio</td></tr>
+            <tr><td><strong>Refração Dra. Carol</strong></td><td>Dra. Ana Carolina <span class="tag tag-gray">"Carol"</span></td><td>Refração / Plástica</td><td>HOG</td><td>livre · bloco · 12/per · 20min</td><td>Todos</td></tr>
+            <tr><td><strong>Rotina</strong></td><td>Dra. Mª Carolina Andolpho</td><td>Rotina</td><td>HOG</td><td>bloco</td><td>Todos</td></tr>
+            <tr><td><strong>EDU Retina</strong></td><td>Dr. Eduardo Takano</td><td>Retina</td><td>HOG</td><td>plantão · exames prévios</td><td>Maioria convênio</td></tr>
+            <tr><td><strong>MR NI</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Nilson</td><td>Mapeamento de retina</td><td>Sala de exames</td><td>bloco · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>Angio</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Nilson (+ enferm./técnico)</td><td>Angiografia</td><td>Térreo</td><td>plantão · contraste/jejum · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>YAG</strong> <span class="tag tag-blue">exame médico</span></td><td>Dr. Lucas</td><td>YAG (laser)</td><td>Consultório 2</td><td>plantão · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>Fotocoagulação</strong> <span class="tag tag-blue">exame médico</span></td><td>Dra. Ana Carolina</td><td>Fotocoagulação (laser)</td><td>Consultório 4</td><td>plantão · <b>reserva sala</b></td><td>Todos</td></tr>
+            <tr><td><strong>Monte Mor · Dra. Georgiana</strong></td><td>Dra. Georgiana</td><td>Catarata</td><td><span class="tag tag-amber">Externo</span></td><td>—</td><td>Convênio</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;"><button class="btn btn-primary btn-sm">+ Novo padrão</button></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-relatorios"><div class="panel"><h2>Relatórios</h2><p class="hint">Ocupação por médico/sala, funil por especialidade, produção cirúrgica, score da consultora, planilhas OMIE e repasse médico.</p></div></div>
+
+    <!-- ================= CONFIGURAÇÕES ================= -->
+    <div class="tab-content" id="tab-configuracoes">
+      <div class="panel"><h2>Configurações</h2>
+        <p class="hint">Proposta/papel timbrado, orientações pós-cirúrgicas, cores das agendas, WhatsApp de follow-up.</p>
+      </div>
+      <div class="panel">
+        <h2>🔌 Integrações <span class="pill">previstas</span></h2>
+        <table>
+          <thead><tr><th>Sistema</th><th>Função</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><strong>NextQS</strong></td><td>Sistema de senhas — chamar paciente</td><td><span class="tag tag-amber">A integrar</span></td></tr>
+            <tr><td><strong>SIVOE</strong></td><td>Prontuário eletrônico</td><td><span class="tag tag-amber">A integrar</span></td></tr>
+            <tr><td><strong>App de estoque do CC</strong></td><td>Estoque / saídas / materiais</td><td><span class="tag tag-amber">A integrar</span></td></tr>
+            <tr><td><strong>OMIE</strong></td><td>Financeiro (contas a receber)</td><td><span class="tag tag-amber">A integrar</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL: reservar a partir do calendário ===== -->
+<div id="slot-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head"><span id="slot-title">Sala</span><button class="x" onclick="closeSlot()">✕</button></div>
+    <div class="modal-body">
+      <div class="slot-view" id="slot-reserve">
+        <div class="ctx-line" id="slot-reserve-ctx">Horário selecionado</div>
+        <div class="hint">Camada 1 — aloca <strong>médico + sala + turno</strong> neste horário. Puxe um Padrão do Médico para trazer as regras prontas.</div>
+        <div class="form-grid">
+          <div><label>Médico</label><select>
+            <optgroup label="Catarata (particular)"><option>Dr. Nilson</option><option>Dr. Lucas</option></optgroup>
+            <optgroup label="Catarata (convênio)"><option>Dr. Pietro Dechichi</option></optgroup>
+            <optgroup label="Retina"><option>Dr. Nilson</option><option>Dr. Eduardo Takano</option><option>Dr. Renan Nishida</option></optgroup>
+            <optgroup label="Plástica / Refração"><option>Dra. Ana Carolina</option></optgroup>
+            <optgroup label="Glaucoma"><option>Dr. Guilherme</option></optgroup>
+            <optgroup label="Rotina / clínica"><option>Dra. Mª Carolina Andolpho</option><option>Dr. Monir</option></optgroup>
+            <optgroup label="Externo (Monte Mor)"><option>Dra. Georgiana</option></optgroup>
+            <optgroup label="Anestesia"><option>Dr. João Lian Jr</option><option>Dra. Marília</option></optgroup>
+          </select></div>
+          <div><label>Padrão do médico (agenda lógica)</label><select><optgroup label="Consultas / cirúrgico"><option>Ni Cat — Catarata Nilson</option><option>Lu Cat — Catarata Lucas</option><option>Refração Dra. Carol</option><option>EDU Retina</option></optgroup><optgroup label="Exames por médico (reservam sala)"><option>MR NI — Mapeamento retina</option><option>YAG — Cons. 2</option><option>Angio — Térreo</option><option>Fotocoagulação — Cons. 4</option></optgroup><option>+ novo padrão…</option></select></div>
+          <div><label>Turno</label><select><option>Manhã</option><option>Tarde</option><option>Cirúrgico</option></select></div>
+          <div><label>Modo de contagem</label><select><option>Encaixe (vários no horário)</option><option>Bloco (grupo no horário)</option><option>Plantão (por hora)</option></select></div>
+          <div><label>Recorrência</label><select><option>Recorrente</option><option>Eventual</option><option>Extra (hora extra)</option></select></div>
+          <div><label>Sala definida?</label><select><option>Sim, definida</option><option>Definir até a data (obrigatório)</option></select></div>
+        </div>
+        <div class="note-blue">Regras herdadas: <strong>≥ 55 anos · máx. 2 que não sobem escada · 16 atend./período · 15 min · encaixe · convênios Bene Vital/Beneficência</strong>.</div>
+        <div class="act-row"><button class="btn btn-primary btn-sm">Salvar reserva</button><button class="btn btn-green btn-sm">Salvar e já liberar</button><button class="btn btn-gray btn-sm" onclick="closeSlot()">Cancelar</button></div>
+      </div>
+      <div class="slot-view" id="slot-manage">
+        <div class="note-blue" id="slot-manage-info"></div>
+        <div style="display:flex; gap:6px; margin:10px 0; flex-wrap:wrap;">
+          <span class="tag tag-gray">Contagem: Encaixe</span>
+          <span class="tag tag-blue">Vagas 14/16</span>
+          <span class="tag tag-teal">≥55 anos · máx. 2 não sobem escada</span>
+        </div>
+        <label style="font-size:10.5px;color:#6B7E90;text-transform:uppercase;letter-spacing:.5px;">Horários do turno (expandido)</label>
+        <table style="margin-top:6px;">
+          <tbody>
+            <tr><td style="width:56px;">07:00</td><td><span class="tag tag-gray">Encaixe</span> Aparecida C. de Souza</td><td style="text-align:right;"><span class="tag tag-green">agendado</span></td></tr>
+            <tr><td>07:00</td><td><span class="tag tag-gray">Encaixe</span> — livre —</td><td style="text-align:right;"><button class="btn btn-outline btn-sm">Encaixar</button></td></tr>
+            <tr><td>08:00</td><td><span class="tag tag-blue">Bloco (3)</span> Célia Simi · Nelson B. · +1</td><td style="text-align:right;"><span class="tag tag-amber">2/3</span></td></tr>
+            <tr><td>09:00</td><td>— livre —</td><td style="text-align:right;"><button class="btn btn-outline btn-sm">Agendar</button></td></tr>
+          </tbody>
+        </table>
+        <div class="hint" style="margin-top:10px;">Mudar horário/sala é livre. <strong>Ceder sala</strong> = o médico se desloca e o consultório é liberado por um momento (avisa as duas agendas). Valor/LIO/lateralidade exigem senha.</div>
+        <div class="act-row">
+          <button class="btn btn-outline btn-sm">✏️ Editar horário / sala</button>
+          <button class="btn btn-green btn-sm">🔓 Liberar p/ agendamento</button>
+          <button class="btn btn-outline btn-sm">↔ Ceder sala (médico desce)</button>
+          <button class="btn btn-red btn-sm">⛔ Bloquear (feriado/reunião/férias/falta)</button>
+        </div>
+      </div>
+      <div class="slot-view" id="slot-blocked">
+        <div class="note-blue" id="slot-blocked-info">Motivo do bloqueio.</div>
+        <div class="hint">Sábado e feriado que abre contam como <strong>hora extra</strong>. Ao reabrir, o bloco fica marcado com ⚡.</div>
+        <div class="act-row"><button class="btn btn-outline btn-sm">✏️ Editar motivo</button><button class="btn btn-primary btn-sm">⚡ Reabrir como hora extra</button><button class="btn btn-gray btn-sm" onclick="closeSlot()">Manter fechado</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const titles = {
+    'dashboard':'Painel Geral','mapa-amb':'Mapa de Ocupação — Ambulatório','recepcao':'Recepção','autorefrator':'Autorefrator','agenda-medica':'Estação do Médico','rastreio':'Rastreio do Paciente','agenda-exames':'Agenda de Exames','lista-espera':'Lista de Espera',
+    'mapa-cc':'Mapa de Ocupação — Centro Cirúrgico','agenda-cirurgica':'Agenda Cirúrgica','espera-cirurgica':'Agenda de Espera Cirúrgica','orcamento-modelo':'Modelo de Orçamento','estoque':'Estoque / Materiais','checagem':'Checagem D-3','pre-op':'Pré-Operatório (Enfermagem)','agenda-posop':'Agenda Pós-Op',
+    'prospectos':'Prospectos','atendimento':'Atendimento Pré-Cirúrgico','agenda-bio':'Agenda de Biometria','agenda-consultora':'Agenda da Consultora','pre-agenda':'Pré-Agenda Cirúrgica','fechamento':'Fechamento do Dia',
+    'funil':'Funil de Vendas','caixa':'Caixa','aprovacao':'Aprovação de Condição Diferenciada','conciliacao':'Conciliação Financeira',
+    'cadastros':'Cadastros','padroes-medico':'Padrões do Médico','relatorios':'Relatórios','configuracoes':'Configurações','ficha':'Ficha do Paciente'
+  };
+  function showTab(id, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    if (el && el.classList && el.classList.contains('nav-item')) el.classList.add('active');
+    else { var nav = document.querySelector('.nav-item[onclick*="\'' + id + '\'"]'); if (nav) nav.classList.add('active'); }
+    document.getElementById('page-title').textContent = titles[id] || '';
+    document.querySelector('.content').scrollTop = 0;
+  }
+
+  // ===== Multi-seleção de filtros (Todos / Nenhum) =====
+  function msAll(btn, val){
+    var panel = btn.closest('.ms-panel');
+    panel.querySelectorAll('input[type=checkbox]').forEach(function(c){ c.checked = val; });
+  }
+
+  // ===== Reserva a partir do calendário =====
+  function openView(name, title){
+    document.querySelectorAll('.slot-view').forEach(v => v.classList.remove('on'));
+    document.getElementById('slot-' + name).classList.add('on');
+    document.getElementById('slot-title').textContent = title;
+    document.getElementById('slot-modal').classList.add('open');
+  }
+  function closeSlot(){ document.getElementById('slot-modal').classList.remove('open'); }
+  function estadoLabel(cl){
+    if (cl.contains('e-agend')) return 'Agendado';
+    if (cl.contains('e-liber')) return 'Liberado p/ call center';
+    if (cl.contains('e-prog'))  return 'Pré-programado';
+    if (cl.contains('e-livre')) return 'Sala livre';
+    if (cl.contains('e-bloq'))  return 'Bloqueado';
+    return '';
+  }
+  document.querySelectorAll('.grade').forEach(function(grade){
+    grade.addEventListener('click', function(e){
+      var blk = e.target.closest('.blk');
+      if (blk){
+        var who = (blk.querySelector('.who') || {}).textContent || '';
+        var sub = (blk.querySelector('.sub') || {}).textContent || '';
+        if (blk.classList.contains('e-livre')){
+          document.getElementById('slot-reserve-ctx').textContent = 'Horário selecionado: ' + (sub || who);
+          openView('reserve', 'Reservar — ' + (sub || 'sala livre'));
+        } else if (blk.classList.contains('e-bloq')){
+          document.getElementById('slot-blocked-info').innerHTML = '<strong>Motivo:</strong> ' + who + (sub ? (' — ' + sub) : '');
+          openView('blocked', 'Bloqueio');
+        } else {
+          document.getElementById('slot-manage-info').innerHTML = '<strong>' + who + '</strong> · ' + sub + ' · estado: ' + estadoLabel(blk.classList);
+          openView('manage', who + ' · ' + sub);
+        }
+        return;
+      }
+      var cell = e.target.closest('.cell');
+      if (cell){
+        document.getElementById('slot-reserve-ctx').textContent = 'Novo horário na célula selecionada';
+        openView('reserve', 'Reservar novo horário');
+      }
+    });
+  });
+  document.getElementById('slot-modal').addEventListener('click', function(e){ if (e.target === this) closeSlot(); });
+</script>
+
+</body>
+</html>
