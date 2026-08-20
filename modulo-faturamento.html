@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG — Módulo de Faturamento (Mockup)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;display:flex;height:100vh;overflow:hidden;font-size:13px;}
+  .sidebar{width:212px;min-width:212px;background:#0D2137;color:#fff;display:flex;flex-direction:column;overflow-y:auto;}
+  .logo{padding:16px 18px 12px;border-bottom:1px solid #1A3A56;}
+  .logo .n{font-size:16px;font-weight:700;} .logo .s{font-size:9px;color:#5A8EB5;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .nav{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:#8BAFC9;font-size:12.5px;border-left:3px solid transparent;}
+  .nav:hover{background:#1A3A56;color:#fff;} .nav.on{background:#1A3A56;color:#fff;border-left-color:#2B9BE8;}
+  .foot{margin-top:auto;padding:12px 16px;border-top:1px solid #1A3A56;font-size:10px;color:#5A8EB5;}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:11px 22px;}
+  .top h1{font-size:15px;color:#0D2137;}
+  .content{flex:1;overflow-y:auto;padding:18px 22px;}
+  .tab{display:none;} .tab.on{display:block;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:16px 18px;margin-bottom:14px;}
+  .panel h2{font-size:13px;color:#0D2137;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pill{font-size:9px;text-transform:uppercase;letter-spacing:.5px;background:#EDF3F9;color:#2B6CA3;padding:2px 8px;border-radius:10px;font-weight:700;}
+  .hint{color:#6B7E90;font-size:11.5px;margin-bottom:10px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;} th{background:#F5F7FA;text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;color:#6B7E90;border-bottom:1px solid #DDE3EB;}
+  td{padding:7px 10px;border-bottom:1px solid #EEF1F5;font-size:12px;} tr:last-child td{border-bottom:none;}
+  .tag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;white-space:nowrap;}
+  .t-gray{background:#EEF1F5;color:#4A5E70;} .t-blue{background:#DCF0FD;color:#0A5E96;} .t-green{background:#D4F7E1;color:#0F6A30;} .t-red{background:#FDDDE0;color:#C0122A;} .t-amber{background:#FEF0DC;color:#9A5700;} .t-purple{background:#EDE3FB;color:#5B2C9E;}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin-bottom:10px;}
+  label{font-size:10.5px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;}
+  input,select{width:100%;padding:8px 10px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;}
+  .btn{padding:7px 13px;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;} .btn-sm{padding:5px 10px;font-size:11px;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-o{background:#fff;color:#2B9BE8;border:1px solid #2B9BE8;} .btn-r{background:#E63946;color:#fff;}
+  .note{background:#FFF8F0;border:1px dashed #F4A261;border-radius:8px;padding:11px 14px;font-size:11.5px;line-height:1.5;}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px;} @media(max-width:900px){.cols2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo"><div class="n">👁 HOG</div><div class="s">Módulo · Faturamento</div></div>
+  <div class="nav on" onclick="go('caixa',this)">💵 Caixa (recebimento)</div>
+  <div class="nav" onclick="go('aprovacao',this)">💬 Aprovação de Desconto</div>
+  <div class="nav" onclick="go('conciliacao',this)">✅ Conciliação</div>
+  <div class="nav" onclick="go('ajustes',this)">🧹 Ajustes pré-fechamento</div>
+  <div class="nav" onclick="go('repasse',this)">🩺 Repasse por profissional</div>
+  <div class="nav" onclick="go('params',this)">⚙️ Parâmetros financeiros</div>
+  <div class="foot">Mockup do módulo de faturamento.<br>Dados fictícios.</div>
+</div>
+<div class="main">
+  <div class="top"><h1 id="title">Caixa (recebimento)</h1></div>
+  <div class="content">
+
+    <!-- CAIXA -->
+    <div class="tab on" id="t-caixa">
+      <div class="panel"><h2>Caixa — cirurgias a pagar <span class="pill">2 portas de entrada</span></h2>
+        <div class="hint">Lista de pendências. O caixa vê a jornada e o telefone. Recebe <strong>só a negociação com o paciente</strong> — o repasse médico não aparece aqui.</div>
+        <table><thead><tr><th>Paciente</th><th>Telefone</th><th>Entrada</th><th>Status LIO</th><th>Valor (lente)</th><th>Pago</th><th>Saldo</th><th></th></tr></thead><tbody>
+          <tr><td>Maria Aparecida</td><td>(19) 98765-4321</td><td><span class="tag t-blue">Via pré-agenda</span></td><td><span class="tag t-purple">LIO Import</span></td><td>R$ 3.600</td><td>R$ 0</td><td style="color:#C0122A;font-weight:600;">R$ 3.600</td><td><button class="btn btn-p btn-sm">Abrir caixa</button></td></tr>
+          <tr><td>José Almeida</td><td>(19) 99111-2020</td><td><span class="tag t-amber">Sem data</span></td><td><span class="tag t-blue">Particular</span></td><td>R$ 3.800</td><td>R$ 1.200</td><td style="color:#C0122A;font-weight:600;">R$ 2.600</td><td><button class="btn btn-p btn-sm">Abrir caixa</button></td></tr>
+        </tbody></table>
+      </div>
+      <div class="panel" style="border:2px solid #1A9E4A;"><h2>💵 Fechamento — Maria Aparecida <span class="tag t-purple">LIO Import · Bene Vital 400</span></h2>
+        <div class="hint">Múltiplas formas na mesma transação. Base: planilha de fechamento de LIO. Gera recibo + planilha OMIE (contas a receber).</div>
+        <div class="form-grid">
+          <div><label>Forma 1</label><select><option>PIX</option><option>Dinheiro</option><option>Stone CAO</option><option>Stone F2</option><option>Cheque</option></select></div>
+          <div><label>Valor 1</label><input value="R$ 2.000,00"></div>
+          <div><label>Forma 2</label><select><option>Stone F2</option></select></div>
+          <div><label>Valor 2</label><input value="R$ 1.600,00"></div>
+          <div><label>Parcelas</label><input value="3x"></div>
+          <div><label>Desconto negociado</label><input value="R$ 0,00"></div>
+        </div>
+        <div class="note">⚠️ Repasse médico e comissão <strong>não aparecem</strong> aqui — calculados nos Parâmetros e exibidos na Conciliação/Repasse.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;"><button class="btn btn-g btn-sm">Finalizar e gerar recibo</button><button class="btn btn-o btn-sm">📄 Exportar planilha OMIE</button></div>
+      </div>
+    </div>
+
+    <!-- APROVAÇÃO -->
+    <div class="tab" id="t-aprovacao">
+      <div class="panel"><h2>Solicitação de Condição Diferenciada — Aparecida F. de Pontes <span class="pill">SLA · 2 relógios</span></h2>
+        <div class="hint">OD · Asférica Premium · registrada no card (substitui o e-mail). Mede o tempo de resposta financeiro→comercial.</div>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+          <div><div style="font-size:10px;text-transform:uppercase;color:#6B7E90;">Relógio 1 — aguardando financeiro</div><span class="tag t-green" style="font-size:13px;padding:4px 10px;">⏱ 02h14 (parado)</span></div>
+          <span style="font-size:20px;color:#C4CDD6;">→</span>
+          <div><div style="font-size:10px;text-transform:uppercase;color:#6B7E90;">Relógio 2 — resposta → fechamento</div><span class="tag t-amber" style="font-size:13px;padding:4px 10px;">⏱ 00h47 (correndo)</span></div>
+        </div>
+      </div>
+      <div class="panel"><h2>Detalhamento financeiro — cálculo automático (taxas + impostos + repasse por LIO)</h2>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Item</th><th style="text-align:right;">À vista</th><th style="text-align:right;">5x</th><th style="text-align:right;">10x</th></tr></thead><tbody>
+          <tr><td>Valor bruto (com NF)</td><td style="text-align:right;">3.082,00</td><td style="text-align:right;">3.350,00</td><td style="text-align:right;">3.490,00</td></tr>
+          <tr><td>Taxa cartão antecip. 9,69%am</td><td style="text-align:right;color:#C0122A;">—</td><td style="text-align:right;color:#C0122A;">-220,77</td><td style="text-align:right;color:#C0122A;">-338,18</td></tr>
+          <tr><td>Custo lente</td><td style="text-align:right;color:#C0122A;">-120,00</td><td style="text-align:right;color:#C0122A;">-120,00</td><td style="text-align:right;color:#C0122A;">-120,00</td></tr>
+          <tr><td>Comissão + mat. médico</td><td style="text-align:right;color:#C0122A;">-310,00</td><td style="text-align:right;color:#C0122A;">-310,00</td><td style="text-align:right;color:#C0122A;">-310,00</td></tr>
+          <tr><td>Impostos 11,35%</td><td style="text-align:right;color:#C0122A;">-349,81</td><td style="text-align:right;color:#C0122A;">-380,23</td><td style="text-align:right;color:#C0122A;">-396,12</td></tr>
+          <tr><td>Repasse cirurgião (da LIO)</td><td style="text-align:right;color:#C0122A;">-750,00</td><td style="text-align:right;color:#C0122A;">-750,00</td><td style="text-align:right;color:#C0122A;">-750,00</td></tr>
+          <tr style="background:#F0FBF4;"><td><strong>Líquido p/ empresa</strong></td><td style="text-align:right;font-weight:700;color:#0F6A30;">1.552,19</td><td style="text-align:right;font-weight:700;color:#0F6A30;">1.569,01</td><td style="text-align:right;font-weight:700;color:#0F6A30;">1.575,70</td></tr>
+        </tbody></table></div>
+        <div style="margin-top:10px;"><button class="btn btn-g btn-sm">✅ Aprovar e enviar ao comercial</button></div>
+      </div>
+      <div class="panel"><h2>Fechamento do comercial + auditoria</h2>
+        <div class="hint">O comercial marca a opção decidida → para o Relógio 2 e notifica o financeiro. Tudo fica no card.</div>
+        <div class="note" style="border-color:#2B9BE8;background:#F8FAFC;"><strong>23/07 18:58</strong> Comercial abriu · <strong>21:12</strong> Financeiro respondeu 3 opções (R1: 02h14) · <strong>21:59</strong> Comercial fechou 5x R$ 3.350 (R2: 00h47)</div>
+      </div>
+    </div>
+
+    <!-- CONCILIAÇÃO -->
+    <div class="tab" id="t-conciliacao">
+      <div class="panel"><h2>Conciliação Financeira — pós-recebimento</h2>
+        <div class="hint">Conferência da jornada (LIO, valor recebido, data). Gera a planilha no formato do <strong>repasse médico</strong>. O financeiro dá o check ou abre tratativa.</div>
+        <table><thead><tr><th>Paciente</th><th>LIO</th><th>Recebido</th><th>Cirurgia</th><th>Repasse</th><th>Conferência</th><th></th></tr></thead><tbody>
+          <tr><td>Paulo Ferreira</td><td>Asférica · +20,0</td><td>R$ 2.750 ✓</td><td>15/07 ✓</td><td>calculado ✓</td><td><span class="tag t-green">OK</span></td><td><button class="btn btn-g btn-sm">✅ Check final</button></td></tr>
+          <tr><td>José Almeida</td><td>Tórica · s/ dioptria ⚠️</td><td>R$ 1.200 de 3.800</td><td>sem data</td><td>—</td><td><span class="tag t-red">Inconsistência</span></td><td><button class="btn btn-r btn-sm">Abrir tratativa</button></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- AJUSTES PRÉ-FECHAMENTO -->
+    <div class="tab" id="t-ajustes">
+      <div class="panel"><h2>Ajustes antes de fechar o repasse <span class="pill">reconciliação</span></h2>
+        <div class="hint">Antes de gerar o relatório de repasse, corrige a base de visitas: paciente duplicado, convênio errado, deu entrada e foi embora, homônimos. Usa dedup por CPF/id SIVOE + Unificar Pacientes.</div>
+        <table><thead><tr><th>Ocorrência</th><th>Paciente(s)</th><th>Detalhe</th><th>Ação</th></tr></thead><tbody>
+          <tr><td><span class="tag t-amber">Duplicado</span></td><td>Maria Aparecida (2×)</td><td>Cadastrado 2 vezes no mesmo dia</td><td><button class="btn btn-o btn-sm">Unificar</button></td></tr>
+          <tr><td><span class="tag t-amber">Convênio errado</span></td><td>Santo Silva</td><td>Entrou como Particular, é Beneficência</td><td><button class="btn btn-o btn-sm">Corrigir</button></td></tr>
+          <tr><td><span class="tag t-red">No-show c/ entrada</span></td><td>Vilma Pontes</td><td>Deu entrada e foi embora</td><td><button class="btn btn-o btn-sm">Remover da produção</button></td></tr>
+          <tr><td><span class="tag t-purple">Homônimo</span></td><td>José Almeida × José Almeida</td><td>Dois pacientes, mesmo nome</td><td><button class="btn btn-o btn-sm">Separar</button></td></tr>
+        </tbody></table>
+        <div style="margin-top:10px;"><button class="btn btn-g btn-sm">🔒 Base conferida → liberar fechamento do repasse</button></div>
+      </div>
+    </div>
+
+    <!-- REPASSE -->
+    <div class="tab" id="t-repasse">
+      <div class="panel"><h2>Repasse por profissional <span class="pill">fechamento mensal</span></h2>
+        <div class="hint">Regras de repasse por profissional (integra o dash existente). Produção cirúrgica vem da baixa cirúrgica (médico executor) — evita digitação dupla.</div>
+        <div class="cols2">
+          <div><table><thead><tr><th>Médico</th><th>Mês</th><th>Base</th><th>Vencimento</th><th></th></tr></thead><tbody>
+            <tr><td>Dr. Nilson</td><td>Ago/26</td><td><span class="tag t-green">pronta</span></td><td>10/09</td><td><button class="btn btn-o btn-sm">📄 Planilha</button></td></tr>
+            <tr><td>Dr. Lucas</td><td>Ago/26</td><td><span class="tag t-green">pronta</span></td><td>10/09</td><td><button class="btn btn-o btn-sm">📄 Planilha</button></td></tr>
+            <tr><td>Dr. Pietro</td><td>Ago/26</td><td><span class="tag t-amber">conferir</span></td><td>30/08</td><td><button class="btn btn-o btn-sm">📄 Planilha</button></td></tr>
+          </tbody></table></div>
+          <div class="note">O <strong>repasse por LIO</strong> e a comissão são parametrizados (aba Parâmetros). O CRM alimenta a produção (executor + tipo de cirurgia) e o repasse sai por médico/mês, com vencimento. Gera a planilha no formato exato do repasse.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARÂMETROS -->
+    <div class="tab" id="t-params">
+      <div class="panel"><h2>Parâmetros financeiros <span class="pill">alimentam o cálculo</span></h2>
+        <div class="hint">Base do cálculo automático da Aprovação de Desconto e do repasse. Editável pela gestão.</div>
+        <div class="cols2">
+          <div class="panel" style="margin:0;"><h2>Taxas de maquininha (importável)</h2>
+            <table><thead><tr><th>Adquirente</th><th>Débito</th><th>1x</th><th>Antecip.</th></tr></thead><tbody>
+              <tr><td>Stone CAO</td><td>1,20%</td><td>2,90%</td><td>9,69% a.m.</td></tr>
+              <tr><td>Stone F2</td><td>1,10%</td><td>2,70%</td><td>—</td></tr>
+            </tbody></table></div>
+          <div class="panel" style="margin:0;"><h2>Impostos e custos</h2>
+            <table><tbody>
+              <tr><td>Impostos (Simples/Presumido)</td><td style="text-align:right;">11,35%</td></tr>
+              <tr><td>Custo material médico (padrão)</td><td style="text-align:right;">R$ 260,00</td></tr>
+              <tr><td>Comissão (padrão)</td><td style="text-align:right;">R$ 50,00</td></tr>
+            </tbody></table></div>
+        </div>
+        <div class="panel" style="margin:14px 0 0;"><h2>Repasse do cirurgião por LIO · custo da lente</h2>
+          <table><thead><tr><th>LIO</th><th>Custo lente</th><th>Repasse cirurgião</th></tr></thead><tbody>
+            <tr><td>Monofocal Asférica</td><td>R$ 1.200</td><td>R$ 550</td></tr>
+            <tr><td>Monotórica</td><td>R$ 1.800</td><td>R$ 750</td></tr>
+            <tr><td>Premium Estendido</td><td>R$ 3.800</td><td>R$ 1.500</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  const T={caixa:'Caixa (recebimento)',aprovacao:'Aprovação de Desconto',conciliacao:'Conciliação',ajustes:'Ajustes pré-fechamento',repasse:'Repasse por profissional',params:'Parâmetros financeiros'};
+  function go(id,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));document.getElementById('t-'+id).classList.add('on');el.classList.add('on');document.getElementById('title').textContent=T[id];}
+</script>
+</body>
+</html>
