@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo de Agendas — HOG · Modelo para SIVOE</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#EEF2F6;color:#1A2B3C;font-size:14px;line-height:1.55;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 70px;}
+  header{background:#0D2137;color:#fff;padding:30px 0;margin-bottom:26px;}
+  header .wrap{padding-bottom:0;}
+  header h1{font-size:24px;font-weight:700;}
+  header .sub{color:#8BAFC9;font-size:14px;margin-top:6px;}
+  header .tags{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;}
+  header .tags span{background:#1A3A56;color:#8BAFC9;font-size:11px;padding:4px 11px;border-radius:12px;}
+  h2{font-size:17px;color:#0D2137;margin:30px 0 12px;padding-bottom:8px;border-bottom:2px solid #D7DFE8;display:flex;align-items:center;gap:9px;}
+  h2 .n{background:#2B9BE8;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none;}
+  h3{font-size:14px;color:#0D2137;margin:0 0 6px;}
+  p{margin-bottom:10px;color:#3C4E60;}
+  .card{background:#fff;border:1px solid #D7DFE8;border-radius:10px;padding:16px 18px;margin-bottom:14px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:800px){.grid2,.grid3{grid-template-columns:1fr;}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#5A6B7B;font-size:11px;text-transform:uppercase;border-bottom:1px solid #D7DFE8;}
+  td{padding:7px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:12px;font-family:ui-monospace,Consolas,monospace;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+  .t-b{background:#DCF0FD;color:#0A5E96;} .t-g{background:#D4F7E1;color:#0F6A30;} .t-a{background:#FEF0DC;color:#9A5700;} .t-p{background:#EDE3FB;color:#5B2C9E;}
+  /* camadas */
+  .layers{display:flex;gap:0;align-items:stretch;flex-wrap:wrap;}
+  .layer{flex:1;min-width:180px;background:#fff;border:1px solid #D7DFE8;border-top:4px solid #2B9BE8;border-radius:8px;padding:12px 14px;margin:4px;}
+  .layer .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6B7E90;}
+  .layer h3{margin:3px 0 5px;font-size:14px;}
+  .layer p{font-size:12px;margin:0;color:#5A6B7B;}
+  .arrow{align-self:center;color:#B7C2CD;font-size:18px;}
+  .note{background:#EEF6FD;border:1px dashed #2B9BE8;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#274b66;}
+  .sep{display:flex;gap:10px;font-size:11px;color:#6B7E90;flex-wrap:wrap;margin-top:6px;}
+  .sep b{color:#0D2137;}
+  .foot{color:#6B7E90;font-size:12px;margin-top:24px;text-align:center;}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>👁 Módulo de Agendas — Hospital dos Olhos Guanabara</h1>
+    <div class="sub">Modelo de agendamento para implantação no ecossistema — proposta técnica de parceria com a <strong>SIVOE</strong>.</div>
+    <div class="tags"><span>Resumo técnico</span><span>Camadas de capacidade</span><span>Agenda contínua de exames</span><span>Contrato de dados</span></div>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="note">Este documento descreve o <strong>modelo de agendas</strong> que o HOG adota e propõe que a SIVOE incorpore no sistema. O foco é a <strong>lógica</strong> e o <strong>contrato de dados</strong> — não a interface. HOG e SIVOE são parceiros: o SIVOE permanece dono do <strong>cadastro do paciente e do prontuário</strong>; a agenda é operada por este modelo.</div>
+
+  <!-- 1 -->
+  <h2><span class="n">1</span> Conceito: capacidade em camadas</h2>
+  <p>A agenda não é uma lista de horários fixos. É uma <strong>cadeia de capacidade em 4 camadas</strong>: a coordenação reserva a capacidade, libera para agendamento, o call center enxerga por “agenda lógica”, e regras automáticas garantem que só o que é válido seja marcado.</p>
+  <div class="layers">
+    <div class="layer"><div class="k">Camada 1</div><h3>Reserva</h3><p>Aloca <b>médico + sala + turno</b> (recorrente/eventual/extra). Gera o mapa de ocupação. Não abre horário para marcar.</p></div>
+    <div class="arrow">→</div>
+    <div class="layer"><div class="k">Camada 2</div><h3>Liberação</h3><p>A coordenação libera <b>dias específicos</b> para agendamento. Dispara a lista de espera.</p></div>
+    <div class="arrow">→</div>
+    <div class="layer"><div class="k">Camada 3</div><h3>Agenda lógica</h3><p>O call center vê por <b>médico × tipo × local</b> (ex: “Catarata Nilson”, “Refração Carol”).</p></div>
+    <div class="arrow">→</div>
+    <div class="layer"><div class="k">Camada 4</div><h3>Regras</h3><p>Aplicadas no ato de agendar: idade, cotas, encaixe/bloco/plantão, convênios. O operador não precisa saber.</p></div>
+  </div>
+
+  <!-- 2 -->
+  <h2><span class="n">2</span> Estados do bloco — eixos independentes</h2>
+  <p>Cada bloco carrega três informações <strong>independentes</strong> (o erro comum é misturá-las numa cor só):</p>
+  <div class="grid3">
+    <div class="card"><h3>Turno</h3><div class="sep"><span class="tag t-a">Manhã</span><span class="tag t-g">Tarde</span><span class="tag t-b">Cirúrgico</span></div></div>
+    <div class="card"><h3>Estado</h3><div class="sep">Sala livre → Pré-programado → Liberado → Agendado · <b>Bloqueado</b> (com motivo)</div></div>
+    <div class="card"><h3>Marcas</h3><div class="sep">⚡ hora extra · 🔒 médico em 2 lugares · 🎓 residente (só gerencial)</div></div>
+  </div>
+
+  <!-- 3 -->
+  <h2><span class="n">3</span> Dois paradigmas de agendamento</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Consulta = slot</h3>
+      <p>Marcação por horário, com <b>modo de contagem</b> por agenda lógica: <span class="tag t-b">encaixe</span> (vários no mesmo horário), <span class="tag t-b">bloco</span> (grupo), <span class="tag t-b">plantão</span> (por hora).</p>
+    </div>
+    <div class="card">
+      <h3>Exame = tempo contínuo</h3>
+      <p>A <b>sala é o recurso</b>; o paciente ocupa a <b>soma das durações</b> dos seus exames em <b>bloco contínuo</b>. Granularidade 5 min, buffer entre pacientes, chegada antecipada. Regras: ordem clínica calculada, biometria não após 15h, preparo obrigatório, dilatação não ocupa a sala.</p>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <h2><span class="n">4</span> Separação por executor</h2>
+  <div class="grid2">
+    <div class="card"><h3>Exame por técnico → Agenda de Exames</h3><p>Biometria, OCT, topografia, paquimetria, microscopia, campo visual, retinografia. Usam o motor contínuo (sala = recurso).</p></div>
+    <div class="card"><h3>Exame por médico → Mapa de Ocupação</h3><p>Mapeamento de retina, YAG, Fotocoagulação, Angiografia. Consomem a <b>agenda do médico + a sala do equipamento</b> (ex: YAG=Cons.2, Fotocoag.=Cons.4).</p></div>
+  </div>
+
+  <!-- 5 -->
+  <h2><span class="n">5</span> Contrato de dados <span style="font-size:11px;color:#6B7E90;font-weight:400;">(tabelas essenciais)</span></h2>
+  <div class="card">
+  <table>
+    <thead><tr><th>Entidade</th><th>Campos-chave</th><th>Papel</th></tr></thead>
+    <tbody>
+      <tr><td><code>medicos</code></td><td>id (medId), nome, especialidade, crm</td><td>profissional</td></tr>
+      <tr><td><code>salas</code></td><td>id, nome, andar, tipo</td><td>recurso físico (consultório/CC/exames)</td></tr>
+      <tr><td><code>agendas_logicas</code></td><td>id, nome, medico_id, tipo, local, <code>regras jsonb</code></td><td>camada 3+4 (médico×tipo×local + regras)</td></tr>
+      <tr><td><code>reservas</code></td><td>medico_id, sala_id, turno, data, recorrencia, estado</td><td>camada 1 (capacidade)</td></tr>
+      <tr><td><code>liberacoes</code></td><td>agenda_logica_id, data, liberado_em</td><td>camada 2</td></tr>
+      <tr><td><code>agendamentos</code></td><td>paciente_id, agenda_logica_id, tipo, data, hora, sala_id, status, observacao</td><td>consulta/exame/cirurgia</td></tr>
+      <tr><td><code>exames</code></td><td>id, sigla, equipamento, duracao_min, ordem, dilata, preparo</td><td>catálogo (parametrização)</td></tr>
+      <tr><td><code>exame_dia_config</code></td><td>data, ini, fim, <code>salas jsonb</code>, exames[], intervalo</td><td>“abrir o dia” de exames</td></tr>
+      <tr><td><code>exame_agendamentos</code></td><td>data, paciente_id, exames[], ini, fim, sala, chegar_as, <code>plano jsonb</code></td><td>bloco contínuo agendado</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>Fronteira com a SIVOE:</strong> o <code>paciente</code> e o <code>prontuário</code> são da SIVOE. Este modelo referencia o paciente por <code>id/CPF</code> (não recadastra). Quando o atendimento é finalizado no prontuário, gera-se a <strong>visita</strong> (para faturamento) e o <strong>pedido de exames</strong> (que alimenta o call center, sem expor o prontuário).</div>
+
+  <!-- 6 -->
+  <h2><span class="n">6</span> Fluxo operacional (resumo)</h2>
+  <div class="card">
+    <p><strong>Gestão</strong> reserva (c.1) e libera dias (c.2) → <strong>Call center</strong> agenda na agenda lógica; nos exames só escolhe os exames e o motor devolve os horários que cabem (c.3+4) → <strong>Recepção</strong> dá entrada e encaminha (fila/senha) → <strong>Médico/Técnico</strong> executa; ao finalizar o prontuário, grava a visita (faturamento) e o pedido de exames.</p>
+    <p style="margin:0;">Especialidades muito convênio (retina, glaucoma, córnea-transplante) podem usar <strong>agenda cirúrgica externa</strong>; a consultora de catarata <strong>consome</strong> a fatia de pré-op da agenda de exames pelas parametrizações.</p>
+  </div>
+
+  <div class="foot">Proposta técnica · Hospital dos Olhos Guanabara — modelo de agendas para parceria com a SIVOE · v1</div>
+</div>
+</body>
+</html>
