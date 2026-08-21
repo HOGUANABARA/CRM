@@ -47,7 +47,7 @@
 </div></header>
 <div class="wrap">
 
-<div class="nota"><b>Princípio central:</b> o usuário não deve perceber que mudou de sistema. Botões, cores, tabelas e menus seguem exatamente o padrão atual (Bootstrap 5.3.3). As <b>melhorias</b> entram no que o sistema atual não faz — validações, alertas e informação contextual — <b>sem</b> mudar o visual que a equipe já conhece.</div>
+<div class="nota"><b>Princípio central:</b> o usuário não deve perceber que mudou de sistema. Botões, cores, tabelas e menus seguem exatamente o padrão atual (Bootstrap 5.3.3). As <b>melhorias</b> entram em duas frentes, sem mexer no visual: <b>(1) validações, alertas e informação contextual</b> em todas as telas; e <b>(2) novos modelos de agendamento</b> no Centro Cirúrgico, nos Exames e na Consultora Cirúrgica (ver seção 7).</div>
 
 <h2><span class="n">1</span> Fundação técnica</h2>
 <div class="demo">
@@ -157,7 +157,37 @@
   <div class="nao"><b>✕ Evite</b>Mensagens genéricas (“erro ao salvar”), pop-ups do navegador para regras de negócio, ou bloquear sem dizer o porquê.</div>
 </div>
 
-<h2><span class="n">7</span> Estrutura de tela (todas iguais)</h2>
+<h2><span class="n">7</span> Onde o sistema muda de verdade <span style="font-size:12px;color:#6c757d;font-weight:400">— novos modelos de agendamento</span></h2>
+<div class="nota"><b>A aparência é a mesma; o que evolui é o modelo de agendamento</b> em três áreas: Centro Cirúrgico, Exames e Consultora Cirúrgica. Nessas telas o usuário encontra <b>funções novas</b> — mas com os mesmos botões, cores e tabelas de sempre, então a curva de aprendizado é curta.</div>
+<div class="demo">
+<table class="man">
+<tr><th style="width:150px">Área</th><th style="width:38%">Como era</th><th>Como fica</th></tr>
+<tr><td><b>Consulta</b><br><span class="st st-neutro">sem mudança</span></td>
+    <td>Marcação por horário na agenda do médico.</td>
+    <td><b>Igual</b> — slot por horário, com <b>modo de contagem</b> parametrizado por agenda: encaixe, bloco ou plantão. Ganha as validações (intervalo, faltas, cota de escada).</td></tr>
+<tr><td><b>Exames</b><br><span class="st st-info">modelo novo</span></td>
+    <td>Grade fixa de horários (ex.: de 20 em 20 min), independente do exame. Exame de 10 min ocupava 20; combos não cabiam; pacientes com vários exames ficavam fragmentados.</td>
+    <td><b>Agenda contínua:</b> a <b>sala é o recurso</b> e o paciente ocupa <b>a soma real</b> dos seus exames, em <b>bloco contínuo</b>. O sistema calcula a <b>ordem clínica</b> (campo visual antes de dilatar), respeita <b>combos com tempo próprio</b>, bloqueia biometria após 15h, mostra o <b>preparo obrigatório</b> e o horário de <b>chegar às</b>. O call center escolhe só <b>quais exames</b> — o resto é calculado.</td></tr>
+<tr><td><b>Centro Cirúrgico</b><br><span class="st st-info">modelo novo</span></td>
+    <td>Agenda cirúrgica <b>sem vínculo com o médico executor</b> — a produção era redigitada depois, em outro controle.</td>
+    <td><b>Executor obrigatório</b> no agendamento e na baixa. Nova <b>baixa cirúrgica</b> registra executor, lateralidade, sala, anestesista, LIO e dioptria; marca <b>segundo olho</b> e <b>gera a tratativa de pós-operatório</b> automaticamente. Distingue <b>HOG × externo</b> (parceiros e cobrança) e alimenta o repasse sem digitação dupla.</td></tr>
+<tr><td><b>Consultora Cirúrgica</b><br><span class="st st-info">modelo novo</span></td>
+    <td>Atendimento sem rastreio — perdia-se o acompanhamento de quem queria lente importada.</td>
+    <td><b>Prospectos + atendimento pré-cirúrgico</b>: orçamento de LIO com <b>impressão padrão</b>, agendamento dos exames pré-op, e <b>Fechamento do Dia</b> — todo paciente da agenda precisa terminar com uma situação (meta: <b>zero sem tratativa</b>). No dia do exame, os pacientes <b>caem automaticamente</b> na agenda da consultora. Ganha KPIs, comissão e reporte ao financeiro.</td></tr>
+<tr><td><b>Lista de espera</b><br><span class="st st-info">função nova</span></td>
+    <td>Resolvida com “agendas Z” improvisadas.</td>
+    <td>Fila real por <b>ordem de chegada + urgência</b>, por agenda. Quando a coordenação <b>libera dias</b>, o sistema avisa quem contatar.</td></tr>
+<tr><td><b>Capacidade</b><br><span class="st st-info">função nova</span></td>
+    <td>Grade montada fora do sistema (planilha/calendário).</td>
+    <td><b>Mapa de Ocupação</b>: reserva (médico + sala + turno) e <b>liberação</b> dos dias para o call center, com recorrência, bloqueios e hora extra.</td></tr>
+</table>
+</div>
+<div class="regra">
+  <div class="sim"><b>✓ Como apresentar à equipe</b>“É o mesmo sistema, com as mesmas telas e botões. O que mudou: o computador agora faz as contas do exame, cobra o médico executor na cirurgia e não deixa paciente sem tratativa.”</div>
+  <div class="nao"><b>✕ Como não apresentar</b>“Sistema novo, tudo diferente, vamos treinar do zero.” — a familiaridade visual é justamente o que reduz resistência e erro.</div>
+</div>
+
+<h2><span class="n">8</span> Estrutura de tela (todas iguais)</h2>
 <div class="demo">
 <pre>┌──────────────────────────────────────────────┐
 │ NAVBAR escura #212529  logo + menus          │  ← igual em todo o sistema
@@ -174,7 +204,7 @@
 └──────────────────────────────────────────────┘</pre>
 </div>
 
-<h2><span class="n">8</span> Menus — a mesma organização de sempre</h2>
+<h2><span class="n">9</span> Menus — a mesma organização de sempre</h2>
 <div class="demo">
 <table class="man">
 <tr><th style="width:150px">Menu</th><th>Submenus</th></tr>
@@ -190,7 +220,7 @@
 </div>
 <p><b>Regra:</b> manter os nomes e a posição dos menus. Itens novos entram <b>dentro</b> do menu que já faz sentido, nunca criando um menu novo no meio dos existentes.</p>
 
-<h2><span class="n">9</span> Como usar em um módulo novo</h2>
+<h2><span class="n">10</span> Como usar em um módulo novo</h2>
 <div class="demo">
 <pre>&lt;link rel="stylesheet" href="hog-ui.css"&gt;
 
@@ -204,7 +234,7 @@
 &lt;table class="table table-sm table-striped table-hover align-middle"&gt;…&lt;/table&gt;</pre>
 </div>
 
-<h2><span class="n">10</span> Checklist antes de publicar um módulo</h2>
+<h2><span class="n">11</span> Checklist antes de publicar um módulo</h2>
 <div class="demo">
 <table class="man">
 <tr><td>☐ Importa o <code>hog-ui.css</code>?</td></tr>
