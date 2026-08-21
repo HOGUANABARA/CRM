@@ -52,6 +52,13 @@
   .info{background:#F5F7FA;border:1px solid #E4EAF0;border-radius:6px;padding:9px 11px;font-size:11.5px;color:#3C4E60;margin-bottom:10px;line-height:1.5;}
   .blk{background:#FFF3F4;border:1px solid #E63946;border-radius:7px;padding:10px 12px;font-size:12px;color:#C0122A;margin-bottom:10px;}
 </style>
+<style>
+  .agbar{background:#dce9f7;padding:7px 10px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;border-bottom:1px solid #c5d9ee;}
+  .agbar a{padding:6px 13px;color:#1a3d5c;text-decoration:none;font-size:14px;cursor:pointer;border-radius:3px;white-space:nowrap;}
+  .agbar a:hover{background:#fff;}
+  .agbar a.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .agbar a.verTodas{color:#0d6efd;font-size:13px;border-left:1px solid #b9cfe4;margin-left:6px;}
+</style>
 <link rel="stylesheet" href="hog-tema.css">
 </head>
 <body>
@@ -61,6 +68,7 @@
   <button class="tb" data-t="fila">Fila / Encaminhados <span class="c" id="c-fila">–</span></button>
   <button class="tb" data-t="guias">Solicitações &amp; Guias <span class="c" id="c-guias">–</span></button>
 </div>
+<div class="agbar" id="agbar"></div>
 <div class="bar">
   <input type="date" id="dt" onchange="load()">
   <button class="btn btn-o btn-s" onclick="hoje()">hoje</button>
@@ -90,6 +98,25 @@ const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getEle
 const fecha=()=>document.getElementById('ov').classList.remove('on');
 let cur='chegada', AG=[], SOL=[];
 
+/* ---- Barra de agendas do dia: aparecem SÓ as agendas com paciente no dia ---- */
+let AGENDA='', AGL=[], AG_ALL=[], VER_TODAS=(localStorage.getItem('hog_agbar_todas')==='1');
+async function carregaAgendas(){ if(!AGL.length){ AGL=await g('agendas_logicas?select=id,nome&order=nome').catch(()=>[]) } }
+function renderAgbar(){
+  const doDia=[...new Set(AG_ALL.map(a=>a.agenda_logica_id).filter(Boolean))];
+  const lista=VER_TODAS?AGL:AGL.filter(x=>doDia.includes(x.id));
+  const cnt={}; AG_ALL.forEach(a=>{cnt[a.agenda_logica_id]=(cnt[a.agenda_logica_id]||0)+1});
+  let h=`<a class="${AGENDA?'':'on'}" onclick="setAg('')">TODAS</a>`;
+  h+=lista.map(x=>`<a class="${AGENDA===x.id?'on':''}" onclick="setAg('${x.id}')">${E(x.nome)}${cnt[x.id]?' <b>('+cnt[x.id]+')</b>':''}</a>`).join('');
+  if(!VER_TODAS&&!lista.length)h+=`<a style="color:#6c757d;cursor:default">— nenhuma agenda com movimento neste dia —</a>`;
+  const n=AGL.length-lista.length;
+  h+=`<a class="verTodas" onclick="alternaTodas()" title="Agendas sem paciente no dia ficam ocultas">`+
+     (VER_TODAS?'&#9776; ver só as do dia':('&#9776; ver todas'+(n>0?' (+'+n+')':'')))+`</a>`;
+  document.getElementById('agbar').innerHTML=h;
+}
+function alternaTodas(){VER_TODAS=!VER_TODAS;localStorage.setItem('hog_agbar_todas',VER_TODAS?'1':'0');renderAgbar()}
+function setAg(id){AGENDA=id;filtraAgenda();renderAgbar();render()}
+function filtraAgenda(){AG=AGENDA?AG_ALL.filter(a=>a.agenda_logica_id===AGENDA):AG_ALL.slice()}
+
 async function load(){try{
   stat('ld','carregando…');
   const d=V('dt')||iso(new Date());
@@ -98,6 +125,9 @@ async function load(){try{
   AG=await g(q);
   if(V('q')){const t=V('q').toLowerCase();AG=AG.filter(a=>a.pacientes&&a.pacientes.nome.toLowerCase().includes(t))}
   SOL=await g('solicitacoes?select=*,pacientes(nome,cpf),medicos(nome),exames(nome,codigo_tuss),convenios(nome)&status=in.(pendente,entregue)&order=criado_em.desc').catch(()=>[]);
+  await carregaAgendas();
+  AG_ALL=AG; if(AGENDA&&!AG_ALL.some(a=>a.agenda_logica_id===AGENDA))AGENDA='';
+  filtraAgenda(); renderAgbar();
   render(); stat('ok','● conectado');
 }catch(e){document.getElementById('ct').innerHTML='<div class="msg e" style="display:block">Erro: '+E(e.message)+'</div>';stat('er','● erro')}}
 
