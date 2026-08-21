@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Cadastros</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;display:flex;height:100vh;overflow:hidden;font-size:13px;}
+  .sidebar{width:215px;min-width:215px;background:#0D2137;color:#fff;display:flex;flex-direction:column;overflow-y:auto;}
+  .logo{padding:15px 18px 11px;border-bottom:1px solid #1A3A56;}
+  .logo .n{font-size:16px;font-weight:700;} .logo .s{font-size:9px;color:#5A8EB5;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .sec{padding:11px 14px 3px;font-size:9px;text-transform:uppercase;letter-spacing:1.1px;color:#3E6B8A;font-weight:700;}
+  .nav{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;color:#8BAFC9;font-size:12.5px;border-left:3px solid transparent;}
+  .nav:hover{background:#1A3A56;color:#fff;} .nav.on{background:#1A3A56;color:#fff;border-left-color:#2B9BE8;}
+  .nav .c{margin-left:auto;background:#1A3A56;color:#8BAFC9;font-size:9.5px;padding:1px 6px;border-radius:8px;}
+  .nav.on .c{background:#2B9BE8;color:#fff;}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:10px 20px;display:flex;align-items:center;gap:12px;}
+  .top h1{font-size:15px;color:#0D2137;}
+  #st{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;}
+  .ok{background:#E4F7EC;color:#0F6A30;} .er{background:#FDE7E9;color:#C0122A;} .ld{background:#FEF3D6;color:#9A5700;}
+  .content{flex:1;overflow-y:auto;padding:16px 20px;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:15px 17px;margin-bottom:14px;}
+  .panel h2{font-size:13px;color:#0D2137;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .pill{font-size:9px;text-transform:uppercase;letter-spacing:.4px;background:#EDF3F9;color:#2B6CA3;padding:2px 8px;border-radius:9px;font-weight:700;}
+  .hint{color:#6B7E90;font-size:11.5px;margin-bottom:11px;line-height:1.5;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:11px;}
+  label{font-size:10px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+  input,select,textarea{width:100%;padding:7px 9px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;font-family:inherit;}
+  input:focus,select:focus{outline:none;border-color:#2B9BE8;}
+  .btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-o{background:#fff;color:#2B9BE8;border:1px solid #2B9BE8;}
+  .btn-x{background:#FDE7E9;color:#C0122A;padding:3px 8px;font-size:10.5px;}
+  .btn-s{padding:4px 9px;font-size:11px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F5F7FA;text-align:left;padding:7px 9px;color:#6B7E90;font-size:9.5px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;white-space:nowrap;}
+  td{padding:6px 9px;border-bottom:1px solid #EEF1F5;} tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FAFCFE;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;}
+  .t-b{background:#DCF0FD;color:#0A5E96;} .t-g{background:#D4F7E1;color:#0F6A30;} .t-a{background:#FEF0DC;color:#9A5700;}
+  .t-r{background:#FDDDE0;color:#C0122A;} .t-p{background:#EDE3FB;color:#5B2C9E;} .t-n{background:#EEF1F5;color:#4A5E70;}
+  .msg{padding:8px 11px;border-radius:6px;font-size:12px;margin-bottom:9px;display:none;}
+  .msg.s{display:block;background:#E4F7EC;color:#0F6A30;} .msg.e{display:block;background:#FDE7E9;color:#C0122A;}
+  .msg.w{display:block;background:#FFF8F0;color:#9A5700;border:1px solid #F4A261;}
+  .empty{padding:18px;text-align:center;color:#9AAAB8;font-style:italic;}
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .bar input{max-width:250px;}
+  code{background:#EEF1F5;padding:1px 4px;border-radius:3px;font-size:11px;}
+  .dup{background:#FFF8F0;border:1px solid #F4A261;border-radius:7px;padding:9px 12px;margin-bottom:9px;font-size:11.5px;display:none;}
+  .dup.on{display:block;} .dup b{color:#9A5700;}
+  .dup .item{padding:4px 0;border-top:1px solid #F7DCBB;margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo"><div class="n">👁 HOG Gestão</div><div class="s">Cadastros</div></div>
+  <div class="sec">Pessoas</div>
+  <div class="nav on" data-t="pacientes">🧑 Pacientes <span class="c" id="c-pacientes">–</span></div>
+  <div class="nav" data-t="medicos">🩺 Médicos <span class="c" id="c-medicos">–</span></div>
+  <div class="nav" data-t="usuarios">👤 Usuários <span class="c" id="c-usuarios">–</span></div>
+  <div class="nav" data-t="perfis">🔑 Perfis <span class="c" id="c-perfis">–</span></div>
+  <div class="sec">Estrutura</div>
+  <div class="nav" data-t="salas">🏠 Salas <span class="c" id="c-salas">–</span></div>
+  <div class="nav" data-t="equipamentos">🔧 Equipamentos <span class="c" id="c-equipamentos">–</span></div>
+  <div class="nav" data-t="especialidades">🎯 Especialidades <span class="c" id="c-especialidades">–</span></div>
+  <div class="nav" data-t="agendas_logicas">📐 Padrões de Atendimento <span class="c" id="c-agendas_logicas">–</span></div>
+  <div class="sec">Catálogos</div>
+  <div class="nav" data-t="exames">🔬 Exames <span class="c" id="c-exames">–</span></div>
+  <div class="nav" data-t="exame_combos">🧩 Combos <span class="c" id="c-exame_combos">–</span></div>
+  <div class="nav" data-t="procedimentos">⚕️ Procedimentos <span class="c" id="c-procedimentos">–</span></div>
+  <div class="nav" data-t="lios">👁 LIOs <span class="c" id="c-lios">–</span></div>
+  <div class="sec">Comercial</div>
+  <div class="nav" data-t="convenios">🏥 Convênios <span class="c" id="c-convenios">–</span></div>
+  <div class="nav" data-t="parceiros">🤝 Parceiros <span class="c" id="c-parceiros">–</span></div>
+  <div class="sec">Calendário</div>
+  <div class="nav" data-t="feriados_bloqueios">📅 Feriados / Bloqueios <span class="c" id="c-feriados_bloqueios">–</span></div>
+</div>
+<div class="main">
+  <div class="top"><h1 id="tt">Pacientes</h1><span id="st" class="ld">conectando…</span></div>
+  <div class="content" id="ct"></div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const api={
+  get:async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()},
+  post:async(t,o)=>{const r=await fetch(SB+'/'+t,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()},
+  patch:async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())},
+  del:async(t,q)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text())}
+};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
+const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textContent=t};
+const say=(id,cls,txt)=>{const e=document.getElementById(id);if(e){e.className='msg '+cls;e.innerHTML=txt}};
+const opt=(a,ph,val)=>'<option value="">'+(ph||'—')+'</option>'+a.map(o=>`<option value="${o.id}"${o.id===val?' selected':''}>${E(o.nome)}</option>`).join('');
+const sn=v=>v===''?null:v; const nn=v=>v===''?null:Number(v);
+let ref={};
+async function loadRef(){
+  const [sal,med,esp,eq,conv,perf,par,ex]=await Promise.all(['salas','medicos','especialidades','equipamentos','convenios','perfis','parceiros','exames']
+    .map(t=>api.get(t+'?select=id,nome&order=nome').catch(()=>[])));
+  ref={salas:sal,medicos:med,especialidades:esp,equipamentos:eq,convenios:conv,perfis:perf,parceiros:par,exames:ex};
+}
+async function counts(){
+  for(const t of ['pacientes','medicos','usuarios','perfis','salas','equipamentos','especialidades','agendas_logicas','exames','exame_combos','procedimentos','lios','convenios','parceiros','feriados_bloqueios']){
+    api.get(t+'?select=id').then(r=>{const e=document.getElementById('c-'+t);if(e)e.textContent=r.length}).catch(()=>{});
+  }
+}
+
+/* ============ PACIENTES (com anti-duplicação) ============ */
+async function checkDup(){
+  const nome=V('p_nome'), nasc=V('p_nasc'), cpf=V('p_cpf'), box=document.getElementById('p_dup');
+  if(nome.length<3){box.className='dup';return}
+  let al=[];
+  try{
+    if(cpf){const c=await api.get('pacientes?cpf=eq.'+encodeURIComponent(cpf)+'&select=nome,nascimento');
+      if(c.length)al.push('🔴 <b>CPF já cadastrado</b> — '+E(c[0].nome)+' (bloqueia)');}
+    const r=await api.get('pacientes?select=id,nome,nascimento,telefone&nome=ilike.*'+encodeURIComponent(nome.split(' ')[0])+'*&limit=6');
+    r.forEach(p=>{
+      const mesmoNome=p.nome.toLowerCase()===nome.toLowerCase();
+      if(mesmoNome&&nasc&&p.nascimento===nasc) al.push('🔴 <b>Provável duplicado</b> — '+E(p.nome)+' · '+E(p.nascimento));
+      else if(mesmoNome&&nasc&&p.nascimento&&p.nascimento!==nasc) al.push('🟠 <b>Homônimo</b> — existe '+E(p.nome)+' com nascimento '+E(p.nascimento));
+      else if(!mesmoNome) al.push('🟡 Parecido: '+E(p.nome)+(p.nascimento?' · '+E(p.nascimento):''));
+    });
+  }catch(e){}
+  box.className=al.length?'dup on':'dup';
+  box.innerHTML=al.length?'<b>Verificação de duplicidade</b>'+al.map(a=>'<div class="item">'+a+'</div>').join(''):'';
+}
+async function savePaciente(){
+  const nome=V('p_nome'); if(!nome)return say('p_msg','e','Nome é obrigatório.');
+  const escada=V('p_escada'); if(escada==='')return say('p_msg','e','⚠️ "Sobe escada" é obrigatório — sem isso o paciente não pode agendar exame.');
+  const cpf=V('p_cpf');
+  try{
+    if(cpf){const c=await api.get('pacientes?cpf=eq.'+encodeURIComponent(cpf)+'&select=nome');
+      if(c.length)return say('p_msg','e','🔴 CPF já cadastrado para '+E(c[0].nome)+' — cadastro bloqueado.');}
+    await api.post('pacientes',{nome,cpf:sn(cpf),nascimento:sn(V('p_nasc')),sexo:sn(V('p_sexo')),telefone:sn(V('p_tel')),
+      whatsapp:sn(V('p_wpp')),email:sn(V('p_email')),convenio_id:sn(V('p_conv')),carteirinha:sn(V('p_cart')),
+      sobe_escada:escada==='sim',mobilidade_obs:sn(V('p_mob')),observacao:sn(V('p_obs')),
+      status_cadastro:cpf?'completo':'pre_cadastro',origem:'manual'});
+    say('p_msg','s','✅ Paciente cadastrado!'); render();
+  }catch(e){say('p_msg','e','Erro: '+E(e.message))}
+}
+
+/* ============ DEFINIÇÃO DAS TELAS ============ */
+const T={
+pacientes:{t:'Pacientes',form:()=>`
+  <div class="panel"><h2>Novo paciente <span class="pill">CPF obrigatório no check-in</span></h2>
+  <div class="hint">O call center pode cadastrar sem CPF (pré-cadastro). Na <b>entrada</b>, o CPF passa a ser obrigatório. <b>"Sobe escada" é obrigatório</b> — sem ele o paciente não agenda exame.</div>
+  <div class="msg" id="p_msg"></div><div class="dup" id="p_dup"></div>
+  <div class="grid">
+    <div style="grid-column:span 2"><label>Nome completo *</label><input id="p_nome" oninput="checkDup()" placeholder="Nome do paciente"></div>
+    <div><label>CPF</label><input id="p_cpf" oninput="checkDup()" placeholder="000.000.000-00"></div>
+    <div><label>Nascimento</label><input id="p_nasc" type="date" onchange="checkDup()"></div>
+    <div><label>Sexo</label><select id="p_sexo"><option value="">—</option><option>F</option><option>M</option></select></div>
+    <div><label>Telefone</label><input id="p_tel"></div>
+    <div><label>WhatsApp</label><input id="p_wpp"></div>
+    <div><label>E-mail</label><input id="p_email"></div>
+    <div><label>Convênio</label><select id="p_conv">${opt(ref.convenios)}</select></div>
+    <div><label>Carteirinha</label><input id="p_cart"></div>
+    <div><label>Sobe escada? *</label><select id="p_escada"><option value="">— obrigatório —</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+    <div><label>Obs. mobilidade</label><input id="p_mob"></div>
+    <div style="grid-column:span 2"><label>Observação</label><input id="p_obs"></div>
+  </div>
+  <button class="btn btn-g" onclick="savePaciente()">+ Cadastrar paciente</button></div>`,
+  list:async q=>{const r=await api.get('pacientes?select=*,convenios(nome)&order=nome'+(q?'&nome=ilike.*'+encodeURIComponent(q)+'*':''));
+    return {n:r.length,html:r.length?tbl(['Nome','CPF','Nascimento','Telefone','Convênio','Escada','Status',''],r.map(p=>[
+      E(p.nome),p.cpf?E(p.cpf):'<span class="tag t-a">pendente</span>',E(p.nascimento)||'—',E(p.telefone)||'—',
+      p.convenios?E(p.convenios.nome):'—',
+      p.sobe_escada===null?'<span class="tag t-r">não informado</span>':(p.sobe_escada?'<span class="tag t-n">sobe</span>':'<span class="tag t-a">não sobe</span>'),
+      p.status_cadastro==='completo'?'<span class="tag t-g">completo</span>':'<span class="tag t-a">pré-cadastro</span>',
+      del('pacientes','id=eq.'+p.id)])):empty()}}},
+
+medicos:{t:'Médicos',form:()=>simpleForm('med',[
+    {id:'id',l:'ID (medId) *',ph:'ex: joao'},{id:'nome',l:'Nome *',ph:'Dr. João...',span:2},
+    {id:'crm',l:'CRM'},{id:'rqe',l:'RQE'},
+    {id:'tipo',l:'Tipo',sel:[['medico','Médico'],['residente','Residente'],['anestesista','Anestesista'],['externo','Externo']]},
+    {id:'telefone',l:'Telefone'},{id:'email',l:'E-mail'}],'medicos','Médicos','Cadastro de profissionais. O <b>medId</b> é o identificador canônico usado em todo o sistema.'),
+  list:async q=>{const r=await api.get('medicos?select=*&order=nome');
+    return {n:r.length,html:tbl(['medId','Nome','CRM','Tipo',''],r.map(m=>['<code>'+E(m.id)+'</code>',E(m.nome),E(m.crm)||'—',
+      '<span class="tag '+(m.tipo==='medico'?'t-b':m.tipo==='residente'?'t-p':'t-n')+'">'+E(m.tipo)+'</span>',del('medicos','id=eq.'+m.id)]))}}},
+
+salas:{t:'Salas',form:()=>simpleForm('sal',[
+    {id:'id',l:'ID *',ph:'ex: cons5'},{id:'nome',l:'Nome *',span:2},
+    {id:'andar',l:'Andar',sel:[['terreo','Térreo'],['1andar','1º andar']]},
+    {id:'tipo',l:'Tipo',sel:[['consultorio','Consultório'],['exames','Exames'],['cc','Centro Cirúrgico'],['consultora','Consultora'],['gerais','Gerais']]},
+    {id:'sobe_escada',l:'Exige subir escada?',sel:[['true','Sim'],['false','Não (acessível)']]},
+    {id:'capacidade_simultanea',l:'Capacidade simultânea',ph:'1',num:true}],'salas','Salas','Locais de atendimento. A <b>capacidade simultânea</b> é parametrizável (ex: 2 técnicos em equipamentos diferentes).'),
+  list:async()=>{const r=await api.get('salas?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Nome','Andar','Tipo','Acesso','Cap.',''],r.map(s=>['<code>'+E(s.id)+'</code>',E(s.nome),E(s.andar),E(s.tipo),
+      s.sobe_escada===false?'<span class="tag t-g">sem escada</span>':'<span class="tag t-n">escada</span>',s.capacidade_simultanea||1,del('salas','id=eq.'+s.id)]))}}},
+
+equipamentos:{t:'Equipamentos',form:()=>simpleForm('eqp',[
+    {id:'id',l:'ID *',ph:'ex: oct2'},{id:'nome',l:'Nome *',span:2},
+    {id:'sala_id',l:'Sala atual',ref:'salas'},
+    {id:'movel',l:'Pode se deslocar?',sel:[['false','Fixo'],['true','Móvel']]}],'equipamentos','Equipamentos','Equipamentos e onde estão. Equipamento <b>móvel</b> pode ser alocado em outra sala (ex: consultório livre).'),
+  list:async()=>{const r=await api.get('equipamentos?select=*,salas(nome)&order=nome');
+    return {n:r.length,html:tbl(['ID','Equipamento','Sala','Tipo',''],r.map(e=>['<code>'+E(e.id)+'</code>',E(e.nome),
+      e.salas?E(e.salas.nome):'—',e.movel?'<span class="tag t-b">móvel</span>':'<span class="tag t-n">fixo</span>',del('equipamentos','id=eq.'+e.id)]))}}},
+
+especialidades:{t:'Especialidades',form:()=>simpleForm('esp',[{id:'id',l:'ID *',ph:'ex: uveite'},{id:'nome',l:'Nome *',span:2}],'especialidades','Especialidades','Especialidades atendidas.'),
+  list:async()=>{const r=await api.get('especialidades?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Nome',''],r.map(e=>['<code>'+E(e.id)+'</code>',E(e.nome),del('especialidades','id=eq.'+e.id)]))}}},
+
+agendas_logicas:{t:'Padrões de Atendimento',form:()=>`
+  <div class="panel"><h2>Novo padrão de atendimento <span class="pill">agenda lógica · camadas 3 e 4</span></h2>
+  <div class="hint">É o que o call center enxerga (ex: “Ni Cat — Catarata Nilson”) e onde ficam as <b>regras automáticas</b>. O <b>lembrete da coordenação</b> aparece em todo agendamento desta agenda.</div>
+  <div class="msg" id="ag_msg"></div>
+  <div class="grid">
+    <div><label>ID *</label><input id="ag_id" placeholder="ex: ni_cat"></div>
+    <div style="grid-column:span 2"><label>Nome *</label><input id="ag_nome" placeholder="Ni Cat — Catarata Nilson"></div>
+    <div><label>Médico</label><select id="ag_med">${opt(ref.medicos)}</select></div>
+    <div><label>Especialidade</label><select id="ag_esp">${opt(ref.especialidades)}</select></div>
+    <div><label>Tipo</label><select id="ag_tipo"><option value="consulta">Consulta</option><option value="exame_medico">Exame por médico</option><option value="cirurgia">Cirurgia</option><option value="retorno">Retorno</option></select></div>
+    <div><label>Sala padrão</label><select id="ag_sala">${opt(ref.salas)}</select></div>
+    <div><label>Local</label><select id="ag_local"><option value="HOG">HOG</option><option value="externo">Externo</option></select></div>
+    <div><label>Turno</label><select id="ag_turno"><option value="">—</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="cirurgico">Cirúrgico</option></select></div>
+    <div><label>Modo de contagem</label><select id="ag_modo"><option value="encaixe">Encaixe</option><option value="bloco">Bloco</option><option value="plantao">Plantão (por hora)</option></select></div>
+    <div><label>Tempo (min)</label><input id="ag_tempo" type="number"></div>
+    <div><label>Qtd por período</label><input id="ag_qtd" type="number"></div>
+    <div><label>Idade mínima</label><input id="ag_idade" type="number"></div>
+    <div><label>Cota "não sobe escada"</label><input id="ag_cota" type="number" placeholder="máx. por agenda"></div>
+    <div style="grid-column:span 2"><label>💬 Lembrete da coordenação (aparece ao agendar)</label><input id="ag_obs" placeholder="ex: sem encaixe após 11h"></div>
+    <div><label>Alerta ativo?</label><select id="ag_alerta"><option value="false">Desligado</option><option value="true">Ligado</option></select></div>
+  </div>
+  <button class="btn btn-g" onclick="saveAgenda()">+ Cadastrar padrão</button></div>`,
+  list:async()=>{const r=await api.get('agendas_logicas?select=*,medicos(nome),salas(nome)&order=nome');
+    return {n:r.length,html:tbl(['ID','Agenda','Médico','Tipo','Sala','Contagem','Cota escada','Lembrete',''],r.map(a=>[
+      '<code>'+E(a.id)+'</code>',E(a.nome),a.medicos?E(a.medicos.nome):'—',
+      '<span class="tag '+(a.tipo==='exame_medico'?'t-p':'t-b')+'">'+E(a.tipo)+'</span>',
+      a.salas?E(a.salas.nome):'—',E(a.modo_contagem)||'—',a.cota_nao_sobe_escada??'—',
+      a.observacao_agendamento?(a.alerta_ativo?'<span class="tag t-a">🔔 ligado</span>':'<span class="tag t-n">🔕 desligado</span>'):'—',
+      del('agendas_logicas','id=eq.'+a.id)]))}}},
+
+exames:{t:'Exames',form:()=>simpleForm('exa',[
+    {id:'id',l:'ID *',ph:'ex: OCT'},{id:'nome',l:'Nome *',span:2},{id:'sigla',l:'Sigla'},
+    {id:'equipamento_id',l:'Equipamento',ref:'equipamentos'},
+    {id:'duracao_min',l:'Duração solo (min) *',num:true,ph:'10'},
+    {id:'ordem',l:'Ordem clínica',num:true},
+    {id:'dilata',l:'Dilata?',sel:[['false','Não'],['true','Sim']]},
+    {id:'executor',l:'Executor',sel:[['tecnico','Técnico'],['medico','Médico'],['medico_equipe','Médico + equipe']]},
+    {id:'local_execucao',l:'Onde é feito',sel:[['HOG','HOG'],['externo','Externo'],['ambos','Ambos']]},
+    {id:'codigo_tuss',l:'Código TUSS'},
+    {id:'preparo',l:'Preparo',span:2}],'exames','Exames','Catálogo do motor de agendamento. A <b>duração solo</b> e a <b>ordem clínica</b> alimentam o cálculo do bloco contínuo.'),
+  list:async()=>{const r=await api.get('exames?select=*&order=ordem');
+    return {n:r.length,html:tbl(['ID','Exame','Dur.','Ordem','Dilata','Executor','Local','TUSS',''],r.map(e=>[
+      '<code>'+E(e.id)+'</code>',E(e.nome),(e.duracao_min||'—')+' min',e.ordem??'—',
+      e.dilata?'<span class="tag t-a">sim</span>':'—',
+      '<span class="tag '+(e.executor==='tecnico'?'t-b':'t-p')+'">'+E(e.executor)+'</span>',
+      E(e.local_execucao),E(e.codigo_tuss)||'—',del('exames','id=eq.'+e.id)]))}}},
+
+exame_combos:{t:'Combos de Exames',form:()=>`
+  <div class="panel"><h2>Novo combo <span class="pill">tempo próprio ≠ soma</span></h2>
+  <div class="hint">Combinação frequente com <b>duração própria</b> — o combo não é a soma dos tempos individuais.</div>
+  <div class="msg" id="cb_msg"></div>
+  <div class="grid">
+    <div><label>ID *</label><input id="cb_id" placeholder="ex: preop_cat"></div>
+    <div style="grid-column:span 2"><label>Nome *</label><input id="cb_nome" placeholder="Pré-op catarata"></div>
+    <div style="grid-column:span 2"><label>Exames (separados por vírgula) *</label><input id="cb_ex" placeholder="BIO,TOPO,OCT"></div>
+    <div><label>Duração do combo (min) *</label><input id="cb_dur" type="number" placeholder="30"></div>
+  </div>
+  <button class="btn btn-g" onclick="saveCombo()">+ Cadastrar combo</button></div>`,
+  list:async()=>{const r=await api.get('exame_combos?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Combo','Exames','Duração',''],r.map(c=>['<code>'+E(c.id)+'</code>',E(c.nome),
+      (c.exames||[]).map(x=>'<span class="tag t-b">'+E(x)+'</span>').join(' '),(c.duracao_min||'—')+' min',del('exame_combos','id=eq.'+c.id)]))}}},
+
+procedimentos:{t:'Procedimentos',form:()=>simpleForm('prc',[
+    {id:'id',l:'ID *',ph:'ex: faco'},{id:'nome',l:'Nome *',span:2},
+    {id:'especialidade_id',l:'Especialidade',ref:'especialidades'},
+    {id:'codigo_tuss',l:'Código TUSS'},{id:'detalhe',l:'Detalhe',ph:'1 OLHO / 2 OLHOS'},
+    {id:'cid',l:'CID'},{id:'duracao_min',l:'Duração (min)',num:true},
+    {id:'local_execucao',l:'Onde é feito',sel:[['HOG','HOG'],['externo','Externo'],['ambos','Ambos']]}],'procedimentos','Procedimentos','Procedimentos cirúrgicos com TUSS. O campo <b>detalhe</b> (1 olho / 2 olhos) faz parte da identificação do preço.'),
+  list:async()=>{const r=await api.get('procedimentos?select=*&order=nome');
+    return {n:r.length,html:r.length?tbl(['ID','Procedimento','TUSS','Detalhe','Local',''],r.map(p=>['<code>'+E(p.id)+'</code>',E(p.nome),
+      E(p.codigo_tuss)||'—',E(p.detalhe)||'—',E(p.local_execucao),del('procedimentos','id=eq.'+p.id)])):empty('Nenhum procedimento — serão importados da tabela de preços.')}}},
+
+lios:{t:'LIOs',form:()=>simpleForm('lio',[
+    {id:'id',l:'ID *'},{id:'nome',l:'Nome *',span:2},
+    {id:'categoria',l:'Categoria',sel:[['monofocal','Monofocal'],['torica','Tórica'],['premium','Premium']]},
+    {id:'valor_venda',l:'Valor venda',num:true},{id:'custo',l:'Custo',num:true},{id:'repasse_cirurgiao',l:'Repasse cirurgião',num:true}],'lios','LIOs','Catálogo de lentes intraoculares.'),
+  list:async()=>{const r=await api.get('lios?select=*&order=valor_venda.desc');
+    return {n:r.length,html:tbl(['ID','LIO','Categoria','Venda','Custo','Repasse',''],r.map(l=>['<code>'+E(l.id)+'</code>',E(l.nome),E(l.categoria),
+      'R$ '+(l.valor_venda||0),'R$ '+(l.custo||0),'R$ '+(l.repasse_cirurgiao||0),del('lios','id=eq.'+l.id)]))}}},
+
+convenios:{t:'Convênios',form:()=>simpleForm('cnv',[
+    {id:'id',l:'ID *'},{id:'nome',l:'Nome *',span:2},
+    {id:'tipo',l:'Tipo',sel:[['convenio','Convênio'],['particular','Particular'],['parceiro','Parceiro']]},
+    {id:'registro_ans',l:'Registro ANS'},
+    {id:'exige_guia',l:'Exige guia?',sel:[['true','Sim'],['false','Não']]},
+    {id:'exige_autorizacao',l:'Exige autorização?',sel:[['false','Não'],['true','Sim']]},
+    {id:'prazo_pagamento',l:'Prazo pagto (dias)',num:true}],'convenios','Convênios','Todo paciente tem direito à LIO do plano; a venda de LIO Import é comercial.'),
+  list:async()=>{const r=await api.get('convenios?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Convênio','Tipo','Guia','Autorização',''],r.map(c=>['<code>'+E(c.id)+'</code>',E(c.nome),
+      '<span class="tag t-b">'+E(c.tipo)+'</span>',c.exige_guia?'sim':'não',c.exige_autorizacao?'sim':'não',del('convenios','id=eq.'+c.id)]))}}},
+
+parceiros:{t:'Parceiros',form:()=>simpleForm('par',[
+    {id:'id',l:'ID *'},{id:'nome',l:'Nome *',span:2},
+    {id:'categoria',l:'Categoria',sel:[['parceiro','Parceiro'],['modalidade','Modalidade comercial']]},
+    {id:'tipo',l:'Fluxo',sel:[['envia','Envia p/ HOG'],['recebe','Recebe do HOG'],['ambos','Ambos']]},
+    {id:'cnpj',l:'CNPJ'},{id:'contato',l:'Contato'},{id:'forma_cobranca',l:'Forma de cobrança'}],'parceiros','Parceiros','Parceiros que enviam/recebem cirurgias e as modalidades comerciais da tabela de preços.'),
+  list:async()=>{const r=await api.get('parceiros?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Nome','Categoria','Fluxo',''],r.map(p=>['<code>'+E(p.id)+'</code>',E(p.nome),
+      '<span class="tag '+(p.categoria==='modalidade'?'t-a':'t-p')+'">'+E(p.categoria||'parceiro')+'</span>',E(p.tipo)||'—',del('parceiros','id=eq.'+p.id)]))}}},
+
+perfis:{t:'Perfis',list:async()=>{const r=await api.get('perfis?select=*&order=nome');
+    return {n:r.length,html:tbl(['ID','Perfil','Permissões'],r.map(p=>['<code>'+E(p.id)+'</code>',E(p.nome),
+      '<code style="font-size:10px">'+E(JSON.stringify(p.permissoes))+'</code>']))}},
+  form:()=>`<div class="panel"><h2>Perfis de acesso <span class="pill">9 perfis</span></h2>
+    <div class="hint">Controlam o que cada papel vê. Regra importante: <b>o prontuário é restrito</b> (clínico/gerencial) — o call center vê apenas o pedido de exames.</div></div>`},
+
+usuarios:{t:'Usuários',form:()=>`
+  <div class="panel"><h2>Novo usuário</h2>
+  <div class="msg" id="us_msg"></div>
+  <div class="grid">
+    <div style="grid-column:span 2"><label>Nome *</label><input id="us_nome"></div>
+    <div><label>Login / e-mail</label><input id="us_login"></div>
+    <div><label>Perfil *</label><select id="us_perfil">${opt(ref.perfis)}</select></div>
+    <div><label>Médico vinculado</label><select id="us_med">${opt(ref.medicos)}</select></div>
+  </div>
+  <button class="btn btn-g" onclick="saveUsuario()">+ Cadastrar usuário</button></div>`,
+  list:async()=>{const r=await api.get('usuarios?select=*,perfis(nome),medicos(nome)&order=nome');
+    return {n:r.length,html:r.length?tbl(['Nome','Login','Perfil','Médico',''],r.map(u=>[E(u.nome),E(u.login)||'—',
+      u.perfis?'<span class="tag t-b">'+E(u.perfis.nome)+'</span>':'—',u.medicos?E(u.medicos.nome):'—',del('usuarios','id=eq.'+u.id)])):empty()}}},
+
+feriados_bloqueios:{t:'Feriados / Bloqueios',form:()=>`
+  <div class="panel"><h2>Novo bloqueio</h2>
+  <div class="hint">Feriado, reunião, férias ou falta. Se <b>abrir como hora extra</b>, o bloco fica marcado com ⚡ no mapa.</div>
+  <div class="msg" id="fb_msg"></div>
+  <div class="grid">
+    <div><label>Data *</label><input id="fb_data" type="date"></div>
+    <div><label>Tipo</label><select id="fb_tipo"><option value="feriado">Feriado</option><option value="reuniao">Reunião</option><option value="ferias">Férias</option><option value="falta">Falta</option></select></div>
+    <div style="grid-column:span 2"><label>Motivo</label><input id="fb_motivo"></div>
+    <div><label>Abre como hora extra?</label><select id="fb_extra"><option value="false">Não</option><option value="true">Sim ⚡</option></select></div>
+    <div><label>Aplica a</label><select id="fb_aplica"><option value="empresa">Empresa toda</option><option value="medico">Médico</option><option value="sala">Sala</option></select></div>
+    <div><label>Médico (se aplicável)</label><select id="fb_med">${opt(ref.medicos)}</select></div>
+    <div><label>Sala (se aplicável)</label><select id="fb_sala">${opt(ref.salas)}</select></div>
+  </div>
+  <button class="btn btn-g" onclick="saveFeriado()">+ Cadastrar bloqueio</button></div>`,
+  list:async()=>{const r=await api.get('feriados_bloqueios?select=*,medicos(nome),salas(nome)&order=data');
+    return {n:r.length,html:r.length?tbl(['Data','Tipo','Motivo','Aplica a','Hora extra',''],r.map(f=>[E(f.data),
+      '<span class="tag t-r">'+E(f.tipo)+'</span>',E(f.motivo)||'—',
+      f.medicos?E(f.medicos.nome):(f.salas?E(f.salas.nome):'empresa'),f.abre_hora_extra?'⚡ sim':'—',
+      del('feriados_bloqueios','id=eq.'+f.id)])):empty()}}}
+};
+
+/* ============ helpers de render ============ */
+function tbl(cols,rows){return '<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+
+  rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+function empty(m){return '<div class="empty">'+(m||'Nenhum registro ainda.')+'</div>'}
+function del(t,q){return '<button class="btn btn-x" onclick="rm(\''+t+'\',\''+q+'\')">excluir</button>'}
+async function rm(t,q){if(!confirm('Excluir este registro?'))return;try{await api.del(t,q);render()}catch(e){alert('Erro: '+e.message)}}
+function simpleForm(pfx,fields,table,title,hint){
+  return `<div class="panel"><h2>Novo registro — ${title}</h2><div class="hint">${hint||''}</div>
+  <div class="msg" id="${pfx}_msg"></div><div class="grid">`+
+  fields.map(f=>`<div${f.span?' style="grid-column:span '+f.span+'"':''}><label>${f.l}</label>`+
+    (f.sel?`<select id="${pfx}_${f.id}">`+f.sel.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')+'</select>':
+     f.ref?`<select id="${pfx}_${f.id}">${opt(ref[f.ref]||[])}</select>`:
+     `<input id="${pfx}_${f.id}"${f.num?' type="number"':''}${f.ph?' placeholder="'+f.ph+'"':''}>`)+'</div>').join('')+
+  `</div><button class="btn btn-g" onclick="saveSimple('${pfx}','${table}',${JSON.stringify(fields.map(f=>({id:f.id,num:!!f.num,sel:!!f.sel})))})">+ Cadastrar</button></div>`;
+}
+async function saveSimple(pfx,table,fields){
+  const o={};
+  for(const f of fields){const v=V(pfx+'_'+f.id);
+    if(f.sel&&(v==='true'||v==='false'))o[f.id]=v==='true'; else o[f.id]=f.num?nn(v):sn(v);}
+  if(!o.nome)return say(pfx+'_msg','e','Nome é obrigatório.');
+  if(o.id===null||o.id==='')return say(pfx+'_msg','e','ID é obrigatório.');
+  try{await api.post(table,o);say(pfx+'_msg','s','✅ Cadastrado!');render()}
+  catch(e){say(pfx+'_msg','e','Erro: '+E(e.message))}
+}
+async function saveAgenda(){try{
+  if(!V('ag_id')||!V('ag_nome'))return say('ag_msg','e','ID e Nome são obrigatórios.');
+  await api.post('agendas_logicas',{id:V('ag_id'),nome:V('ag_nome'),medico_id:sn(V('ag_med')),especialidade_id:sn(V('ag_esp')),
+    tipo:V('ag_tipo'),sala_padrao_id:sn(V('ag_sala')),local:V('ag_local'),turno:sn(V('ag_turno')),modo_contagem:V('ag_modo'),
+    tempo_atendimento_min:nn(V('ag_tempo')),qtd_periodo:nn(V('ag_qtd')),idade_min:nn(V('ag_idade')),
+    cota_nao_sobe_escada:nn(V('ag_cota')),observacao_agendamento:sn(V('ag_obs')),alerta_ativo:V('ag_alerta')==='true'});
+  say('ag_msg','s','✅ Padrão cadastrado!');render()}catch(e){say('ag_msg','e','Erro: '+E(e.message))}}
+async function saveCombo(){try{
+  const ex=V('cb_ex').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+  if(!V('cb_id')||!V('cb_nome')||!ex.length)return say('cb_msg','e','ID, nome e exames são obrigatórios.');
+  await api.post('exame_combos',{id:V('cb_id'),nome:V('cb_nome'),exames:ex,duracao_min:nn(V('cb_dur'))});
+  say('cb_msg','s','✅ Combo cadastrado!');render()}catch(e){say('cb_msg','e','Erro: '+E(e.message))}}
+async function saveUsuario(){try{
+  if(!V('us_nome'))return say('us_msg','e','Nome é obrigatório.');
+  await api.post('usuarios',{nome:V('us_nome'),login:sn(V('us_login')),perfil_id:sn(V('us_perfil')),medico_id:sn(V('us_med'))});
+  say('us_msg','s','✅ Usuário cadastrado!');render()}catch(e){say('us_msg','e','Erro: '+E(e.message))}}
+async function saveFeriado(){try{
+  if(!V('fb_data'))return say('fb_msg','e','Data é obrigatória.');
+  await api.post('feriados_bloqueios',{data:V('fb_data'),tipo:V('fb_tipo'),motivo:sn(V('fb_motivo')),
+    abre_hora_extra:V('fb_extra')==='true',aplica_a:V('fb_aplica'),medico_id:sn(V('fb_med')),sala_id:sn(V('fb_sala'))});
+  say('fb_msg','s','✅ Bloqueio cadastrado!');render()}catch(e){say('fb_msg','e','Erro: '+E(e.message))}}
+
+let cur='pacientes',busca='';
+async function render(){
+  const c=document.getElementById('ct'),d=T[cur];
+  document.getElementById('tt').textContent=d.t;
+  c.innerHTML='<div class="empty">Carregando…</div>';
+  try{
+    await loadRef();
+    const r=await d.list(busca);
+    c.innerHTML=(d.form?d.form():'')+
+      `<div class="panel"><h2>${d.t} cadastrados <span class="pill">${r.n}</span></h2>`+
+      (cur==='pacientes'?`<div class="bar"><input id="q" placeholder="🔍 buscar por nome" value="${E(busca)}" onkeyup="if(event.key==='Enter'){busca=this.value;render()}"><button class="btn btn-o btn-s" onclick="busca=document.getElementById('q').value;render()">Buscar</button>${busca?'<button class="btn btn-o btn-s" onclick="busca=\'\';render()">limpar</button>':''}</div>`:'')+
+      r.html+'</div>';
+    stat('ok','● conectado'); counts();
+  }catch(e){c.innerHTML='<div class="panel"><div class="msg e" style="display:block">Erro: '+E(e.message)+'</div></div>';stat('er','● erro')}
+}
+document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on');
+  cur=n.dataset.t;busca='';render();});
+render();
+</script>
+</body>
+</html>
