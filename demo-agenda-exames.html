@@ -266,8 +266,8 @@ são fictícios. Projeto AGENDA EXAMES.</p>
 
 <script>
 /* ====== Camada Supabase (dados reais) ====== */
-const SB_URL='https://hfjudertusjeinnzwfeu.supabase.co/rest/v1';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmanVkZXJ0dXNqZWlubnp3ZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDg4OTgsImV4cCI6MjEwMDY4NDg5OH0.0OVDqq18RrbaapDdApGIS7IrrHVxfgFxd-AW8jnQXy4';
+const SB_URL='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
 const SBH={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
 let PACIENTES=[];
 async function sbGet(p){const r=await fetch(SB_URL+'/'+p,{headers:SBH});if(!r.ok)throw new Error(await r.text());return r.json();}
