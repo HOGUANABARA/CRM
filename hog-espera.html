@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Lista de Espera</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  .top h1{font-size:15px;color:#0D2137;}
+  .pill{font-size:9px;text-transform:uppercase;letter-spacing:.4px;background:#EDF3F9;color:#2B6CA3;padding:2px 8px;border-radius:9px;font-weight:700;}
+  #st{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;}
+  .ok{background:#E4F7EC;color:#0F6A30;} .er{background:#FDE7E9;color:#C0122A;} .ld{background:#FEF3D6;color:#9A5700;}
+  .bar{background:#fff;border-bottom:1px solid #DDE3EB;padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+  select,input{padding:6px 9px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;background:#fff;font-family:inherit;}
+  .btn{padding:6px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-o{background:#fff;color:#2B9BE8;border:1px solid #2B9BE8;}
+  .btn-n{background:#EEF1F5;color:#4A5E70;} .btn-r{background:#E63946;color:#fff;} .btn-s{padding:4px 9px;font-size:11px;}
+  .wrap{flex:1;overflow-y:auto;padding:14px 18px;}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:13px;}
+  .k{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:11px 13px;}
+  .k .n{font-size:21px;font-weight:700;color:#0D2137;} .k .l{font-size:9.5px;color:#6B7E90;text-transform:uppercase;margin-top:2px;}
+  .k.al{border-color:#F4A261;background:#FFFBF5;} .k.al .n{color:#9A5700;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:14px 16px;margin-bottom:13px;}
+  .panel h2{font-size:13px;color:#0D2137;margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .hint{color:#6B7E90;font-size:11.5px;margin-bottom:10px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F5F7FA;text-align:left;padding:7px 9px;color:#6B7E90;font-size:9.5px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;}
+  td{padding:7px 9px;border-bottom:1px solid #EEF1F5;} tr:last-child td{border-bottom:none;} tr:hover td{background:#FAFCFE;}
+  tr.urg td{background:#FFF8F0;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;}
+  .t-b{background:#DCF0FD;color:#0A5E96;} .t-g{background:#D4F7E1;color:#0F6A30;} .t-a{background:#FEF0DC;color:#9A5700;}
+  .t-r{background:#FDDDE0;color:#C0122A;} .t-n{background:#EEF1F5;color:#4A5E70;}
+  .empty{padding:18px;text-align:center;color:#9AAAB8;font-style:italic;}
+  .aviso{background:#EEF6FD;border:1px solid #2B9BE8;border-radius:7px;padding:10px 13px;font-size:12px;color:#274b66;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .aviso b{color:#0D2137;}
+  .ov{position:fixed;inset:0;background:rgba(13,33,55,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow-y:auto;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:10px;width:100%;max-width:540px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .mh{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid #EEF1F5;}
+  .mh b{font-size:14px;color:#0D2137;} .mh button{background:none;border:none;font-size:17px;cursor:pointer;color:#6B7E90;}
+  .mb{padding:15px 17px;} .mf{padding:12px 17px;border-top:1px solid #EEF1F5;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
+  label{font-size:10px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+  .msg{padding:8px 11px;border-radius:6px;font-size:12px;margin-bottom:9px;display:none;}
+  .msg.s{display:block;background:#E4F7EC;color:#0F6A30;} .msg.e{display:block;background:#FDE7E9;color:#C0122A;}
+  .info{background:#F5F7FA;border:1px solid #E4EAF0;border-radius:6px;padding:9px 11px;font-size:11.5px;color:#3C4E60;margin-bottom:10px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="top"><h1>⏳ Lista de Espera</h1><span class="pill">ordem de chegada + urgência</span><span id="st" class="ld">conectando…</span></div>
+<div class="bar">
+  <select id="f_ag" onchange="load()"><option value="">Todas as agendas</option></select>
+  <select id="f_pri" onchange="load()"><option value="">Todas as prioridades</option><option value="urgencia">Só urgências</option><option value="normal">Só normais</option></select>
+  <input id="q" placeholder="🔍 buscar paciente" onkeyup="if(event.key==='Enter')load()">
+  <button class="btn btn-p btn-s" style="margin-left:auto" onclick="novo()">+ Colocar na espera</button>
+</div>
+<div class="wrap"><div class="kpi" id="kpi"></div><div id="avisos"></div><div id="ct"></div></div>
+<div class="ov" id="ov" onclick="if(event.target===this)fecha()">
+  <div class="mdl"><div class="mh"><b id="mt"></b><button onclick="fecha()">✕</button></div>
+  <div class="mb" id="mb"></div><div class="mf" id="mf"></div></div>
+</div>
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const po=async(t,o)=>{const r=await fetch(SB+'/'+t,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const de=async(t,q)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text())};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textContent=t};
+const iso=d=>d.toISOString().slice(0,10);
+const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
+const fecha=()=>document.getElementById('ov').classList.remove('on');
+const sel=(id,arr,v,ph)=>`<select id="${id}"><option value="">${ph||'—'}</option>`+arr.map(o=>`<option value="${o.id}"${o.id===v?' selected':''}>${E(o.nome)}</option>`).join('')+'</select>';
+let REF={agendas:[],pacientes:[]}, LE=[], LIB=[];
+
+async function loadRef(){
+  const [a,p]=await Promise.all([g('agendas_logicas?select=id,nome&order=nome'),g('pacientes?select=id,nome,telefone&order=nome')]);
+  REF={agendas:a,pacientes:p};
+  const e=document.getElementById('f_ag');const v=e.value;
+  e.innerHTML='<option value="">Todas as agendas</option>'+a.map(o=>`<option value="${o.id}">${E(o.nome)}</option>`).join('');e.value=v;
+}
+async function load(){try{
+  stat('ld','carregando…');
+  let q='lista_espera?select=*,pacientes(nome,telefone,cpf),agendas_logicas(nome)&order=prioridade.desc,entrou_em';
+  if(V('f_ag'))q+='&agenda_logica_id=eq.'+V('f_ag');
+  if(V('f_pri'))q+='&prioridade=eq.'+V('f_pri');
+  const hoje=iso(new Date());
+  [LE,LIB]=await Promise.all([g(q),g(`reservas?select=*,agendas_logicas(nome)&estado=eq.liberado&data=gte.${hoje}&order=data`)]);
+  if(V('q')){const t=V('q').toLowerCase();LE=LE.filter(x=>x.pacientes&&x.pacientes.nome.toLowerCase().includes(t))}
+  render(); stat('ok','● conectado');
+}catch(e){document.getElementById('ct').innerHTML='<div class="msg e" style="display:block">Erro: '+E(e.message)+'</div>';stat('er','● erro')}}
+
+function render(){
+  const urg=LE.filter(x=>x.prioridade==='urgencia').length;
+  const agendas=new Set(LE.map(x=>x.agenda_logica_id)).size;
+  const antigo=LE.length?Math.max(...LE.map(x=>dias(x.entrou_em))):0;
+  document.getElementById('kpi').innerHTML=kpi(LE.length,'Na espera')+(urg?kpiA(urg,'Urgências'):kpi(0,'Urgências'))+
+    kpi(agendas,'Agendas com fila')+kpi(LIB.length,'Reservas liberadas')+
+    (antigo>30?kpiA(antigo+'d','Espera mais antiga'):kpi(antigo+'d','Espera mais antiga'));
+  // avisos de liberação (camada 2 → chama a fila)
+  const porAg={}; LIB.forEach(r=>{if(!r.agenda_logica_id)return;(porAg[r.agenda_logica_id]??=[]).push(r)});
+  const av=Object.entries(porAg).map(([ag,rs])=>{
+    const fila=LE.filter(x=>x.agenda_logica_id===ag).length; if(!fila)return '';
+    const nome=rs[0].agendas_logicas?rs[0].agendas_logicas.nome:ag;
+    return `<div class="aviso">🔓 <b>${rs.length} dia(s) liberado(s)</b> em <b>${E(nome)}</b> — ${fila} paciente(s) na espera aguardando contato.
+      <button class="btn btn-p btn-s" style="margin-left:auto" onclick="document.getElementById('f_ag').value='${ag}';load()">Ver fila</button></div>`;
+  }).join('');
+  document.getElementById('avisos').innerHTML=av;
+  document.getElementById('ct').innerHTML=`<div class="panel"><h2>Fila <span class="tag t-b">${LE.length}</span></h2>
+   <div class="hint">Ordem de <b>chegada</b>, com <b>urgências no topo</b>. Ao liberar dias no Mapa de Ocupação, o call center contata a fila desta agenda.</div>
+   ${LE.length?tbl(['#','Paciente','Telefone','Agenda desejada','Entrou em','Espera','Prioridade','Obs',''],LE.map((x,i)=>[
+     (i+1),x.pacientes?E(x.pacientes.nome):'—',x.pacientes?E(x.pacientes.telefone||'—'):'—',
+     x.agendas_logicas?E(x.agendas_logicas.nome):'—',E(x.entrou_em),dias(x.entrou_em)+'d',
+     x.prioridade==='urgencia'?'<span class="tag t-r">urgência</span>':'<span class="tag t-n">normal</span>',
+     E(x.observacao||'—'),
+     `<button class="btn btn-g btn-s" onclick="contatar('${x.id}')">📞 Contatar</button>
+      <button class="btn btn-o btn-s" onclick="prio('${x.id}','${x.prioridade==='urgencia'?'normal':'urgencia'}')">${x.prioridade==='urgencia'?'↓' : '↑'}</button>
+      <button class="btn btn-n btn-s" onclick="sair('${x.id}')">✕</button>`
+   ],x=>x.prioridade==='urgencia'?'urg':'')):'<div class="empty">Ninguém na lista de espera.</div>'}</div>`;
+}
+const kpi=(n,l)=>`<div class="k"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+const kpiA=(n,l)=>`<div class="k al"><div class="n">${n}</div><div class="l">⚠ ${l}</div></div>`;
+const dias=d=>{if(!d)return 0;return Math.max(0,Math.round((new Date()-new Date(d+'T12:00:00'))/86400000))};
+function tbl(cols,rows,cls){return '<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+
+  rows.map((r,i)=>`<tr class="${cls?cls(LE[i]):''}">`+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+
+function novo(){
+  abre('Colocar na lista de espera',
+   `<div class="hint">Use quando <b>não há dias liberados</b> para a agenda desejada. Ao liberar, o call center contata a fila.</div>
+    <div class="msg" id="n_msg"></div>
+    <div class="grid">
+      <div style="grid-column:span 2"><label>Paciente *</label>${sel('n_pac',REF.pacientes)}</div>
+      <div style="grid-column:span 2"><label>Agenda desejada *</label>${sel('n_ag',REF.agendas)}</div>
+      <div><label>Prioridade</label><select id="n_pri"><option value="normal">Normal</option><option value="urgencia">Urgência</option></select></div>
+      <div><label>Entrou em</label><input type="date" id="n_data" value="${iso(new Date())}"></div>
+      <div style="grid-column:span 2"><label>Observação</label><input id="n_obs"></div>
+    </div>`,
+   `<button class="btn btn-n" onclick="fecha()">Cancelar</button><button class="btn btn-g" onclick="salvar()">+ Colocar na espera</button>`);
+}
+async function salvar(){
+  const m=document.getElementById('n_msg');
+  if(!V('n_pac')||!V('n_ag')){m.className='msg e';m.textContent='Escolha paciente e agenda.';return}
+  try{
+    const j=await g(`lista_espera?paciente_id=eq.${V('n_pac')}&agenda_logica_id=eq.${V('n_ag')}&select=id`);
+    if(j.length){m.className='msg e';m.textContent='🔴 Este paciente já está na espera desta agenda.';return}
+    await po('lista_espera',{paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),tipo:'consulta',
+      prioridade:V('n_pri'),entrou_em:V('n_data'),observacao:V('n_obs')||null});
+    fecha();load();
+  }catch(e){m.className='msg e';m.textContent='Erro: '+e.message}
+}
+async function prio(id,p){try{await pa('lista_espera','id=eq.'+id,{prioridade:p});load()}catch(e){alert('Erro: '+e.message)}}
+async function sair(id){if(!confirm('Remover da lista de espera?'))return;try{await de('lista_espera','id=eq.'+id);load()}catch(e){alert('Erro: '+e.message)}}
+function contatar(id){
+  const x=LE.find(y=>y.id===id); if(!x)return;
+  const libs=LIB.filter(r=>r.agenda_logica_id===x.agenda_logica_id);
+  abre('Contatar — '+(x.pacientes?x.pacientes.nome:''),
+   `<div class="info"><b>${E(x.pacientes?x.pacientes.nome:'')}</b>${x.pacientes&&x.pacientes.telefone?' · 📞 '+E(x.pacientes.telefone):''}<br>
+     Agenda: ${E(x.agendas_logicas?x.agendas_logicas.nome:'')} · na fila há <b>${dias(x.entrou_em)} dias</b>
+     ${x.prioridade==='urgencia'?' · <span class="tag t-r">urgência</span>':''}</div>
+    ${libs.length?`<div class="aviso">🔓 <b>${libs.length} dia(s) liberado(s)</b>: ${libs.slice(0,6).map(r=>E(r.data)).join(', ')}${libs.length>6?'…':''}</div>`
+      :'<div class="msg e" style="display:block">Ainda não há dias liberados para esta agenda.</div>'}
+    <div class="hint">Após agendar, remova da fila. O agendamento em si é feito na <b>Agenda Médica</b>.</div>
+    <div class="grid"><div><label>Resultado do contato</label><select id="c_res">
+      <option value="agendado">Agendou — remover da fila</option>
+      <option value="nao_atende">Não atendeu — manter na fila</option>
+      <option value="desistiu">Desistiu — remover</option>
+    </select></div><div><label>Quem contatou</label><input id="c_quem" placeholder="seu nome"></div></div>`,
+   `<button class="btn btn-n" onclick="fecha()">Fechar</button>
+    <button class="btn btn-g" onclick="salvarContato('${id}')">Registrar</button>`);
+}
+async function salvarContato(id){
+  const r=V('c_res'), quem=V('c_quem')||'—';
+  try{
+    if(r==='nao_atende'){const x=LE.find(y=>y.id===id);
+      await pa('lista_espera','id=eq.'+id,{observacao:((x.observacao?x.observacao+' | ':'')+'contato '+iso(new Date())+' por '+quem+': não atendeu')});}
+    else await de('lista_espera','id=eq.'+id);
+    fecha();load();
+  }catch(e){alert('Erro: '+e.message)}
+}
+(async()=>{await loadRef();load()})();
+</script>
+</body>
+</html>
