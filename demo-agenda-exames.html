@@ -275,8 +275,10 @@ async function sbPost(t,o){const r=await fetch(SB_URL+'/'+t,{method:'POST',heade
 const _CORES={CAMPO:'var(--s2)',TOPO:'var(--s4)',PAQUI:'var(--s5)',MICRO:'var(--s7)',BIO:'var(--s3)',OCT:'var(--s1)'};
 function _lab(d){try{const dt=new Date(d+'T12:00:00');const w=dt.toLocaleDateString('pt-BR',{weekday:'long'});return w.charAt(0).toUpperCase()+w.slice(1)+' '+d.slice(8)+'/'+d.slice(5,7);}catch(e){return d;}}
 async function carregaSupabase(){
-  const ex=await sbGet('exames?select=*&order=ordem');
-  if(ex&&ex.length) EXAMES=ex.map(e=>({id:e.id,sig:e.sigla,nome:e.nome,equip:e.equipamento,dur:e.duracao_min,ordem:e.ordem,dilata:e.dilata,cor:_CORES[e.id]||'var(--s1)',preparo:e.preparo?[e.preparo]:[]}));
+  const ex=await sbGet('exames?select=*,equipamentos(nome)&order=ordem');
+  if(ex&&ex.length) EXAMES=ex.map(e=>({id:e.id,sig:e.sigla,nome:e.nome,
+    equip:(e.equipamentos&&e.equipamentos.nome)||e.equipamento_id||'—',
+    dur:e.duracao_min,ordem:e.ordem,dilata:e.dilata,cor:_CORES[e.id]||'var(--s1)',preparo:e.preparo?[e.preparo]:[]}));
   const cfg=await sbGet('exame_dia_config?select=*&order=data');
   if(cfg&&cfg.length){DIAS={};cfg.forEach(c=>{DIAS[c.data]={lab:_lab(c.data),perfil:c.perfil,ini:c.ini,fim:c.fim,salas:c.salas,exames:c.exames,intervalo:c.intervalo};});}
   PACIENTES=await sbGet('pacientes?select=id,nome&order=nome').catch(function(){return [];});
@@ -612,5 +614,25 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
  const k={pGran:'gran',pBuf:'buf',pCheg:'cheg'}[id];P[k]=Math.max(0,+e.target.value||0);
  if(k==='gran')P.gran=Math.max(5,P.gran);
  semear();SEL=[];DIA=null;SLOT=null;renderAll();});
-(async()=>{ try{ await carregaSupabase(); }catch(e){ console.error('Supabase:',e.message); } renderAll(); })();
+/* ===== abre a aba conforme o papel de quem acessa =====
+   #parametros → gestão · #agendar → call center · #dia → recepção        */
+function aplicaPerfil(){
+  const P={
+    '#parametros':{tab:'p1',mostra:['p1','p4'],titulo:'Parâmetros da agenda de exames',
+      sub:'Definidos pela gestão: tempos por exame, combos, salas abertas e regras. Alterar aqui muda o cálculo em todas as telas.'},
+    '#agendar':{tab:'p2',mostra:['p2'],titulo:'Agendamento de exames',
+      sub:'Selecione os exames que o paciente precisa fazer — o sistema devolve os dias e horários que realmente cabem.'},
+    '#dia':{tab:'p3',mostra:['p3'],titulo:'Agenda de exames do dia',
+      sub:'Ocupação por sala, indicadores e a lista do dia. Imprima ou exporte para Excel.'}
+  };
+  const p=P[location.hash]; if(!p)return;
+  const b=document.querySelector('.tab[data-p="'+p.tab+'"]'); if(b)b.click();
+  document.querySelectorAll('.tab').forEach(t=>{ if(!p.mostra.includes(t.dataset.p)) t.style.display='none'; });
+  if(p.mostra.length<2){const tabs=document.querySelector('.tabs'); if(tabs)tabs.style.display='none';}
+  const eb=document.querySelector('.eyebrow'); if(eb)eb.style.display='none';
+  const h1=document.querySelector('h1'); if(h1){h1.textContent=p.titulo;h1.style.fontSize='20px';}
+  const sub=document.querySelector('.sub'); if(sub)sub.textContent=p.sub;
+}
+window.addEventListener('hashchange',()=>location.reload());
+(async()=>{ try{ await carregaSupabase(); }catch(e){ console.error('Supabase:',e.message); } renderAll(); aplicaPerfil(); })();
 </script></body></html>
