@@ -12,11 +12,30 @@ body{
 }
 .content,.wrap{font-size:16px;}
 
-/* ---------- Barra lateral (módulo de cadastros) ---------- */
-.sidebar{background:#212529 !important;}
-.sidebar .nav,.sidebar .nav-item{font-size:14px !important;}
-.nav.on,.nav-item.active{background:#2c3e50 !important;border-left-color:#0d6efd !important;}
-.logo .n{font-size:15px !important;}
+/* ---------- Cadastros: barra lateral vira BARRA HORIZONTAL (padrão do sistema) ----------
+   Evita a sensação de "outro sistema" com menu duplicado. */
+body.pg-cadastros{flex-direction:column !important;}
+body.pg-cadastros .sidebar{
+  width:100% !important;min-width:0 !important;flex-direction:row !important;flex-wrap:wrap !important;
+  align-items:center !important;background:#dce9f7 !important;color:#1a3d5c !important;
+  border-bottom:1px solid #c5d9ee !important;padding:6px 10px !important;gap:2px !important;
+  overflow:visible !important;flex-shrink:0 !important;}
+body.pg-cadastros .sidebar .logo{display:none !important;}
+body.pg-cadastros .sidebar .sec{
+  padding:0 6px 0 10px !important;font-size:10px !important;color:#5a7a95 !important;font-weight:700 !important;
+  border-left:1px solid #b9cfe4 !important;margin-left:5px !important;white-space:nowrap;}
+body.pg-cadastros .sidebar .sec:first-of-type{border-left:none !important;margin-left:0 !important;}
+body.pg-cadastros .sidebar .nav{
+  padding:5px 10px !important;color:#1a3d5c !important;font-size:14px !important;
+  border-left:none !important;border-radius:.25rem !important;white-space:nowrap;width:auto !important;}
+body.pg-cadastros .sidebar .nav:hover{background:#fff !important;color:#0a3d62 !important;}
+body.pg-cadastros .sidebar .nav.on{background:#fff !important;color:#212529 !important;font-weight:600 !important;
+  box-shadow:0 1px 3px rgba(0,0,0,.12) !important;}
+body.pg-cadastros .sidebar .nav .c{margin-left:5px !important;background:#c9dcef !important;color:#1a3d5c !important;
+  font-size:11px !important;padding:0 6px !important;border-radius:9px !important;}
+body.pg-cadastros .sidebar .nav.on .c{background:#0d6efd !important;color:#fff !important;}
+body.pg-cadastros .main{width:100% !important;flex:1 !important;}
+body.pg-cadastros .top{display:none !important;}  /* o título já aparece na casca do sistema */
 
 /* ---------- Painéis / cartões ---------- */
 .panel,.card{background:#fff !important;border:1px solid #dee2e6 !important;border-radius:.375rem !important;}
