@@ -1,0 +1,125 @@
+/* ============================================================
+   HOG GESTÃO — Tema unificado (hog-tema.css)
+   Carregue SEMPRE por último, depois do <style> do módulo.
+   Normaliza os módulos existentes ao padrão do manual de design
+   (Bootstrap 5.3.3 — mesmo visual do sistema atual).
+   ============================================================ */
+
+/* ---------- Tipografia e superfícies ---------- */
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif !important;
+  font-size:16px !important; color:#212529 !important;
+}
+.content,.wrap{font-size:16px;}
+
+/* ---------- Barra lateral (módulo de cadastros) ---------- */
+.sidebar{background:#212529 !important;}
+.sidebar .nav,.sidebar .nav-item{font-size:14px !important;}
+.nav.on,.nav-item.active{background:#2c3e50 !important;border-left-color:#0d6efd !important;}
+.logo .n{font-size:15px !important;}
+
+/* ---------- Painéis / cartões ---------- */
+.panel,.card{background:#fff !important;border:1px solid #dee2e6 !important;border-radius:.375rem !important;}
+.panel h2,.card-title{font-size:14px !important;font-weight:600 !important;color:#212529 !important;}
+.hint{font-size:14px !important;color:#6c757d !important;}
+.pill{background:#e7f1ff !important;color:#052c65 !important;border-radius:.375rem !important;font-size:11px !important;}
+
+/* ---------- Botões: mapeia as classes dos módulos para o padrão ---------- */
+.btn,.bl,.b1,.b2,.b3,.b4,.bt-ag,.bt-d,.bt-g,.bt-r,.bt-n,.btn-e,.btn-x{
+  font-family:inherit !important;border-radius:.375rem !important;border:1px solid transparent !important;
+  font-size:16px !important;padding:.375rem .75rem !important;line-height:1.5 !important;cursor:pointer;font-weight:400 !important;
+}
+.btn-sm,.btn-s,.bt-ag,.bt-d,.bt-g,.bt-r,.bt-n,.btn-e,.btn-x,.bl{
+  font-size:14px !important;padding:.25rem .5rem !important;border-radius:.25rem !important;
+}
+/* primária (azul) */
+.btn-p,.btn-primary,.b1,.bl,.bt-d{background:#0d6efd !important;border-color:#0d6efd !important;color:#fff !important;}
+.btn-p:hover,.btn-primary:hover,.b1:hover,.bl:hover,.bt-d:hover{background:#0b5ed7 !important;}
+/* sucesso (verde) */
+.btn-g,.btn-success,.b2,.bt-g{background:#198754 !important;border-color:#198754 !important;color:#fff !important;}
+.btn-g:hover,.btn-success:hover,.b2:hover,.bt-g:hover{background:#157347 !important;}
+/* perigo (vermelho) */
+.btn-r,.btn-danger,.b4,.bt-r{background:#dc3545 !important;border-color:#dc3545 !important;color:#fff !important;}
+.btn-r:hover,.btn-danger:hover,.b4:hover,.bt-r:hover{background:#bb2d3b !important;}
+/* atenção (amarelo) — botão "Agendamento" */
+.bt-ag,.btn-warning{background:#ffc107 !important;border-color:#ffc107 !important;color:#000 !important;}
+.bt-ag:hover,.btn-warning:hover{background:#ffca2c !important;}
+/* secundária / neutra */
+.btn-n,.b3,.btn-secondary{background:#6c757d !important;border-color:#6c757d !important;color:#fff !important;}
+.bt-n{background:#e9ecef !important;color:#495057 !important;}
+/* contorno */
+.btn-o,.btn-outline-primary{background:#fff !important;border-color:#0d6efd !important;color:#0d6efd !important;}
+.btn-o:hover{background:#0d6efd !important;color:#fff !important;}
+/* editar / excluir (cadastros) */
+.btn-e{background:#e7f1ff !important;color:#0a58ca !important;border-color:#e7f1ff !important;}
+.btn-x{background:#f8d7da !important;color:#58151c !important;border-color:#f8d7da !important;}
+
+/* ---------- Tabelas: padrão do sistema atual ---------- */
+table{border-collapse:collapse !important;}
+th{background:#fff !important;font-weight:700 !important;font-size:14px !important;color:#212529 !important;
+   padding:.5rem !important;border-bottom:2px solid #dee2e6 !important;text-transform:none !important;letter-spacing:0 !important;}
+td{font-size:14px !important;padding:.5rem !important;border-bottom:1px solid #dee2e6 !important;vertical-align:middle !important;}
+tbody tr:nth-of-type(odd){background:rgba(0,0,0,.03);}
+tbody tr:hover{background:rgba(13,110,253,.06) !important;}
+
+/* ---------- Etiquetas de status ---------- */
+.tag,.st{display:inline-block !important;padding:.2rem .55rem !important;border-radius:.375rem !important;
+  font-size:12px !important;font-weight:600 !important;text-transform:none !important;letter-spacing:0 !important;}
+.t-b,.t-blue,.tag-blue,.st-info{background:#cfe2ff !important;color:#052c65 !important;}
+.t-g,.t-green,.tag-green,.st-ok{background:#d1e7dd !important;color:#0a3622 !important;}
+.t-a,.t-amber,.tag-amber,.st-aviso{background:#fff3cd !important;color:#664d03 !important;}
+.t-r,.t-red,.tag-red,.st-erro{background:#f8d7da !important;color:#58151c !important;}
+.t-p,.t-purple,.tag-purple,.st-roxo{background:#e2d9f3 !important;color:#341c66 !important;}
+.t-n,.t-gray,.tag-gray,.st-neutro{background:#e9ecef !important;color:#495057 !important;}
+.t-teal,.tag-teal{background:#cff4fc !important;color:#055160 !important;}
+
+/* ---------- Mensagens e alertas ---------- */
+.msg,.alerta,.alert,.aviso,.note-blue,.modal-mock,.lembrete,.orient,.info,.blk{
+  border-radius:.375rem !important;font-size:14px !important;}
+.msg.s,.msg.ok,.alert-success{background:#d1e7dd !important;color:#0a3622 !important;border:1px solid #a3cfbb !important;}
+.msg.e,.msg.err,.alert-danger,.alerta.erro,.blk{background:#f8d7da !important;color:#58151c !important;border:1px solid #f1aeb5 !important;}
+.msg.w,.alerta,.alert-warning,.lembrete{background:#fff3cd !important;color:#664d03 !important;border:1px solid #ffe69c !important;}
+.aviso,.alerta.info,.alert-info,.orient,.note-blue{background:#cfe2ff !important;color:#052c65 !important;border:1px solid #b6d4fe !important;}
+.info{background:#f8f9fa !important;color:#212529 !important;border:1px solid #dee2e6 !important;}
+
+/* ---------- Formulários ---------- */
+label,.form-grid label{font-size:12px !important;font-weight:600 !important;color:#495057 !important;
+  text-transform:none !important;letter-spacing:0 !important;}
+input,select,textarea,.form-control,.form-select{font-family:inherit !important;font-size:14px !important;
+  padding:.375rem .75rem !important;border:1px solid #ced4da !important;border-radius:.375rem !important;color:#212529 !important;}
+input:focus,select:focus,textarea:focus{outline:0 !important;border-color:#86b7fe !important;
+  box-shadow:0 0 0 .2rem rgba(13,110,253,.25) !important;}
+
+/* ---------- KPIs ---------- */
+.k,.tile,.score-tile{background:#f8f9fa !important;border:1px solid #dee2e6 !important;border-radius:.375rem !important;}
+.k .n,.tile .n,.score-tile .n{color:#212529 !important;}
+.k .l,.tile .k,.score-tile .l{font-size:11px !important;color:#6c757d !important;}
+.k.al,.score-tile.bad{background:#fff3cd !important;border-color:#ffc107 !important;}
+.k.al .n,.score-tile.bad .n{color:#664d03 !important;}
+.score-tile.good{background:#d1e7dd !important;border-color:#a3cfbb !important;}
+
+/* ---------- Modais ---------- */
+.ov,.hog-ov{background:rgba(0,0,0,.5) !important;}
+.mdl,.modal-box,.hog-modal{border-radius:.375rem !important;box-shadow:0 .5rem 1rem rgba(0,0,0,.15) !important;}
+.mh b,.mdl-h span,.modal-head span{font-size:1.25rem !important;font-weight:500 !important;}
+
+/* ---------- Barras azuis (agendas / dia) ---------- */
+.agbar,.hog-agbar{background:#dce9f7 !important;border-bottom:1px solid #c5d9ee !important;}
+.agbar a,.hog-agbar a{font-size:16px !important;color:#1a3d5c !important;border-radius:.25rem !important;}
+.daybar,.hog-daybar,.filtros{background:#dce9f7 !important;}
+.filtros{padding:9px 18px !important;}
+.badge-med,.hog-head .titulo{background:#dc3545 !important;color:#fff !important;border-radius:.375rem !important;}
+
+/* ---------- Nome do paciente (padrão do sistema) ---------- */
+.pac,.hog-pac{font-weight:700 !important;text-transform:uppercase !important;font-size:15px !important;}
+.sub,.hog-pac-sub{font-size:14px !important;color:#495057 !important;}
+
+/* ---------- Vazio ---------- */
+.empty,.hog-vazio{color:#adb5bd !important;font-style:italic !important;font-size:15px !important;}
+
+/* ---------- Impressão ---------- */
+@media print{
+  .sidebar,.agbar,.daybar,.filtros,.bar,.tabs,.ov,.btn,.bl,.bt-ag,.bt-d,.bt-g,.bt-r,.bt-n,
+  .btn-e,.btn-x,.status,#st,.kpi{display:none !important;}
+  body{background:#fff !important;}
+}

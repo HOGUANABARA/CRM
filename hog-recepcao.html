@@ -52,6 +52,7 @@
   .info{background:#F5F7FA;border:1px solid #E4EAF0;border-radius:6px;padding:9px 11px;font-size:11.5px;color:#3C4E60;margin-bottom:10px;line-height:1.5;}
   .blk{background:#FFF3F4;border:1px solid #E63946;border-radius:7px;padding:10px 12px;font-size:12px;color:#C0122A;margin-bottom:10px;}
 </style>
+<link rel="stylesheet" href="hog-tema.css">
 </head>
 <body>
 <div class="top"><h1>🚶 Recepção</h1><span class="pill">entrada · encaminhamento · guias</span><span id="st" class="ld">conectando…</span></div>
@@ -223,7 +224,7 @@ async function voltar(id){try{await pa('agendamentos','id=eq.'+id,{status:'agend
 function imprimirGuia(id){
   const s=SOL.find(x=>x.id===id); if(!s)return;
   const w=window.open('','_blank'); if(!w)return alert('Permita popups para imprimir.');
-  w.document.write(`<html><head><title>Guia de Solicitação</title></head><body style="font-family:sans-serif;padding:30px">
+</head><body style="font-family:sans-serif;padding:30px">
    <h2 style="margin-bottom:4px">Hospital dos Olhos Guanabara</h2>
    <div style="color:#666;font-size:13px;margin-bottom:16px">Guia de solicitação de exame / procedimento</div><hr>
    <table style="width:100%;font-size:14px;margin-top:16px" cellpadding="6">
