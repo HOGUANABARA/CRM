@@ -224,7 +224,7 @@ async function voltar(id){try{await pa('agendamentos','id=eq.'+id,{status:'agend
 function imprimirGuia(id){
   const s=SOL.find(x=>x.id===id); if(!s)return;
   const w=window.open('','_blank'); if(!w)return alert('Permita popups para imprimir.');
-</head><body style="font-family:sans-serif;padding:30px">
+  w.document.write(`<html><head><title>Guia de Solicitação</title></head><body style="font-family:sans-serif;padding:30px">
    <h2 style="margin-bottom:4px">Hospital dos Olhos Guanabara</h2>
    <div style="color:#666;font-size:13px;margin-bottom:16px">Guia de solicitação de exame / procedimento</div><hr>
    <table style="width:100%;font-size:14px;margin-top:16px" cellpadding="6">
