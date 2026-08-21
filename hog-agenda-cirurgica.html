@@ -10,6 +10,7 @@
   .agbar{background:#dce9f7;padding:7px 10px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;flex-shrink:0;border-bottom:1px solid #c5d9ee;}
   .agbar a{padding:6px 13px;color:#1a3d5c;text-decoration:none;font-size:14px;cursor:pointer;border-radius:3px;white-space:nowrap;}
   .agbar a:hover{background:#fff;} .agbar a.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .agbar a.verTodas{color:#0d6efd;font-size:13px;border-left:1px solid #b9cfe4;margin-left:6px;}
   .daybar{background:#dce9f7;padding:9px;display:flex;justify-content:center;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
   .daybar input,.daybar select{padding:6px 9px;border:1px solid #b9c9d8;border-radius:4px;font-size:14px;}
   .bl{background:#4a90d9;color:#fff;border:none;padding:7px 15px;border-radius:4px;font-size:14px;cursor:pointer;}
@@ -117,12 +118,30 @@ async function loadRef(){
     g('pacientes?select=id,nome,cpf,nascimento,sobe_escada,convenio_id&order=nome'),g('salas?select=id,nome&order=nome'),
     g('lios?select=id,nome,valor_venda&order=nome').catch(()=>[]),g('procedimentos?select=id,nome&order=nome').catch(()=>[])]);
   REF={agendas:a,medicos:m,pacientes:p,salas:s,lios:l,proc:pr};
-  document.getElementById('agbar').innerHTML=`<a class="${AGENDA?'':'on'}" onclick="setAg('')">TODAS AS CIRURGIAS</a>`+
-    a.map(x=>`<a class="${AGENDA===x.id?'on':''}" onclick="setAg('${x.id}')">${E(x.nome)}</a>`).join('');
+  renderAgbar();
 }
-function setAg(id){AGENDA=id;
-  const els=[...document.querySelectorAll('.agbar a')];els.forEach(a=>a.classList.remove('on'));
-  const i=id?REF.agendas.findIndex(x=>x.id===id)+1:0; if(els[i])els[i].classList.add('on'); load();}
+
+/* ---- Barra de agendas: só as agendas cirúrgicas com movimento no dia ---- */
+let DIA_IDS=[], VER_TODAS=(localStorage.getItem('hog_agbar_cir_todas')==='1');
+async function carregaAgendasDoDia(){
+  const d=V('dt'); if(!d){DIA_IDS=[];return}
+  try{
+    const r=await g(`agendamentos?select=agenda_logica_id&data=eq.${d}&tipo=eq.cirurgia&status=neq.cancelado`);
+    DIA_IDS=[...new Set(r.map(x=>x.agenda_logica_id).filter(Boolean))];
+  }catch(e){DIA_IDS=[]}
+}
+function renderAgbar(){
+  const lista=VER_TODAS?REF.agendas:REF.agendas.filter(x=>DIA_IDS.includes(x.id));
+  let h=`<a class="${AGENDA?'':'on'}" onclick="setAg('')">TODAS AS CIRURGIAS</a>`;
+  h+=lista.map(x=>`<a class="${AGENDA===x.id?'on':''}" onclick="setAg('${x.id}')">${E(x.nome)}</a>`).join('');
+  if(!VER_TODAS&&!lista.length)h+=`<a style="color:#6c757d;cursor:default">— nenhuma cirurgia neste dia —</a>`;
+  const n=REF.agendas.length-lista.length;
+  h+=`<a class="verTodas" onclick="alternaTodas()" title="Agendas sem cirurgia no dia ficam ocultas">`+
+     (VER_TODAS?'&#9776; ver só as do dia':('&#9776; ver todas'+(n>0?' (+'+n+')':'')))+`</a>`;
+  document.getElementById('agbar').innerHTML=h;
+}
+function alternaTodas(){VER_TODAS=!VER_TODAS;localStorage.setItem('hog_agbar_cir_todas',VER_TODAS?'1':'0');renderAgbar()}
+function setAg(id){AGENDA=id;renderAgbar();load();}
 async function load(){try{
   stat('ld','carregando…');
   if(!V('dt'))document.getElementById('dt').value=iso(new Date());
@@ -130,6 +149,9 @@ async function load(){try{
   let q=`agendamentos?select=*,pacientes(id,nome,cpf,nascimento,sobe_escada,convenios(nome)),medicos(nome),salas(nome),agendas_logicas(nome,local)&data=eq.${d}&tipo=eq.cirurgia&order=hora`;
   if(AGENDA)q+='&agenda_logica_id=eq.'+AGENDA;
   CIR=await g(q);
+  await carregaAgendasDoDia();
+  if(AGENDA&&!VER_TODAS&&!DIA_IDS.includes(AGENDA))DIA_IDS.push(AGENDA);
+  renderAgbar();
   if(V('f_local'))CIR=CIR.filter(c=>{const loc=c.agendas_logicas?c.agendas_logicas.local:'HOG';return V('f_local')==='externo'?loc==='externo':loc!=='externo'});
   const ag=REF.agendas.find(x=>x.id===AGENDA);
   document.getElementById('bmed').textContent=ag?ag.nome:'Agenda Cirúrgica — todas';
