@@ -8,10 +8,10 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;}
   /* ===== barra de menu (mesma lógica do VoxComm) ===== */
-  .topbar{background:#1c2833;color:#fff;display:flex;align-items:center;padding:0 14px;flex-shrink:0;position:relative;z-index:40;}
+  .topbar{background:#1c2833;color:#fff;display:flex;align-items:center;padding:0 14px;flex-shrink:0;position:relative;z-index:40;flex-wrap:wrap;}
   .brand{font-weight:700;font-size:14px;padding:12px 14px 12px 0;color:#fff;white-space:nowrap;}
   .brand small{display:block;font-size:8.5px;color:#7FA8C4;text-transform:uppercase;letter-spacing:1px;font-weight:400;}
-  .menu{display:flex;align-items:stretch;flex:1;overflow-x:auto;}
+  .menu{display:flex;align-items:stretch;flex:1;flex-wrap:wrap;}
   .mi{position:relative;}
   .mi>a{display:block;padding:15px 13px;color:#e8eef3;text-decoration:none;font-size:13.5px;cursor:pointer;white-space:nowrap;}
   .mi>a:hover,.mi.open>a{background:#2c3e50;color:#fff;}
