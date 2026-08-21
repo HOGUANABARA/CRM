@@ -459,7 +459,7 @@ async function saveFeriado(){try{
     abre_hora_extra:V('fb_extra')==='true',aplica_a:V('fb_aplica'),medico_id:sn(V('fb_med')),sala_id:sn(V('fb_sala'))});
   say('fb_msg','s','✅ Bloqueio cadastrado!');render()}catch(e){say('fb_msg','e','Erro: '+E(e.message))}}
 
-let cur='pacientes',busca='';
+let cur=(location.hash||'#pacientes').slice(1); if(!T[cur])cur='pacientes'; let busca='';
 async function render(){
   const c=document.getElementById('ct'),d=T[cur];
   document.getElementById('tt').textContent=d.t;
@@ -476,7 +476,7 @@ async function render(){
 }
 document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
   document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on');
-  cur=n.dataset.t;busca='';render();});
+  cur=n.dataset.t;busca='';history.replaceState(null,'','#'+cur);render();});
 document.querySelectorAll('.nav').forEach(n=>{if(n.dataset.t===cur){document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on')}});
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(T[h]){cur=h;busca='';document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.t===h));render()}});
 render();
