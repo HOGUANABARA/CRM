@@ -89,6 +89,15 @@ input,select,textarea,.form-control,.form-select{font-family:inherit !important;
   padding:.375rem .75rem !important;border:1px solid #ced4da !important;border-radius:.375rem !important;color:#212529 !important;}
 input:focus,select:focus,textarea:focus{outline:0 !important;border-color:#86b7fe !important;
   box-shadow:0 0 0 .2rem rgba(13,110,253,.25) !important;}
+/* campos dentro de barras de filtro/navegação nunca ocupam 100% */
+.daybar input,.daybar select,.hog-daybar input,.hog-daybar select,
+.bar input,.bar select,.filtros input,.filtros select,.top input,.top select{
+  width:auto !important;min-width:auto !important;}
+.daybar input[type=date],.hog-daybar input[type=date],.bar input[type=date]{width:150px !important;}
+.bar input[type=text],.bar input:not([type]){width:220px !important;}
+/* dentro de formulários/modais o campo continua 100% */
+.grid input,.grid select,.form-grid input,.form-grid select,.hog-grid input,.hog-grid select,
+.mb input,.mb select,.mdl-b input,.mdl-b select{width:100% !important;}
 
 /* ---------- KPIs ---------- */
 .k,.tile,.score-tile{background:#f8f9fa !important;border:1px solid #dee2e6 !important;border-radius:.375rem !important;}
