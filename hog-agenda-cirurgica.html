@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Agenda Cirúrgica</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#fff;color:#212529;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .agbar{background:#dce9f7;padding:7px 10px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;flex-shrink:0;border-bottom:1px solid #c5d9ee;}
+  .agbar a{padding:6px 13px;color:#1a3d5c;text-decoration:none;font-size:14px;cursor:pointer;border-radius:3px;white-space:nowrap;}
+  .agbar a:hover{background:#fff;} .agbar a.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .daybar{background:#dce9f7;padding:9px;display:flex;justify-content:center;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+  .daybar input,.daybar select{padding:6px 9px;border:1px solid #b9c9d8;border-radius:4px;font-size:14px;}
+  .bl{background:#4a90d9;color:#fff;border:none;padding:7px 15px;border-radius:4px;font-size:14px;cursor:pointer;}
+  .bl:hover{background:#3d7cbd;}
+  .status{position:absolute;right:12px;top:8px;font-size:11px;padding:3px 9px;border-radius:9px;font-weight:600;z-index:5;}
+  .ok{background:#E4F7EC;color:#0F6A30;} .er{background:#FDE7E9;color:#C0122A;} .ld{background:#FEF3D6;color:#9A5700;}
+  .head{display:flex;justify-content:center;align-items:center;gap:12px;padding:9px;flex-wrap:wrap;flex-shrink:0;}
+  .badge-med{background:#e8564f;color:#fff;padding:7px 15px;border-radius:5px;font-size:15px;font-weight:500;}
+  .head .dt{font-size:16px;font-weight:600;}
+  .ico{background:none;border:none;font-size:17px;cursor:pointer;color:#495057;}
+  .kpi{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 10px 8px;flex-shrink:0;}
+  .k{background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:7px 14px;text-align:center;min-width:96px;}
+  .k .n{font-size:19px;font-weight:700;} .k .l{font-size:10px;color:#6c757d;text-transform:uppercase;}
+  .k.al{background:#fff3cd;border-color:#ffc107;} .k.al .n{color:#856404;}
+  .wrap{flex:1;overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead th{background:#fff;text-align:left;padding:9px 8px;font-weight:600;border-bottom:2px solid #dee2e6;white-space:nowrap;font-size:13px;}
+  tbody td{padding:9px 8px;border-bottom:1px solid #e9ecef;vertical-align:middle;}
+  tbody tr:nth-child(even){background:#f5f5f5;} tbody tr:hover{background:#eaf3fb;}
+  .num{color:#6c757d;width:26px;text-align:center;}
+  .bt-ag{background:#ffcd39;color:#212529;border:none;padding:6px 12px;border-radius:4px;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .bt-d{background:#4a90d9;color:#fff;border:none;padding:6px 11px;border-radius:4px;font-size:13px;cursor:pointer;}
+  .bt-g{background:#28a745;color:#fff;border:none;padding:5px 10px;border-radius:4px;font-size:12.5px;cursor:pointer;}
+  .bt-r{background:#dc3545;color:#fff;border:none;padding:5px 10px;border-radius:4px;font-size:12.5px;cursor:pointer;}
+  .bt-n{background:#e9ecef;color:#495057;border:none;padding:5px 10px;border-radius:4px;font-size:12.5px;cursor:pointer;}
+  .pac{font-weight:700;text-transform:uppercase;font-size:14px;}
+  .sub{color:#495057;font-size:12.5px;margin-top:1px;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600;}
+  .t-g{background:#d4edda;color:#155724;} .t-r{background:#f8d7da;color:#721c24;} .t-a{background:#fff3cd;color:#856404;}
+  .t-b{background:#d1ecf1;color:#0c5460;} .t-n{background:#e9ecef;color:#495057;} .t-p{background:#e2d9f3;color:#4a2c82;}
+  .empty{padding:40px;text-align:center;color:#adb5bd;font-style:italic;}
+  .alerta{margin:0 10px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:5px;padding:8px 12px;font-size:13px;color:#856404;}
+  .alerta.info{background:#d1ecf1;border-color:#17a2b8;color:#0c5460;}
+  .alerta.erro{background:#f8d7da;border-color:#dc3545;color:#721c24;}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;z-index:60;padding:34px 14px;overflow-y:auto;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:6px;width:100%;max-width:660px;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .mh{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #dee2e6;}
+  .mh b{font-size:16px;} .mh button{background:none;border:none;font-size:20px;cursor:pointer;color:#6c757d;}
+  .mb{padding:15px 16px;} .mf{padding:11px 16px;border-top:1px solid #dee2e6;display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:10px;}
+  label{font-size:12px;color:#495057;display:block;margin-bottom:3px;font-weight:600;}
+  input,select{width:100%;padding:7px 9px;border:1px solid #ced4da;border-radius:4px;font-size:13.5px;font-family:inherit;}
+  .msg{padding:9px 12px;border-radius:5px;font-size:13px;margin-bottom:9px;display:none;}
+  .msg.s{display:block;background:#d4edda;color:#155724;} .msg.e{display:block;background:#f8d7da;color:#721c24;}
+  .msg.w{display:block;background:#fff3cd;color:#856404;}
+  .info{background:#f8f9fa;border:1px solid #dee2e6;border-radius:5px;padding:10px 12px;font-size:13px;margin-bottom:10px;line-height:1.55;}
+  .b1{background:#4a90d9;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13.5px;cursor:pointer;font-weight:500;}
+  .b2{background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13.5px;cursor:pointer;font-weight:500;}
+  .b3{background:#6c757d;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13.5px;cursor:pointer;}
+  .b4{background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:13.5px;cursor:pointer;}
+  .chk{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid #dee2e6;border-radius:5px;margin-bottom:5px;font-size:13px;}
+  .chk input{width:auto;} .chk.ok{background:#d4edda;border-color:#28a745;} .chk.no{background:#f8d7da;border-color:#dc3545;}
+  @media print{.agbar,.daybar,.ov,.bt-ag,.bt-d,.bt-g,.bt-r,.bt-n,.ico,.status,.kpi{display:none!important}}
+</style>
+</head>
+<body>
+<span id="st" class="status ld">conectando…</span>
+<div class="agbar" id="agbar"></div>
+<div class="daybar">
+  <button class="bl" onclick="dia(-1)">Dia anterior</button>
+  <input type="date" id="dt" onchange="load()">
+  <button class="bl" onclick="dia(1)">Próximo dia</button>
+  <button class="bl" style="background:#6c757d" onclick="hoje()">Hoje</button>
+  <select id="f_local" onchange="load()"><option value="">HOG + Externo</option><option value="HOG">Só HOG</option><option value="externo">Só Externo</option></select>
+  <button class="bl" style="background:#28a745" onclick="novo()">+ Agendar cirurgia</button>
+</div>
+<div class="head">
+  <span class="badge-med" id="bmed">Agenda Cirúrgica</span>
+  <span class="dt" id="bdata"></span>
+  <button class="ico" onclick="window.print()" title="Imprimir mapa cirúrgico">🖨</button>
+</div>
+<div class="kpi" id="kpi"></div>
+<div id="avisos"></div>
+<div class="wrap"><div id="ct"></div></div>
+<div class="ov" id="ov" onclick="if(event.target===this)fecha()">
+  <div class="mdl"><div class="mh"><b id="mt"></b><button onclick="fecha()">✕</button></div>
+  <div class="mb" id="mb"></div><div class="mf" id="mf"></div></div>
+</div>
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const po=async(t,o)=>{const r=await fetch(SB+'/'+t,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const de=async(t,q)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text())};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const CK=i=>{const e=document.getElementById(i);return e?e.checked:false};
+const stat=(c,t)=>{const s=document.getElementById('st');s.className='status '+c;s.textContent=t};
+const iso=d=>d.toISOString().slice(0,10);
+const hoje=()=>{document.getElementById('dt').value=iso(new Date());load()};
+const dia=n=>{const d=new Date(V('dt')+'T12:00:00');d.setDate(d.getDate()+n);document.getElementById('dt').value=iso(d);load()};
+const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
+const fecha=()=>document.getElementById('ov').classList.remove('on');
+const sel=(id,arr,v,ph)=>`<select id="${id}"><option value="">${ph||'—'}</option>`+arr.map(o=>`<option value="${o.id}"${o.id===v?' selected':''}>${E(o.nome)}</option>`).join('')+'</select>';
+const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+let REF={agendas:[],medicos:[],pacientes:[],salas:[],lios:[],proc:[]}, CIR=[], AGENDA='';
+
+async function loadRef(){
+  const [a,m,p,s,l,pr]=await Promise.all([
+    g('agendas_logicas?select=*&tipo=eq.cirurgia&order=nome'),g('medicos?select=id,nome,tipo&order=nome'),
+    g('pacientes?select=id,nome,cpf,nascimento,sobe_escada,convenio_id&order=nome'),g('salas?select=id,nome&order=nome'),
+    g('lios?select=id,nome,valor_venda&order=nome').catch(()=>[]),g('procedimentos?select=id,nome&order=nome').catch(()=>[])]);
+  REF={agendas:a,medicos:m,pacientes:p,salas:s,lios:l,proc:pr};
+  document.getElementById('agbar').innerHTML=`<a class="${AGENDA?'':'on'}" onclick="setAg('')">TODAS AS CIRURGIAS</a>`+
+    a.map(x=>`<a class="${AGENDA===x.id?'on':''}" onclick="setAg('${x.id}')">${E(x.nome)}</a>`).join('');
+}
+function setAg(id){AGENDA=id;
+  const els=[...document.querySelectorAll('.agbar a')];els.forEach(a=>a.classList.remove('on'));
+  const i=id?REF.agendas.findIndex(x=>x.id===id)+1:0; if(els[i])els[i].classList.add('on'); load();}
+async function load(){try{
+  stat('ld','carregando…');
+  if(!V('dt'))document.getElementById('dt').value=iso(new Date());
+  const d=V('dt');
+  let q=`agendamentos?select=*,pacientes(id,nome,cpf,nascimento,sobe_escada,convenios(nome)),medicos(nome),salas(nome),agendas_logicas(nome,local)&data=eq.${d}&tipo=eq.cirurgia&order=hora`;
+  if(AGENDA)q+='&agenda_logica_id=eq.'+AGENDA;
+  CIR=await g(q);
+  if(V('f_local'))CIR=CIR.filter(c=>{const loc=c.agendas_logicas?c.agendas_logicas.local:'HOG';return V('f_local')==='externo'?loc==='externo':loc!=='externo'});
+  const ag=REF.agendas.find(x=>x.id===AGENDA);
+  document.getElementById('bmed').textContent=ag?ag.nome:'Agenda Cirúrgica — todas';
+  const dd=new Date(d+'T12:00:00');
+  document.getElementById('bdata').textContent=`${String(dd.getDate()).padStart(2,'0')}/${String(dd.getMonth()+1).padStart(2,'0')}/${dd.getFullYear()} (${DIAS[dd.getDay()]})`;
+  render(); stat('ok','● conectado');
+}catch(e){document.getElementById('ct').innerHTML='<div class="empty">Erro: '+E(e.message)+'</div>';stat('er','● erro')}}
+
+function render(){
+  const semExec=CIR.filter(c=>!c.medico_id).length;
+  const semSala=CIR.filter(c=>!c.sala_id).length;
+  const real=CIR.filter(c=>c.status==='compareceu').length;
+  document.getElementById('kpi').innerHTML=
+    k(CIR.length,'Cirurgias')+k(real,'Realizadas')+
+    (semExec?kA(semExec,'Sem executor'):k(0,'Sem executor'))+
+    (semSala?kA(semSala,'Sem sala'):k(0,'Sem sala'))+
+    k(CIR.filter(c=>c.agendas_logicas&&c.agendas_logicas.local==='externo').length,'Externas');
+  let av='';
+  if(semExec)av+=`<div class="alerta erro">🔴 <b>${semExec} cirurgia(s) sem médico executor</b> — o executor é obrigatório: define o repasse e alimenta o registro de saídas.</div>`;
+  if(semSala)av+=`<div class="alerta">⚠️ ${semSala} cirurgia(s) sem sala definida — obrigatória até a data.</div>`;
+  document.getElementById('avisos').innerHTML=av;
+  if(!CIR.length){document.getElementById('ct').innerHTML='<div class="empty">Nenhuma cirurgia nesta data.</div>';return}
+  document.getElementById('ct').innerHTML=`<table><thead><tr>
+    <th class="num"></th><th></th><th>Horário</th><th>Procedimento</th><th></th>
+    <th style="width:32%">Paciente</th><th>Executor</th><th>Lat.</th><th>Sala</th><th>Local</th><th>Status</th><th></th></tr></thead><tbody>`+
+    CIR.map((c,i)=>{
+      const p=c.pacientes||{}, loc=c.agendas_logicas?c.agendas_logicas.local:'HOG';
+      const obs=[p.convenios?'('+p.convenios.nome.toUpperCase()+')':'',c.observacao||''].filter(Boolean).join(' ');
+      return `<tr>
+       <td class="num">${i+1}</td>
+       <td><button class="bt-ag" onclick="editar('${c.id}')">Agendamento</button></td>
+       <td>${E((c.hora||'').slice(0,5))}</td>
+       <td>${E((c.observacao||'Cirurgia').split('|')[0])}</td>
+       <td><button class="bt-d" onclick="dados('${c.id}')">Dados</button></td>
+       <td><div class="pac">${E(p.nome||'—')}</div><div class="sub">${E(obs)}</div></td>
+       <td>${c.medicos?E(c.medicos.nome):'<span class="tag t-r">definir</span>'}</td>
+       <td>${c.lateralidade?'<span class="tag t-b">'+E(c.lateralidade)+'</span>':'—'}</td>
+       <td>${c.salas?E(c.salas.nome):'<span class="tag t-a">definir</span>'}</td>
+       <td>${loc==='externo'?'<span class="tag t-p">EXTERNO</span>':'<span class="tag t-n">HOG</span>'}</td>
+       <td>${stTag(c.status)}</td>
+       <td style="white-space:nowrap">${c.status==='compareceu'?'<button class="bt-n" onclick="baixa(\''+c.id+'\')">ver baixa</button>':
+          '<button class="bt-g" onclick="baixa(\''+c.id+'\')">Baixa</button><button class="bt-r" onclick="marcar(\''+c.id+'\',\'faltou\')">faltou</button>'}</td></tr>`;
+    }).join('')+'</tbody></table>';
+}
+const k=(n,l)=>`<div class="k"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+const kA=(n,l)=>`<div class="k al"><div class="n">${n}</div><div class="l">⚠ ${l}</div></div>`;
+const stTag=s=>({agendado:'<span class="tag t-n">agendada</span>',aguardando:'<span class="tag t-a">aguardando</span>',
+  em_atendimento:'<span class="tag t-b">em cirurgia</span>',compareceu:'<span class="tag t-g">realizada</span>',
+  faltou:'<span class="tag t-r">faltou</span>',cancelado:'<span class="tag t-n">cancelada</span>'}[s]||E(s));
+const idade=n=>{if(!n)return '—';const d=new Date(n),h=new Date();let a=h.getFullYear()-d.getFullYear();const m=h.getMonth()-d.getMonth();if(m<0||(m===0&&h.getDate()<d.getDate()))a--;return a+' anos'};
+async function marcar(id,s){try{await pa('agendamentos','id=eq.'+id,{status:s});load()}catch(e){alert('Erro: '+e.message)}}
+
+/* ===== BAIXA CIRÚRGICA — executor obrigatório ===== */
+function baixa(id){
+  const c=CIR.find(x=>x.id===id); if(!c)return; const p=c.pacientes||{};
+  const feito=c.status==='compareceu';
+  abre((feito?'Baixa cirúrgica (registrada) — ':'Baixa cirúrgica — ')+(p.nome||''),
+   `<div class="info"><b>${E(p.nome||'')}</b> · ${E(c.data)} ${E((c.hora||'').slice(0,5))}<br>
+     ${p.convenios?E(p.convenios.nome):'—'} · ${idade(p.nascimento)}</div>
+    <div class="msg" id="b_msg"></div>
+    <div class="alerta erro" style="margin:0 0 10px">🔴 O <b>médico executor</b> é obrigatório — é ele que define o repasse e alimenta o registro de saídas cirúrgicas.</div>
+    <div class="grid">
+      <div><label>Médico executor *</label>${sel('b_exec',REF.medicos,c.medico_id||'')}</div>
+      <div><label>Lateralidade *</label><select id="b_lat">
+        <option value="">—</option>${['OD','OE','AO'].map(x=>`<option value="${x}"${c.lateralidade===x?' selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Sala *</label>${sel('b_sala',REF.salas,c.sala_id||'')}</div>
+      <div><label>Anestesista</label>${sel('b_anest',REF.medicos.filter(m=>m.tipo==='anestesista'))}</div>
+      <div><label>LIO utilizada</label>${sel('b_lio',REF.lios)}</div>
+      <div><label>Dioptria</label><input id="b_diop" placeholder="+00,0"></div>
+      <div style="grid-column:span 2"><label>Observação da cirurgia</label><input id="b_obs" value="${E((c.observacao||'').split('|').slice(1).join('|').trim())}"></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="b_realizada" ${feito?'checked':''}> <b>Cirurgia realizada</b> (paciente compareceu e operou)</div>
+    <div class="chk"><input type="checkbox" id="b_segundo"> Haverá <b>segundo olho</b> — criar acompanhamento</div>
+    <div class="chk"><input type="checkbox" id="b_posop" checked> Gerar <b>tratativa de pós-operatório</b> (definir data)</div>`,
+   `<button class="b3" onclick="fecha()">Cancelar</button>
+    <button class="b2" onclick="salvarBaixa('${id}')">💾 Registrar baixa</button>`);
+}
+async function salvarBaixa(id){
+  const m=document.getElementById('b_msg');
+  if(!V('b_exec')){m.className='msg e';m.textContent='🔴 Informe o médico executor — obrigatório.';return}
+  if(!V('b_lat')){m.className='msg e';m.textContent='Informe a lateralidade.';return}
+  if(!V('b_sala')){m.className='msg e';m.textContent='Informe a sala.';return}
+  try{
+    const c=CIR.find(x=>x.id===id);
+    const partes=[];
+    const lio=REF.lios.find(l=>l.id===V('b_lio'));
+    if(lio)partes.push('LIO: '+lio.nome+(V('b_diop')?' '+V('b_diop'):''));
+    if(V('b_anest')){const an=REF.medicos.find(x=>x.id===V('b_anest'));if(an)partes.push('Anest.: '+an.nome)}
+    if(V('b_obs'))partes.push(V('b_obs'));
+    if(CK('b_segundo'))partes.push('SEGUNDO OLHO pendente');
+    await pa('agendamentos','id=eq.'+id,{medico_id:V('b_exec'),lateralidade:V('b_lat'),sala_id:V('b_sala'),
+      status:CK('b_realizada')?'compareceu':c.status,
+      observacao:[(c.observacao||'').split('|')[0].trim(),...partes].filter(Boolean).join(' | ')});
+    if(CK('b_posop')){
+      const d=new Date(c.data+'T12:00:00');d.setDate(d.getDate()+1);
+      await po('agendamentos',{paciente_id:c.paciente_id,medico_id:V('b_exec'),tipo:'pos_op',
+        data:iso(d),hora:'07:30',status:'agendado',observacao:'Pós-op D+1 — definir horário definitivo'}).catch(()=>{});
+    }
+    fecha();load();
+  }catch(e){m.className='msg e';m.innerHTML='Erro: '+E(e.message)}
+}
+
+/* ===== Dados / edição ===== */
+async function dados(id){
+  const c=CIR.find(x=>x.id===id); if(!c)return; const p=c.pacientes||{};
+  const hist=await g(`agendamentos?paciente_id=eq.${p.id}&select=data,hora,tipo,status,lateralidade,medicos(nome)&order=data.desc&limit=10`).catch(()=>[]);
+  abre('Dados — '+(p.nome||''),
+   `<div class="info"><b style="font-size:15px">${E(p.nome||'')}</b><br>
+     CPF: ${p.cpf?E(p.cpf):'<span class="tag t-r">pendente</span>'} · ${idade(p.nascimento)} · ${p.convenios?E(p.convenios.nome):'—'}<br>
+     Escada: ${p.sobe_escada===false?'<span class="tag t-a">NÃO SOBE</span>':'sobe normalmente'}</div>
+    <div style="font-weight:600;margin:10px 0 5px;font-size:13px">Histórico do paciente</div>
+    <table style="font-size:13px"><thead><tr><th>Data</th><th>Tipo</th><th>Lat.</th><th>Médico</th><th>Status</th></tr></thead><tbody>`+
+    (hist.length?hist.map(h=>`<tr><td>${E(h.data)}</td><td>${E(h.tipo)}</td><td>${E(h.lateralidade)||'—'}</td>
+     <td>${h.medicos?E(h.medicos.nome):'—'}</td><td>${stTag(h.status)}</td></tr>`).join(''):'<tr><td colspan="5">Sem histórico</td></tr>')+
+    '</tbody></table>',`<button class="b3" onclick="fecha()">Fechar</button>`);
+}
+function editar(id){
+  const c=CIR.find(x=>x.id===id); if(!c)return;
+  abre('Agendamento cirúrgico',
+   `<div class="msg" id="e_msg"></div>
+    <div class="grid">
+      <div><label>Data</label><input type="date" id="e_data" value="${c.data}"></div>
+      <div><label>Hora</label><input type="time" id="e_hora" value="${(c.hora||'').slice(0,5)}"></div>
+      <div><label>Agenda cirúrgica</label>${sel('e_ag',REF.agendas,c.agenda_logica_id||'')}</div>
+      <div><label>Médico executor</label>${sel('e_med',REF.medicos,c.medico_id||'')}</div>
+      <div><label>Sala</label>${sel('e_sala',REF.salas,c.sala_id||'')}</div>
+      <div><label>Lateralidade</label><select id="e_lat"><option value="">—</option>${['OD','OE','AO'].map(x=>`<option value="${x}"${c.lateralidade===x?' selected':''}>${x}</option>`).join('')}</select></div>
+      <div style="grid-column:span 2"><label>Observação</label><input id="e_obs" value="${E(c.observacao||'')}"></div>
+    </div>`,
+   `<button class="b3" onclick="fecha()">Cancelar</button>
+    <button class="b1" onclick="salvarEd('${id}')">Salvar</button>
+    <button class="b4" onclick="excluir('${id}')">Excluir</button>`);
+}
+async function salvarEd(id){try{
+  await pa('agendamentos','id=eq.'+id,{data:V('e_data'),hora:V('e_hora'),agenda_logica_id:V('e_ag')||null,
+    medico_id:V('e_med')||null,sala_id:V('e_sala')||null,lateralidade:V('e_lat')||null,observacao:V('e_obs')||null});
+  fecha();load()}catch(e){const m=document.getElementById('e_msg');m.className='msg e';m.textContent='Erro: '+e.message}}
+async function excluir(id){if(!confirm('Excluir esta cirurgia?'))return;
+  try{await de('agendamentos','id=eq.'+id);fecha();load()}catch(e){alert('Erro: '+e.message)}}
+
+/* ===== nova cirurgia ===== */
+function novo(){
+  abre('Agendar cirurgia',
+   `<div class="msg" id="n_msg"></div><div id="n_al"></div>
+    <div class="grid">
+      <div style="grid-column:span 2"><label>Paciente *</label>${sel('n_pac',REF.pacientes)}</div>
+      <div><label>Agenda cirúrgica *</label>${sel('n_ag',REF.agendas,AGENDA)}</div>
+      <div><label>Médico executor *</label>${sel('n_med',REF.medicos)}</div>
+      <div><label>Data *</label><input type="date" id="n_data" value="${V('dt')}"></div>
+      <div><label>Hora *</label><input type="time" id="n_hora" value="07:00"></div>
+      <div><label>Sala *</label>${sel('n_sala',REF.salas,'cc')}</div>
+      <div><label>Lateralidade *</label><select id="n_lat"><option value="">—</option><option>OD</option><option>OE</option><option>AO</option></select></div>
+      <div style="grid-column:span 2"><label>Procedimento / observação</label><input id="n_obs" placeholder="ex: Facectomia + LIO"></div>
+      <div><label>Quem agendou</label><input id="n_quem" placeholder="seu nome"></div>
+    </div>`,
+   `<button class="b3" onclick="fecha()">Cancelar</button>
+    <button class="b1" onclick="checar()">Verificar</button>
+    <button class="b2" onclick="salvar()">Agendar cirurgia</button>`);
+  document.getElementById('n_pac').onchange=checar;
+  document.getElementById('n_ag').onchange=()=>{const a=REF.agendas.find(x=>x.id===V('n_ag'));
+    if(a){if(a.medico_id)document.getElementById('n_med').value=a.medico_id;
+      if(a.sala_padrao_id)document.getElementById('n_sala').value=a.sala_padrao_id}checar()};
+}
+async function checar(){
+  const box=document.getElementById('n_al');box.innerHTML='';
+  const pid=V('n_pac'); if(!pid)return; let al=[];
+  const p=REF.pacientes.find(x=>x.id===pid);
+  try{
+    const cir=await g(`agendamentos?paciente_id=eq.${pid}&tipo=eq.cirurgia&status=in.(agendado,aguardando,compareceu)&select=data,lateralidade,status`);
+    if(cir.length)al.push(`<div class="msg w" style="display:block">🟠 <b>Já tem cirurgia registrada</b>: ${cir.map(x=>E(x.data)+(x.lateralidade?' ('+E(x.lateralidade)+')':'')+' — '+E(x.status)).join('; ')}. Confira se não é duplicidade ou se é o 2º olho.</div>`);
+    if(p&&!p.cpf)al.push(`<div class="msg e" style="display:block">🔴 Paciente <b>sem CPF</b> — obrigatório antes da cirurgia.</div>`);
+    if(p&&p.sobe_escada===false)al.push(`<div class="msg w" style="display:block">🟠 Não sobe escada — atenção no fluxo do dia.</div>`);
+  }catch(e){}
+  box.innerHTML=al.join('');
+}
+async function salvar(){
+  const m=document.getElementById('n_msg');
+  if(!V('n_pac')||!V('n_ag')||!V('n_data')||!V('n_hora')){m.className='msg e';m.textContent='Preencha paciente, agenda, data e hora.';return}
+  if(!V('n_med')){m.className='msg e';m.textContent='🔴 O médico executor é obrigatório.';return}
+  if(!V('n_lat')){m.className='msg e';m.textContent='Informe a lateralidade.';return}
+  try{
+    await po('agendamentos',{paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),medico_id:V('n_med'),
+      sala_id:V('n_sala')||null,tipo:'cirurgia',data:V('n_data'),hora:V('n_hora'),lateralidade:V('n_lat'),
+      status:'agendado',observacao:V('n_obs')||null,criado_por:V('n_quem')||null});
+    fecha();load();
+  }catch(e){m.className='msg e';m.innerHTML='Erro: '+E(e.message)}
+}
+(async()=>{document.getElementById('dt').value=iso(new Date());await loadRef();load()})();
+</script>
+</body>
+</html>
