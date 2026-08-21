@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Recepção</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  .top h1{font-size:15px;color:#0D2137;}
+  .pill{font-size:9px;text-transform:uppercase;letter-spacing:.4px;background:#EDF3F9;color:#2B6CA3;padding:2px 8px;border-radius:9px;font-weight:700;}
+  #st{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;}
+  .ok{background:#E4F7EC;color:#0F6A30;} .er{background:#FDE7E9;color:#C0122A;} .ld{background:#FEF3D6;color:#9A5700;}
+  .tabs{background:#fff;border-bottom:1px solid #DDE3EB;padding:0 18px;display:flex;gap:2px;flex-shrink:0;}
+  .tb{border:none;background:none;padding:11px 15px;font-size:13px;font-weight:600;color:#6B7E90;cursor:pointer;border-bottom:3px solid transparent;}
+  .tb.on{color:#2B9BE8;border-bottom-color:#2B9BE8;}
+  .tb .c{background:#EEF1F5;color:#4A5E70;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:5px;}
+  .tb.on .c{background:#2B9BE8;color:#fff;}
+  .bar{background:#fff;border-bottom:1px solid #DDE3EB;padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+  select,input{padding:6px 9px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;background:#fff;font-family:inherit;}
+  .btn{padding:6px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-o{background:#fff;color:#2B9BE8;border:1px solid #2B9BE8;}
+  .btn-n{background:#EEF1F5;color:#4A5E70;} .btn-s{padding:4px 9px;font-size:11px;} .btn-r{background:#E63946;color:#fff;}
+  .wrap{flex:1;overflow-y:auto;padding:14px 18px;}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:13px;}
+  .k{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:11px 13px;}
+  .k .n{font-size:21px;font-weight:700;color:#0D2137;} .k .l{font-size:9.5px;color:#6B7E90;text-transform:uppercase;margin-top:2px;}
+  .k.al{border-color:#F4A261;background:#FFFBF5;} .k.al .n{color:#9A5700;}
+  .panel{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:14px 16px;margin-bottom:13px;}
+  .panel h2{font-size:13px;color:#0D2137;margin-bottom:4px;}
+  .hint{color:#6B7E90;font-size:11.5px;margin-bottom:10px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F5F7FA;text-align:left;padding:7px 9px;color:#6B7E90;font-size:9.5px;text-transform:uppercase;border-bottom:1px solid #DDE3EB;}
+  td{padding:7px 9px;border-bottom:1px solid #EEF1F5;} tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FAFCFE;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;}
+  .t-b{background:#DCF0FD;color:#0A5E96;} .t-g{background:#D4F7E1;color:#0F6A30;} .t-a{background:#FEF0DC;color:#9A5700;}
+  .t-r{background:#FDDDE0;color:#C0122A;} .t-p{background:#EDE3FB;color:#5B2C9E;} .t-n{background:#EEF1F5;color:#4A5E70;}
+  .empty{padding:18px;text-align:center;color:#9AAAB8;font-style:italic;}
+  .msg{padding:8px 11px;border-radius:6px;font-size:12px;margin-bottom:9px;display:none;}
+  .msg.s{display:block;background:#E4F7EC;color:#0F6A30;} .msg.e{display:block;background:#FDE7E9;color:#C0122A;}
+  .msg.w{display:block;background:#FFF8F0;color:#9A5700;border:1px solid #F4A261;}
+  .ov{position:fixed;inset:0;background:rgba(13,33,55,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow-y:auto;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:10px;width:100%;max-width:560px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .mh{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid #EEF1F5;}
+  .mh b{font-size:14px;color:#0D2137;} .mh button{background:none;border:none;font-size:17px;cursor:pointer;color:#6B7E90;}
+  .mb{padding:15px 17px;} .mf{padding:12px 17px;border-top:1px solid #EEF1F5;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
+  label{font-size:10px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+  .info{background:#F5F7FA;border:1px solid #E4EAF0;border-radius:6px;padding:9px 11px;font-size:11.5px;color:#3C4E60;margin-bottom:10px;line-height:1.5;}
+  .blk{background:#FFF3F4;border:1px solid #E63946;border-radius:7px;padding:10px 12px;font-size:12px;color:#C0122A;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="top"><h1>🚶 Recepção</h1><span class="pill">entrada · encaminhamento · guias</span><span id="st" class="ld">conectando…</span></div>
+<div class="tabs">
+  <button class="tb on" data-t="chegada">Chegada do dia <span class="c" id="c-chegada">–</span></button>
+  <button class="tb" data-t="fila">Fila / Encaminhados <span class="c" id="c-fila">–</span></button>
+  <button class="tb" data-t="guias">Solicitações &amp; Guias <span class="c" id="c-guias">–</span></button>
+</div>
+<div class="bar">
+  <input type="date" id="dt" onchange="load()">
+  <button class="btn btn-o btn-s" onclick="hoje()">hoje</button>
+  <select id="f_tipo" onchange="load()"><option value="">Todos os tipos</option><option value="consulta">Consulta</option><option value="exame">Exame</option><option value="cirurgia">Cirurgia</option><option value="pos_op">Pós-op</option></select>
+  <input id="q" placeholder="🔍 buscar paciente" onkeyup="if(event.key==='Enter')load()">
+  <button class="btn btn-p btn-s" style="margin-left:auto" onclick="load()">Atualizar</button>
+</div>
+<div class="wrap"><div class="kpi" id="kpi"></div><div id="ct"></div></div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)fecha()">
+  <div class="mdl"><div class="mh"><b id="mt"></b><button onclick="fecha()">✕</button></div>
+  <div class="mb" id="mb"></div><div class="mf" id="mf"></div></div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textContent=t};
+const iso=d=>d.toISOString().slice(0,10);
+const hoje=()=>{document.getElementById('dt').value=iso(new Date());load()};
+const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
+const fecha=()=>document.getElementById('ov').classList.remove('on');
+let cur='chegada', AG=[], SOL=[];
+
+async function load(){try{
+  stat('ld','carregando…');
+  const d=V('dt')||iso(new Date());
+  let q=`agendamentos?select=*,pacientes(id,nome,cpf,telefone,nascimento,sobe_escada,status_cadastro,convenios(nome)),medicos(nome),salas(nome,andar),agendas_logicas(nome)&data=eq.${d}&order=hora`;
+  if(V('f_tipo'))q+='&tipo=eq.'+V('f_tipo');
+  AG=await g(q);
+  if(V('q')){const t=V('q').toLowerCase();AG=AG.filter(a=>a.pacientes&&a.pacientes.nome.toLowerCase().includes(t))}
+  SOL=await g('solicitacoes?select=*,pacientes(nome,cpf),medicos(nome),exames(nome,codigo_tuss),convenios(nome)&status=in.(pendente,entregue)&order=criado_em.desc').catch(()=>[]);
+  render(); stat('ok','● conectado');
+}catch(e){document.getElementById('ct').innerHTML='<div class="msg e" style="display:block">Erro: '+E(e.message)+'</div>';stat('er','● erro')}}
+
+function render(){
+  const aguard=AG.filter(a=>a.status==='agendado'), fila=AG.filter(a=>['aguardando','em_atendimento'].includes(a.status));
+  const semCpf=AG.filter(a=>a.pacientes&&!a.pacientes.cpf).length;
+  const naoSobe=AG.filter(a=>a.pacientes&&a.pacientes.sobe_escada===false).length;
+  const pend=SOL.filter(s=>s.status==='pendente').length, entr=SOL.filter(s=>s.status==='entregue').length;
+  document.getElementById('c-chegada').textContent=aguard.length;
+  document.getElementById('c-fila').textContent=fila.length;
+  document.getElementById('c-guias').textContent=pend+entr;
+  document.getElementById('kpi').innerHTML=
+    kpi(AG.length,'Agendados no dia')+kpi(AG.filter(a=>a.status!=='agendado').length,'Já deram entrada')+
+    kpi(fila.length,'Na fila')+(semCpf?kpiA(semCpf,'Sem CPF (trava entrada)'):kpi(0,'Sem CPF'))+
+    (naoSobe?kpiA(naoSobe,'Não sobem escada'):kpi(0,'Não sobem escada'))+kpi(pend,'Guias a entregar');
+  const c=document.getElementById('ct');
+  if(cur==='chegada')c.innerHTML=telaChegada(aguard);
+  else if(cur==='fila')c.innerHTML=telaFila(fila);
+  else c.innerHTML=telaGuias();
+}
+const kpi=(n,l)=>`<div class="k"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+const kpiA=(n,l)=>`<div class="k al"><div class="n">${n}</div><div class="l">⚠ ${l}</div></div>`;
+
+function telaChegada(rows){
+  return `<div class="panel"><h2>Chegada — dar entrada</h2>
+   <div class="hint">O <b>CPF é obrigatório na entrada</b> — sem ele o sistema bloqueia. Pacientes que <b>não sobem escada</b> são roteados para o térreo (e o médico é avisado que precisa descer).</div>
+   ${rows.length?tbl(['Hora','Paciente','CPF','Tipo','Médico','Sala','Escada','Convênio',''],rows.map(a=>{
+     const p=a.pacientes||{};
+     return [E(a.hora||'').slice(0,5),E(p.nome||'—'),
+       p.cpf?E(p.cpf):'<span class="tag t-r">pendente</span>',
+       '<span class="tag t-b">'+E(a.tipo)+'</span>',a.medicos?E(a.medicos.nome):'—',
+       a.salas?E(a.salas.nome):'—',
+       p.sobe_escada===false?'<span class="tag t-a">não sobe → térreo</span>':(p.sobe_escada===null?'<span class="tag t-r">não informado</span>':'—'),
+       p.convenios?E(p.convenios.nome):'—',
+       `<button class="btn btn-g btn-s" onclick="entrada('${a.id}')">▶ Dar entrada</button>`];
+   })):'<div class="empty">Nenhum paciente aguardando entrada neste dia.</div>'}</div>`;
+}
+function telaFila(rows){
+  return `<div class="panel"><h2>Fila — encaminhados</h2>
+   <div class="hint">Pacientes que já deram entrada. Encaminhe para <b>autorefrator</b> ou <b>sala de espera</b> (térreo/superior). A chamada por senha integra o <b>NextQS</b>.</div>
+   ${rows.length?tbl(['Hora','Paciente','Tipo','Médico','Status','Observação',''],rows.map(a=>[
+     E(a.hora||'').slice(0,5),a.pacientes?E(a.pacientes.nome):'—','<span class="tag t-b">'+E(a.tipo)+'</span>',
+     a.medicos?E(a.medicos.nome):'—',
+     a.status==='aguardando'?'<span class="tag t-a">aguardando</span>':'<span class="tag t-g">em atendimento</span>',
+     E(a.observacao||'—'),
+     `<button class="btn btn-o btn-s" onclick="encaminhar('${a.id}')">↗ Encaminhar</button>
+      <button class="btn btn-n btn-s" onclick="voltar('${a.id}')">↩ desfazer</button>`
+   ])):'<div class="empty">Ninguém na fila.</div>'}</div>`;
+}
+function telaGuias(){
+  const pend=SOL.filter(s=>s.status==='pendente'), entr=SOL.filter(s=>s.status==='entregue');
+  return `<div class="panel"><h2>Solicitações pendentes de entrega <span class="tag t-a">${pend.length}</span></h2>
+   <div class="hint">O médico solicitou; a recepção <b>gera a guia</b> e <b>dá baixa</b> registrando quem entregou.</div>
+   ${pend.length?tbl(['Paciente','Exame / Procedimento','TUSS','Lat.','Solicitante','Convênio',''],pend.map(s=>[
+     s.pacientes?E(s.pacientes.nome):'—',E(s.nome_item||(s.exames?s.exames.nome:'—')),
+     E(s.codigo_tuss||(s.exames?s.exames.codigo_tuss:'')||'—'),E(s.lateralidade||'—'),
+     s.medicos?E(s.medicos.nome):'—',s.convenios?E(s.convenios.nome):'—',
+     `<button class="btn btn-o btn-s" onclick="imprimirGuia('${s.id}')">🖨 Guia</button>
+      <button class="btn btn-g btn-s" onclick="darBaixa('${s.id}')">✓ Entregar</button>`
+   ])):'<div class="empty">Nenhuma solicitação pendente.</div>'}</div>
+   <div class="panel"><h2>Entregues — aguardando agendamento <span class="tag t-b">${entr.length}</span></h2>
+   <div class="hint">Já entregues ao paciente. O <b>call center</b> agenda a partir daqui (TUSS e lateralidade já preenchidos).</div>
+   ${entr.length?tbl(['Paciente','Item','Entregue por','Quando','A quem'],entr.map(s=>[
+     s.pacientes?E(s.pacientes.nome):'—',E(s.nome_item||'—'),E(s.entregue_por||'—'),
+     E((s.entregue_em||'').slice(0,16).replace('T',' ')),E(s.entregue_a||'—')
+   ])):'<div class="empty">Nada entregue ainda.</div>'}</div>`;
+}
+function tbl(cols,rows){return '<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+
+  rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+
+/* ===== entrada com trava de CPF ===== */
+async function entrada(id){
+  const a=AG.find(x=>x.id===id); if(!a)return; const p=a.pacientes||{};
+  if(!p.cpf){
+    abre('⛔ Entrada bloqueada — CPF obrigatório',
+      `<div class="blk"><b>Sem CPF não é possível dar entrada.</b><br>Regra do sistema: o CPF é opcional no agendamento, mas <b>obrigatório no check-in</b>.</div>
+       <div class="info"><b>${E(p.nome)}</b>${p.nascimento?' · '+E(p.nascimento):''}${p.telefone?' · '+E(p.telefone):''}</div>
+       <div class="msg" id="e_msg"></div>
+       <div class="grid"><div><label>CPF do paciente *</label><input id="e_cpf" placeholder="000.000.000-00"></div></div>`,
+      `<button class="btn btn-n" onclick="fecha()">Cancelar</button>
+       <button class="btn btn-g" onclick="salvarCpf('${p.id}','${id}')">Salvar CPF e dar entrada</button>`);
+    return;
+  }
+  await confirmarEntrada(id);
+}
+async function salvarCpf(pid,aid){
+  const m=document.getElementById('e_msg'), cpf=V('e_cpf').replace(/\D/g,'');
+  if(cpf.length<11){m.className='msg e';m.textContent='CPF inválido.';return}
+  try{
+    const dup=await g('pacientes?cpf=eq.'+cpf+'&select=id,nome');
+    if(dup.length&&dup[0].id!==pid){m.className='msg e';m.innerHTML='🔴 CPF já cadastrado para <b>'+E(dup[0].nome)+'</b>. Verifique se é duplicidade.';return}
+    await pa('pacientes','id=eq.'+pid,{cpf,status_cadastro:'completo'});
+    fecha(); await confirmarEntrada(aid);
+  }catch(e){m.className='msg e';m.textContent='Erro: '+e.message}
+}
+async function confirmarEntrada(id){
+  try{await pa('agendamentos','id=eq.'+id,{status:'aguardando'});
+    const a=AG.find(x=>x.id===id), p=a?a.pacientes:null;
+    if(p&&p.sobe_escada===false)setTimeout(()=>alert('⚠️ '+p.nome+' NÃO SOBE ESCADA.\n\nEncaminhar para o consultório do TÉRREO e avisar o médico que precisará descer.'),100);
+    load();
+  }catch(e){alert('Erro: '+e.message)}
+}
+function encaminhar(id){
+  const a=AG.find(x=>x.id===id); const p=a?a.pacientes:{};
+  abre('Encaminhar — '+(p?p.nome:''),
+    `<div class="hint">Escolha o destino. A chamada por senha será feita pelo <b>NextQS</b> (integração).</div>
+     <div class="grid"><div><label>Destino</label><select id="d_dest">
+       <option>Autorefrator</option><option>Sala de espera — superior</option>
+       <option${p&&p.sobe_escada===false?' selected':''}>Sala de espera — térreo</option>
+       <option>Consultório do médico</option><option>Sala de exames</option><option>Consultora cirúrgica</option>
+     </select></div><div><label>Observação</label><input id="d_obs"></div></div>
+     ${p&&p.sobe_escada===false?'<div class="blk">⚠️ Paciente não sobe escada — encaminhar ao térreo.</div>':''}`,
+    `<button class="btn btn-n" onclick="fecha()">Cancelar</button>
+     <button class="btn btn-p" onclick="salvarEnc('${id}')">↗ Encaminhar</button>`);
+}
+async function salvarEnc(id){try{
+  const a=AG.find(x=>x.id===id);
+  await pa('agendamentos','id=eq.'+id,{status:'em_atendimento',
+    observacao:((a&&a.observacao)?a.observacao+' | ':'')+'→ '+V('d_dest')+(V('d_obs')?' ('+V('d_obs')+')':'')});
+  fecha();load()}catch(e){alert('Erro: '+e.message)}}
+async function voltar(id){try{await pa('agendamentos','id=eq.'+id,{status:'agendado'});load()}catch(e){alert('Erro: '+e.message)}}
+
+/* ===== guias ===== */
+function imprimirGuia(id){
+  const s=SOL.find(x=>x.id===id); if(!s)return;
+  const w=window.open('','_blank'); if(!w)return alert('Permita popups para imprimir.');
+  w.document.write(`<html><head><title>Guia de Solicitação</title></head><body style="font-family:sans-serif;padding:30px">
+   <h2 style="margin-bottom:4px">Hospital dos Olhos Guanabara</h2>
+   <div style="color:#666;font-size:13px;margin-bottom:16px">Guia de solicitação de exame / procedimento</div><hr>
+   <table style="width:100%;font-size:14px;margin-top:16px" cellpadding="6">
+    <tr><td><b>Paciente</b></td><td>${E(s.pacientes?s.pacientes.nome:'')}</td></tr>
+    <tr><td><b>CPF</b></td><td>${E(s.pacientes?s.pacientes.cpf:'')||'—'}</td></tr>
+    <tr><td><b>Convênio</b></td><td>${E(s.convenios?s.convenios.nome:'')||'—'}</td></tr>
+    <tr><td><b>Procedimento</b></td><td>${E(s.nome_item||(s.exames?s.exames.nome:''))}</td></tr>
+    <tr><td><b>Código TUSS</b></td><td>${E(s.codigo_tuss||(s.exames?s.exames.codigo_tuss:''))||'—'}</td></tr>
+    <tr><td><b>Lateralidade</b></td><td>${E(s.lateralidade)||'—'}</td></tr>
+    <tr><td><b>Médico solicitante</b></td><td>${E(s.medicos?s.medicos.nome:'')}</td></tr>
+    <tr><td><b>Data da solicitação</b></td><td>${E((s.criado_em||'').slice(0,10))}</td></tr>
+   </table><br><br>
+   <div style="font-size:13px">Recebi a guia acima: ____________________________________ Data: ___/___/______</div>
+   </body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+function darBaixa(id){
+  const s=SOL.find(x=>x.id===id);
+  abre('Dar baixa na solicitação',
+    `<div class="info"><b>${E(s.pacientes?s.pacientes.nome:'')}</b><br>${E(s.nome_item||'')} ${s.lateralidade?'('+E(s.lateralidade)+')':''}</div>
+     <div class="hint">Registra <b>quem entregou</b>, quando e a quem — trilha de auditoria.</div>
+     <div class="grid">
+      <div><label>Entregue por *</label><input id="b_por" placeholder="seu nome"></div>
+      <div><label>Entregue a</label><select id="b_a"><option>Paciente</option><option>Acompanhante</option></select></div>
+     </div>`,
+    `<button class="btn btn-n" onclick="fecha()">Cancelar</button>
+     <button class="btn btn-g" onclick="salvarBaixa('${id}')">✓ Confirmar entrega</button>`);
+}
+async function salvarBaixa(id){try{
+  if(!V('b_por'))return alert('Informe quem entregou.');
+  await pa('solicitacoes','id=eq.'+id,{status:'entregue',entregue_por:V('b_por'),entregue_em:new Date().toISOString(),entregue_a:V('b_a')});
+  fecha();load()}catch(e){alert('Erro: '+e.message)}}
+
+document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));b.classList.add('on');cur=b.dataset.t;render()});
+document.getElementById('dt').value=iso(new Date()); load();
+</script>
+</body>
+</html>
