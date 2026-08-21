@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 100" role="img" aria-label="Hospital dos Olhos Guanabara">
+  <title>Hospital dos Olhos Guanabara</title>
+  <path fill="#0F4C81" d="M41 4h16a8 8 0 0 1 8 8v16a24 24 0 0 0 0 44v16a8 8 0 0 1-8 8H41a8 8 0 0 1-8-8V72H11a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8h22V12a8 8 0 0 1 8-8z"/>
+  <circle cx="79" cy="50" r="21" fill="#1B9CE0"/>
+</svg>

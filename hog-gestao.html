@@ -9,8 +9,10 @@
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;}
   /* ===== barra de menu (mesma lógica do VoxComm) ===== */
   .topbar{background:#1c2833;color:#fff;display:flex;align-items:center;padding:0 14px;flex-shrink:0;position:relative;z-index:40;flex-wrap:wrap;}
-  .brand{font-weight:700;font-size:14px;padding:12px 14px 12px 0;color:#fff;white-space:nowrap;}
-  .brand small{display:block;font-size:8.5px;color:#7FA8C4;text-transform:uppercase;letter-spacing:1px;font-weight:400;}
+  .brand{display:flex;align-items:center;gap:9px;padding:9px 16px 9px 0;color:#fff;white-space:nowrap;margin-right:4px;border-right:1px solid #34495e;}
+  .brand .bn{font-size:13.5px;font-weight:500;line-height:1.15;color:#fff;}
+  .brand .bn b{color:#1B9CE0;font-weight:700;}
+  .brand small{display:block;font-size:8.5px;color:#7FA8C4;text-transform:uppercase;letter-spacing:1px;font-weight:400;margin-top:1px;}
   .menu{display:flex;align-items:stretch;flex:1;flex-wrap:wrap;}
   .mi{position:relative;}
   .mi>a{display:block;padding:15px 13px;color:#e8eef3;text-decoration:none;font-size:13.5px;cursor:pointer;white-space:nowrap;}
@@ -51,7 +53,13 @@
 <body>
 
 <div class="topbar">
-  <div class="brand">👁 HOG Gestão<small>Sistema</small></div>
+  <div class="brand">
+    <svg viewBox="0 0 110 100" width="26" height="24" aria-hidden="true" style="flex:none">
+      <path fill="#ffffff" d="M41 4h16a8 8 0 0 1 8 8v16a24 24 0 0 0 0 44v16a8 8 0 0 1-8 8H41a8 8 0 0 1-8-8V72H11a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8h22V12a8 8 0 0 1 8-8z"/>
+      <circle cx="79" cy="50" r="21" fill="#1B9CE0"/>
+    </svg>
+    <span class="bn">Hospital dos Olhos <b>Guanabara</b><small>Sistema de Gestão</small></span>
+  </div>
   <div class="menu" id="menu">
     <div class="mi"><a data-go="home">Home</a></div>
 
