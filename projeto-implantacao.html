@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projeto de Implantação — CRM + Exames + Externo · HOG</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#EEF2F6;color:#1A2B3C;font-size:14px;line-height:1.55;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 70px;}
+  header{background:#0D2137;color:#fff;padding:30px 0;margin-bottom:24px;}
+  header .wrap{padding-bottom:0;}
+  header h1{font-size:23px;font-weight:700;}
+  header .sub{color:#8BAFC9;font-size:14px;margin-top:6px;}
+  h2{font-size:17px;color:#0D2137;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #D7DFE8;display:flex;align-items:center;gap:9px;}
+  h2 .n{background:#2B9BE8;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none;}
+  h3{font-size:14px;color:#0D2137;margin:0 0 5px;}
+  p{margin-bottom:10px;color:#3C4E60;}
+  .card{background:#fff;border:1px solid #D7DFE8;border-radius:10px;padding:15px 18px;margin-bottom:12px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;} .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#5A6B7B;font-size:11px;text-transform:uppercase;border-bottom:1px solid #D7DFE8;}
+  td{padding:7px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top;} tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+  .t-done{background:#D4F7E1;color:#0F6A30;} .t-now{background:#DCF0FD;color:#0A5E96;} .t-next{background:#FEF0DC;color:#9A5700;} .t-ext{background:#EDE3FB;color:#5B2C9E;}
+  code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:12px;}
+  .phase{display:flex;gap:12px;margin-bottom:10px;}
+  .phase .num{width:26px;height:26px;border-radius:50%;background:#2B9BE8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;font-size:13px;}
+  .phase .num.done{background:#1A9E4A;} .phase .num.ext{background:#5B2C9E;}
+  .phase .b{flex:1;}
+  .note{background:#EEF6FD;border:1px dashed #2B9BE8;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#274b66;}
+  .foot{color:#6B7E90;font-size:12px;margin-top:24px;text-align:center;}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Projeto de Implantação — CRM + Agendamento de Exames + Agendamento Externo</h1>
+  <div class="sub">Hospital dos Olhos Guanabara · sistema modular integrado ao ecossistema (SIVOE, NextQS, OMIE, estoque, faturamento)</div>
+</div></header>
+<div class="wrap">
+
+  <!-- 1 -->
+  <h2><span class="n">1</span> Objetivo e escopo</h2>
+  <div class="card">
+    <p>Substituir o WBudget e os processos manuais (planilhas + sistemas isolados) por um <strong>sistema modular</strong> que modela a jornada real do paciente e conecta os sistemas que já existem — <strong>integrar, não recriar</strong>.</p>
+    <div class="grid3">
+      <div><h3>CRM</h3><p style="font-size:12.5px;margin:0;">Jornada comercial (catarata/plástica/…), consultora, caixa, conciliação, funil.</p></div>
+      <div><h3>Agendamento de exames</h3><p style="font-size:12.5px;margin:0;">Motor contínuo (sala=recurso), da empresa toda; call center agenda.</p></div>
+      <div><h3>Agendamento externo</h3><p style="font-size:12.5px;margin:0;">Cirurgias de/para parceiros, com cobrança e declaração de material.</p></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <h2><span class="n">2</span> Arquitetura & ecossistema</h2>
+  <div class="card">
+  <table>
+    <thead><tr><th>Sistema</th><th>Papel</th><th>Relação</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CRM-HOG</strong></td><td>agendas, comercial, cirúrgico, financeiro</td><td>núcleo (novo)</td></tr>
+      <tr><td><strong>SIVOE</strong></td><td>cadastro do paciente + prontuário</td><td><span class="tag t-ext">integra</span> — fonte da verdade do paciente</td></tr>
+      <tr><td><strong>NextQS</strong></td><td>fila / senha / chamar paciente</td><td><span class="tag t-ext">integra</span> — recepção/estações</td></tr>
+      <tr><td><strong>Estoque</strong></td><td>LIO / materiais / saídas</td><td><span class="tag t-ext">integra</span> — reserva/baixa de LIO</td></tr>
+      <tr><td><strong>Faturamento/Repasse</strong></td><td>repasse por profissional</td><td><span class="tag t-ext">integra</span> — CRM alimenta a produção</td></tr>
+      <tr><td><strong>OMIE</strong></td><td>financeiro (contas a receber)</td><td><span class="tag t-ext">integra</span> — exporta planilha</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>Fronteira de dados:</strong> o SIVOE é dono do paciente/prontuário; o CRM referencia por <code>id/CPF</code> (sem recadastrar). Ao finalizar o prontuário → gera a <strong>visita</strong> (faturamento) e o <strong>pedido de exames</strong> (alimenta o call center, sem expor o prontuário). Acesso ao prontuário por papel.</div>
+
+  <!-- 3 -->
+  <h2><span class="n">3</span> Fases de implantação (modular → unir no fim)</h2>
+  <div class="card">
+    <div class="phase"><div class="num done">1</div><div class="b"><h3>CRM Catarata (núcleo) <span class="tag t-now">em andamento</span></h3><p style="margin:0;font-size:12.5px;">Importação da agenda de catarata · fluxo consultora · caixa · conciliação.</p></div></div>
+    <div class="phase"><div class="num">2</div><div class="b"><h3>Integração Estoque</h3><p style="margin:0;font-size:12.5px;">LIO/saídas ligadas ao agendamento cirúrgico.</p></div></div>
+    <div class="phase"><div class="num">3</div><div class="b"><h3>Agendamento externo + exames + cirurgia</h3><p style="margin:0;font-size:12.5px;">Agenda de exames (empresa toda) já funcional; externos e cirurgia na sequência.</p></div></div>
+    <div class="phase"><div class="num">4</div><div class="b"><h3>Faturamento / repasse</h3><p style="margin:0;font-size:12.5px;">Unificar com o dash de repasse por profissional.</p></div></div>
+    <div class="phase"><div class="num ext">5</div><div class="b"><h3>Agendas & telas de atendimento <span class="tag t-ext">outro chat</span></h3><p style="margin:0;font-size:12.5px;">Motor de agendas (4 camadas) + estações de atendimento.</p></div></div>
+    <div class="phase"><div class="num">6</div><div class="b"><h3>União dos módulos</h3><p style="margin:0;font-size:12.5px;">Integração final e liberação para a empresa toda.</p></div></div>
+  </div>
+
+  <!-- 4 -->
+  <h2><span class="n">4</span> Estado atual (já no ar)</h2>
+  <div class="grid2">
+    <div class="card"><h3>✅ Já funcional</h3>
+      <p style="font-size:12.5px;margin:0;">Banco <strong>Supabase</strong> criado e populado (médicos, salas, convênios, exames, LIO). <strong>Agenda de Exames</strong> conectada e gravando (cadastro de paciente, imprimir, Excel). Mockup completo do CRM (v5) publicado.</p>
+    </div>
+    <div class="card"><h3>Publicado</h3>
+      <p style="font-size:12.5px;margin:0;"><code>hoguanabara.github.io/CRM/</code> — Sistema completo, Agenda de Exames (ao vivo), Módulo de Agendas (SIVOE), Módulo de Faturamento, Mapa-Mestre.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <h2><span class="n">5</span> Integrações a negociar / decisões</h2>
+  <div class="card">
+  <table>
+    <thead><tr><th>Item</th><th>O que falta</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SIVOE</strong> (API/webhook/view)</td><td>definir método de sincronização de paciente + evento "prontuário salvo → visita".</td></tr>
+      <tr><td><strong>NextQS</strong></td><td>integrar painel de senhas na recepção/estações.</td></tr>
+      <tr><td><strong>Estoque</strong></td><td>expor entradas/saídas de LIO ao agendamento cirúrgico.</td></tr>
+      <tr><td><strong>Exames (parametrização)</strong></td><td>cronometrar tempo real dos exames; combos com tempo próprio; paralelismo por sala; reserva técnica.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="foot">Projeto de implantação · Hospital dos Olhos Guanabara · v1</div>
+</div>
+</body>
+</html>
