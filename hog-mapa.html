@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Mapa de Ocupação</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .top{background:#fff;border-bottom:1px solid #DDE3EB;padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  .top h1{font-size:15px;color:#0D2137;}
+  .top .pill{font-size:9px;text-transform:uppercase;letter-spacing:.4px;background:#EDF3F9;color:#2B6CA3;padding:2px 8px;border-radius:9px;font-weight:700;}
+  #st{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;}
+  .ok{background:#E4F7EC;color:#0F6A30;} .er{background:#FDE7E9;color:#C0122A;} .ld{background:#FEF3D6;color:#9A5700;}
+  .bar{background:#fff;border-bottom:1px solid #DDE3EB;padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+  select,input{padding:6px 9px;border:1px solid #DDE3EB;border-radius:6px;font-size:12px;background:#fff;font-family:inherit;}
+  .btn{padding:6px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+  .btn-p{background:#2B9BE8;color:#fff;} .btn-g{background:#1A9E4A;color:#fff;} .btn-o{background:#fff;color:#2B9BE8;border:1px solid #2B9BE8;}
+  .btn-r{background:#E63946;color:#fff;} .btn-n{background:#EEF1F5;color:#4A5E70;} .btn-s{padding:4px 9px;font-size:11px;}
+  .wrap{flex:1;overflow-y:auto;padding:14px 18px;}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:13px;}
+  .k{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:11px 13px;}
+  .k .n{font-size:21px;font-weight:700;color:#0D2137;} .k .l{font-size:9.5px;color:#6B7E90;text-transform:uppercase;margin-top:2px;}
+  .k.al{border-color:#F4A261;background:#FFFBF5;} .k.al .n{color:#9A5700;}
+  /* grade */
+  .grade{display:grid;grid-template-columns:78px repeat(6,1fr);gap:5px;}
+  .gh{font-size:10px;text-transform:uppercase;color:#6B7E90;text-align:center;padding:5px 2px;font-weight:700;}
+  .gh small{display:block;color:#9AAAB8;font-weight:500;font-size:11px;}
+  .gh.hoje{color:#2B9BE8;} .gh.hoje small{color:#2B9BE8;}
+  .gl{font-size:10px;text-transform:uppercase;color:#6B7E90;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .cell{background:#FAFBFC;border:1px solid #EEF1F5;border-radius:6px;min-height:74px;padding:4px;display:flex;flex-direction:column;gap:4px;cursor:pointer;}
+  .cell:hover{box-shadow:inset 0 0 0 1px #C9D6E2;}
+  .blk{border-left:4px solid #B7C2CD;border-radius:4px;padding:4px 6px;font-size:10px;line-height:1.25;position:relative;cursor:pointer;}
+  .blk:hover{filter:brightness(.97);box-shadow:0 0 0 2px rgba(43,155,232,.3);}
+  .blk .who{font-weight:700;color:#0D2137;display:block;} .blk .sub{color:#5A6B7B;font-size:9px;}
+  .blk .bd{position:absolute;top:3px;right:4px;font-size:9px;}
+  .t-manha{background:#FDEEDD;} .t-tarde{background:#E4F5EA;} .t-cir{background:#DEF3F0;} .t-livre{background:#EFE6FB;}
+  .t-bloq{background:#FBE3E6;background-image:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(192,18,42,.08) 5px,rgba(192,18,42,.08) 10px);}
+  .e-prog{border-left-color:#9AA7B4;} .e-liber{border-left-color:#F4A261;} .e-agend{border-left-color:#2B9BE8;}
+  .e-bloq{border-left-color:#E63946;} .e-livre{border-left-color:#8A63C4;}
+  .lg{display:flex;gap:20px;flex-wrap:wrap;margin-top:13px;padding-top:12px;border-top:1px solid #EEF1F5;font-size:10.5px;}
+  .lg b{display:block;text-transform:uppercase;letter-spacing:.4px;color:#6B7E90;font-size:9px;margin-bottom:4px;}
+  .chip{display:inline-flex;align-items:center;gap:4px;margin-right:9px;color:#4A5E70;}
+  .sw{width:18px;height:11px;border-radius:3px;display:inline-block;}
+  .swb{width:13px;height:11px;border-radius:3px;border-left:4px solid;display:inline-block;background:#F3F5F8;}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(13,33,55,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow-y:auto;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:10px;width:100%;max-width:560px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .mh{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid #EEF1F5;}
+  .mh b{font-size:14px;color:#0D2137;} .mh button{background:none;border:none;font-size:17px;cursor:pointer;color:#6B7E90;}
+  .mb{padding:15px 17px;} .mf{padding:12px 17px;border-top:1px solid #EEF1F5;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
+  label{font-size:10px;color:#6B7E90;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+  .hint{color:#6B7E90;font-size:11.5px;margin-bottom:10px;line-height:1.5;}
+  .msg{padding:8px 11px;border-radius:6px;font-size:12px;margin-bottom:9px;display:none;}
+  .msg.s{display:block;background:#E4F7EC;color:#0F6A30;} .msg.e{display:block;background:#FDE7E9;color:#C0122A;}
+  .info{background:#F5F7FA;border:1px solid #E4EAF0;border-radius:6px;padding:8px 10px;font-size:11.5px;color:#3C4E60;margin-bottom:10px;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;}
+  .t-b{background:#DCF0FD;color:#0A5E96;} .t-a{background:#FEF0DC;color:#9A5700;} .t-g{background:#D4F7E1;color:#0F6A30;}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🗓️ Mapa de Ocupação</h1><span class="pill">camada 1 · reserva</span><span class="pill">camada 2 · liberação</span>
+  <span id="st" class="ld">conectando…</span>
+</div>
+<div class="bar">
+  <button class="btn btn-n btn-s" onclick="semana(-7)">‹ semana</button>
+  <input type="date" id="dt" onchange="load()">
+  <button class="btn btn-n btn-s" onclick="semana(7)">semana ›</button>
+  <button class="btn btn-o btn-s" onclick="hoje()">hoje</button>
+  <select id="f_med" onchange="load()"><option value="">Todos os médicos</option></select>
+  <select id="f_sala" onchange="load()"><option value="">Todas as salas</option></select>
+  <select id="f_ag" onchange="load()"><option value="">Todas as agendas</option></select>
+  <button class="btn btn-p btn-s" style="margin-left:auto" onclick="novaReserva()">+ Nova reserva</button>
+</div>
+<div class="wrap">
+  <div class="kpi" id="kpi"></div>
+  <div id="grade"></div>
+  <div class="lg">
+    <div><b>Turno (fundo)</b>
+      <span class="chip"><span class="sw t-manha"></span>Manhã</span>
+      <span class="chip"><span class="sw t-tarde"></span>Tarde</span>
+      <span class="chip"><span class="sw t-cir"></span>Cirúrgico</span>
+      <span class="chip"><span class="sw t-livre"></span>Sala livre</span></div>
+    <div><b>Estado (barra)</b>
+      <span class="chip"><span class="swb e-prog"></span>Pré-programado</span>
+      <span class="chip"><span class="swb e-liber"></span>Liberado</span>
+      <span class="chip"><span class="swb e-agend"></span>Agendado</span>
+      <span class="chip"><span class="swb e-bloq"></span>Bloqueado</span></div>
+    <div><b>Marcas</b><span class="chip">⚡ hora extra</span><span class="chip">⛔ bloqueio</span><span class="chip">🔒 médico em 2 lugares</span></div>
+  </div>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)fecha()">
+  <div class="mdl">
+    <div class="mh"><b id="mt">Reserva</b><button onclick="fecha()">✕</button></div>
+    <div class="mb" id="mb"></div>
+    <div class="mf" id="mf"></div>
+  </div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const po=async(t,o)=>{const r=await fetch(SB+'/'+t,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const de=async(t,q)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text())};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textContent=t};
+
+const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const TURNOS=[['manha','Manhã'],['tarde','Tarde'],['cirurgico','Cirúrgico']];
+const iso=d=>d.toISOString().slice(0,10);
+function segunda(d){const x=new Date(d+'T12:00:00');const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
+let REF={medicos:[],salas:[],agendas:[]}, RES=[], BLQ=[], SEL=null;
+
+function hoje(){document.getElementById('dt').value=iso(new Date());load()}
+function semana(n){const d=new Date(V('dt')+'T12:00:00');d.setDate(d.getDate()+n);document.getElementById('dt').value=iso(d);load()}
+
+async function loadRef(){
+  const [m,s,a]=await Promise.all([g('medicos?select=id,nome&order=nome'),g('salas?select=id,nome&order=nome'),g('agendas_logicas?select=id,nome,medico_id,sala_padrao_id,turno&order=nome')]);
+  REF={medicos:m,salas:s,agendas:a};
+  const fill=(id,arr,ph)=>{const e=document.getElementById(id);const v=e.value;
+    e.innerHTML='<option value="">'+ph+'</option>'+arr.map(o=>`<option value="${o.id}">${E(o.nome)}</option>`).join('');e.value=v};
+  fill('f_med',m,'Todos os médicos');fill('f_sala',s,'Todas as salas');fill('f_ag',a,'Todas as agendas');
+}
+const nome=(arr,id)=>{const o=arr.find(x=>x.id===id);return o?o.nome:''};
+const curto=n=>n.replace(/^Dr[a]?\.\s*/,'').split(' ').slice(0,2).join(' ');
+
+async function load(){
+  try{
+    stat('ld','carregando…');
+    if(!V('dt'))document.getElementById('dt').value=iso(new Date());
+    const ini=segunda(V('dt')), fim=new Date(ini); fim.setDate(fim.getDate()+5);
+    let q=`reservas?select=*&data=gte.${iso(ini)}&data=lte.${iso(fim)}&order=data`;
+    if(V('f_med'))q+='&medico_id=eq.'+V('f_med');
+    if(V('f_sala'))q+='&sala_id=eq.'+V('f_sala');
+    if(V('f_ag'))q+='&agenda_logica_id=eq.'+V('f_ag');
+    [RES,BLQ]=await Promise.all([g(q),g(`feriados_bloqueios?select=*&data=gte.${iso(ini)}&data=lte.${iso(fim)}`)]);
+    render(ini); stat('ok','● conectado');
+  }catch(e){document.getElementById('grade').innerHTML='<div class="msg e" style="display:block">Erro: '+E(e.message)+'</div>';stat('er','● erro')}
+}
+
+function render(ini){
+  const dias=[...Array(6)].map((_,i)=>{const d=new Date(ini);d.setDate(d.getDate()+i);return d});
+  const hj=iso(new Date());
+  let h='<div class="grade"><div class="gl"></div>';
+  dias.forEach(d=>{h+=`<div class="gh${iso(d)===hj?' hoje':''}">${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></div>`});
+  TURNOS.forEach(([tk,tl])=>{
+    h+=`<div class="gl">${tl}</div>`;
+    dias.forEach(d=>{
+      const dd=iso(d);
+      const bl=BLQ.filter(b=>b.data===dd);
+      const rs=RES.filter(r=>r.data===dd&&r.turno===tk);
+      h+=`<div class="cell" onclick="novaReserva('${dd}','${tk}')">`;
+      bl.forEach(b=>{h+=`<div class="blk t-bloq e-bloq" onclick="event.stopPropagation();verBloqueio('${b.id}')"><span class="bd">${b.abre_hora_extra?'⚡':'⛔'}</span><span class="who">${E(b.tipo)}</span><span class="sub">${E(b.motivo||'')}</span></div>`});
+      rs.forEach(r=>{
+        const dup=RES.filter(x=>x.data===dd&&x.turno===tk&&x.medico_id===r.medico_id).length>1;
+        const cls=r.estado==='bloqueado'?'t-bloq e-bloq':(r.estado==='liberado'?'t-'+(tk==='cirurgico'?'cir':tk)+' e-liber':'t-'+(tk==='cirurgico'?'cir':tk)+' e-prog');
+        h+=`<div class="blk ${cls}" onclick="event.stopPropagation();abrir('${r.id}')">`+
+           `<span class="bd">${r.hora_extra?'⚡':''}${dup?'🔒':''}</span>`+
+           `<span class="who">${E(curto(nome(REF.medicos,r.medico_id)||'—'))}</span>`+
+           `<span class="sub">${E(nome(REF.salas,r.sala_id)||'sala?')}${r.agenda_logica_id?' · '+E(nome(REF.agendas,r.agenda_logica_id)):''}</span></div>`;
+      });
+      h+='</div>';
+    });
+  });
+  h+='</div>';
+  document.getElementById('grade').innerHTML=h;
+  const lib=RES.filter(r=>r.estado==='liberado').length, pre=RES.filter(r=>r.estado==='pre_programado').length;
+  const semSala=RES.filter(r=>!r.sala_id).length;
+  document.getElementById('kpi').innerHTML=
+    kpi(RES.length,'Reservas na semana')+kpi(pre,'Pré-programadas')+kpi(lib,'Liberadas p/ agendar')+
+    kpi(new Set(RES.map(r=>r.medico_id)).size,'Médicos na semana')+
+    kpi(BLQ.length,'Bloqueios')+(semSala?kpiAl(semSala,'Sem sala definida'):kpi(0,'Sem sala definida'));
+}
+const kpi=(n,l)=>`<div class="k"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+const kpiAl=(n,l)=>`<div class="k al"><div class="n">${n}</div><div class="l">⚠ ${l}</div></div>`;
+
+/* ===== modais ===== */
+const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;
+  document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
+const fecha=()=>document.getElementById('ov').classList.remove('on');
+const sel=(id,arr,v,ph)=>`<select id="${id}"><option value="">${ph||'—'}</option>`+arr.map(o=>`<option value="${o.id}"${o.id===v?' selected':''}>${E(o.nome)}</option>`).join('')+'</select>';
+
+function novaReserva(data,turno){
+  SEL=null;
+  abre('Nova reserva — camada 1',
+    `<div class="hint">Aloca <b>médico + sala + turno</b>. A reserva <b>não abre horário</b> para agendar — isso é a camada 2 (liberação).</div>
+     <div class="msg" id="r_msg"></div>
+     <div class="grid">
+       <div><label>Data *</label><input type="date" id="r_data" value="${data||V('dt')}"></div>
+       <div><label>Turno *</label><select id="r_turno">${TURNOS.map(([k,l])=>`<option value="${k}"${k===turno?' selected':''}>${l}</option>`).join('')}</select></div>
+       <div><label>Médico *</label>${sel('r_med',REF.medicos)}</div>
+       <div><label>Sala</label>${sel('r_sala',REF.salas,'','definir até a data')}</div>
+       <div style="grid-column:span 2"><label>Agenda lógica (padrão)</label>${sel('r_ag',REF.agendas)}</div>
+       <div><label>Recorrência</label><select id="r_rec"><option value="eventual">Eventual</option><option value="recorrente">Recorrente</option><option value="extra">Extra (hora extra)</option></select></div>
+       <div><label>Repetir por (semanas)</label><input type="number" id="r_rep" value="1" min="1" max="26"></div>
+       <div style="grid-column:span 2"><label>Observação</label><input id="r_obs"></div>
+     </div>`,
+    `<button class="btn btn-n" onclick="fecha()">Cancelar</button>
+     <button class="btn btn-p" onclick="salvarReserva(false)">Salvar reserva</button>
+     <button class="btn btn-g" onclick="salvarReserva(true)">Salvar e já liberar</button>`);
+}
+async function salvarReserva(liberar){
+  const m=document.getElementById('r_msg');
+  if(!V('r_med'))return say(m,'e','Escolha o médico.');
+  if(!V('r_data'))return say(m,'e','Escolha a data.');
+  try{
+    const rep=Math.max(1,Number(V('r_rep'))||1), base=new Date(V('r_data')+'T12:00:00'), lote=[];
+    for(let i=0;i<rep;i++){const d=new Date(base);d.setDate(d.getDate()+7*i);
+      lote.push({medico_id:V('r_med'),sala_id:V('r_sala')||null,agenda_logica_id:V('r_ag')||null,
+        data:iso(d),turno:V('r_turno'),recorrencia:V('r_rec'),
+        estado:liberar?'liberado':'pre_programado',hora_extra:V('r_rec')==='extra',observacao:V('r_obs')||null});}
+    await po('reservas',lote); fecha(); load();
+  }catch(e){say(m,'e','Erro: '+E(e.message))}
+}
+const say=(el,c,t)=>{el.className='msg '+c;el.innerHTML=t};
+
+async function abrir(id){
+  const r=(await g('reservas?id=eq.'+id+'&select=*'))[0]; if(!r)return; SEL=r;
+  const med=nome(REF.medicos,r.medico_id), sala=nome(REF.salas,r.sala_id), ag=nome(REF.agendas,r.agenda_logica_id);
+  const est={pre_programado:['t-a','Pré-programado'],liberado:['t-g','Liberado p/ agendamento'],bloqueado:['t-a','Bloqueado']}[r.estado]||['t-b',r.estado];
+  abre('Reserva — '+(med||'—'),
+    `<div class="info"><b>${E(med)}</b> · ${E(r.data)} · ${E(r.turno)}<br>
+      Sala: ${sala?E(sala):'<span class="tag t-a">a definir</span>'} ${ag?' · Agenda: '+E(ag):''}<br>
+      Estado: <span class="tag ${est[0]}">${est[1]}</span> ${r.hora_extra?' <span class="tag t-a">⚡ hora extra</span>':''}</div>
+     <div class="msg" id="a_msg"></div>
+     <div class="grid">
+       <div><label>Sala</label>${sel('a_sala',REF.salas,r.sala_id||'','a definir')}</div>
+       <div><label>Agenda lógica</label>${sel('a_ag',REF.agendas,r.agenda_logica_id||'')}</div>
+       <div><label>Turno</label><select id="a_turno">${TURNOS.map(([k,l])=>`<option value="${k}"${k===r.turno?' selected':''}>${l}</option>`).join('')}</select></div>
+       <div><label>Data</label><input type="date" id="a_data" value="${r.data}"></div>
+     </div>
+     <div class="hint">A <b>liberação</b> (camada 2) é o que abre esta reserva para o call center marcar pacientes.</div>`,
+    `<button class="btn btn-n" onclick="fecha()">Fechar</button>
+     <button class="btn btn-o" onclick="salvarEdicao()">💾 Salvar</button>`+
+    (r.estado!=='liberado'?`<button class="btn btn-g" onclick="mudarEstado('liberado')">🔓 Liberar p/ agendamento</button>`:
+                            `<button class="btn btn-n" onclick="mudarEstado('pre_programado')">↩ Recolher liberação</button>`)+
+    `<button class="btn btn-r" onclick="mudarEstado('bloqueado')">⛔ Bloquear</button>
+     <button class="btn btn-r" onclick="excluir()">Excluir</button>`);
+}
+async function salvarEdicao(){try{
+  await pa('reservas','id=eq.'+SEL.id,{sala_id:V('a_sala')||null,agenda_logica_id:V('a_ag')||null,turno:V('a_turno'),data:V('a_data')});
+  fecha();load()}catch(e){say(document.getElementById('a_msg'),'e','Erro: '+E(e.message))}}
+async function mudarEstado(st){try{
+  let extra={};
+  if(st==='bloqueado'){const m=prompt('Motivo do bloqueio:');if(m===null)return;extra.motivo_bloqueio=m}
+  await pa('reservas','id=eq.'+SEL.id,{estado:st,...extra});fecha();load()}catch(e){alert('Erro: '+e.message)}}
+async function excluir(){if(!confirm('Excluir esta reserva?'))return;
+  try{await de('reservas','id=eq.'+SEL.id);fecha();load()}catch(e){alert('Erro: '+e.message)}}
+async function verBloqueio(id){
+  const b=(await g('feriados_bloqueios?id=eq.'+id+'&select=*'))[0];if(!b)return;
+  abre('Bloqueio — '+b.tipo,
+    `<div class="info"><b>${E(b.tipo)}</b> · ${E(b.data)}<br>${E(b.motivo||'sem motivo registrado')}<br>
+     ${b.abre_hora_extra?'<span class="tag t-a">⚡ aberto como hora extra</span>':'Fechado'}</div>
+     <div class="hint">Sábados e feriados que abrem contam como <b>hora extra</b>.</div>`,
+    `<button class="btn btn-n" onclick="fecha()">Fechar</button>`);
+}
+(async()=>{document.getElementById('dt').value=iso(new Date());await loadRef();load()})();
+</script>
+</body>
+</html>
