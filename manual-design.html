@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Manual de Design</title>
+<link rel="stylesheet" href="hog-ui.css">
+<style>
+  body{background:#f5f7fa;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 60px;}
+  header{background:var(--hog-dark);color:#fff;padding:26px 0;margin-bottom:22px;}
+  header .wrap{padding-bottom:0;}
+  header h1{font-size:23px;font-weight:600;}
+  header .s{color:#9fb6c7;font-size:14px;margin-top:5px;}
+  h2{font-size:18px;margin:28px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--hog-borda);
+     display:flex;align-items:center;gap:9px;}
+  h2 .n{background:var(--hog-primary);color:#fff;width:24px;height:24px;border-radius:50%;
+     display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none;}
+  h3{font-size:15px;margin:16px 0 7px;}
+  p{margin-bottom:9px;color:#495057;font-size:14px;}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .sw{border:1px solid var(--hog-borda);border-radius:var(--hog-radius);overflow:hidden;background:#fff;}
+  .sw .cor{height:52px;} .sw .info{padding:8px 10px;font-size:12px;}
+  .sw .info b{display:block;font-size:12.5px;} .sw .info code{font-size:11px;color:#6c757d;}
+  .demo{background:#fff;border:1px solid var(--hog-borda);border-radius:var(--hog-radius);padding:16px;margin-bottom:12px;}
+  .demo .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#6c757d;font-weight:700;margin-bottom:9px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .regra{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:800px){.regra{grid-template-columns:1fr}}
+  .sim,.nao{border-radius:var(--hog-radius);padding:12px;font-size:13px;}
+  .sim{background:#d1e7dd;border:1px solid #a3cfbb;} .nao{background:#f8d7da;border:1px solid #f1aeb5;}
+  .sim b,.nao b{display:block;margin-bottom:5px;}
+  code{background:#eef1f5;padding:1px 5px;border-radius:3px;font-size:12.5px;font-family:ui-monospace,Consolas,monospace;}
+  pre{background:#212529;color:#e9ecef;padding:12px 14px;border-radius:var(--hog-radius);font-size:12.5px;overflow-x:auto;}
+  table.man{width:100%;border-collapse:collapse;font-size:13px;background:#fff;}
+  table.man th{background:#f8f9fa;text-align:left;padding:8px 10px;font-size:11.5px;text-transform:uppercase;
+    color:#6c757d;border-bottom:1px solid var(--hog-borda);}
+  table.man td{padding:8px 10px;border-bottom:1px solid #eef1f5;vertical-align:top;}
+  .nota{background:#cfe2ff;border:1px dashed var(--hog-primary);border-radius:var(--hog-radius);
+    padding:11px 14px;font-size:13.5px;color:#052c65;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Manual de Design — HOG Gestão</h1>
+  <div class="s">Padrão visual e de comportamento para que a troca de sistema seja <strong>imperceptível</strong> para o usuário</div>
+</div></header>
+<div class="wrap">
+
+<div class="nota"><b>Princípio central:</b> o usuário não deve perceber que mudou de sistema. Botões, cores, tabelas e menus seguem exatamente o padrão atual (Bootstrap 5.3.3). As <b>melhorias</b> entram no que o sistema atual não faz — validações, alertas e informação contextual — <b>sem</b> mudar o visual que a equipe já conhece.</div>
+
+<h2><span class="n">1</span> Fundação técnica</h2>
+<div class="demo">
+<table class="man">
+<tr><th style="width:180px">Item</th><th>Valor</th></tr>
+<tr><td>Framework de referência</td><td><b>Bootstrap 5.3.3</b> (mesmo do sistema atual)</td></tr>
+<tr><td>Folha de estilo</td><td><code>hog-ui.css</code> — todo módulo deve importar</td></tr>
+<tr><td>Fonte</td><td><code>system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif</code></td></tr>
+<tr><td>Tamanho base</td><td><b>16px</b> · pequeno 14px · rótulos 12px</td></tr>
+<tr><td>Fundo / texto</td><td><code>#ffffff</code> / <code>#212529</code></td></tr>
+<tr><td>Cantos</td><td><code>.375rem</code> (6px) · pequeno <code>.25rem</code> (4px)</td></tr>
+</table>
+</div>
+
+<h2><span class="n">2</span> Cores</h2>
+<h3>Cores de ação (idênticas ao sistema atual)</h3>
+<div class="swatches">
+  <div class="sw"><div class="cor" style="background:#0d6efd"></div><div class="info"><b>Primária</b><code>#0d6efd</code> · navegação, "Dados"</div></div>
+  <div class="sw"><div class="cor" style="background:#ffc107"></div><div class="info"><b>Atenção</b><code>#ffc107</code> · "Agendamento"</div></div>
+  <div class="sw"><div class="cor" style="background:#198754"></div><div class="info"><b>Sucesso</b><code>#198754</code> · confirmar, salvar</div></div>
+  <div class="sw"><div class="cor" style="background:#dc3545"></div><div class="info"><b>Perigo</b><code>#dc3545</code> · excluir, faltou, título da agenda</div></div>
+  <div class="sw"><div class="cor" style="background:#6c757d"></div><div class="info"><b>Secundária</b><code>#6c757d</code> · cancelar</div></div>
+  <div class="sw"><div class="cor" style="background:#f8f9fa;border-bottom:1px solid #dee2e6"></div><div class="info"><b>Clara</b><code>#f8f9fa</code> · chips de agenda</div></div>
+</div>
+<h3>Cores de estrutura</h3>
+<div class="swatches">
+  <div class="sw"><div class="cor" style="background:#212529"></div><div class="info"><b>Barra de menu</b><code>#212529</code></div></div>
+  <div class="sw"><div class="cor" style="background:#dce9f7"></div><div class="info"><b>Barras azuis</b><code>#dce9f7</code> · agendas e dia</div></div>
+  <div class="sw"><div class="cor" style="background:#dee2e6"></div><div class="info"><b>Bordas</b><code>#dee2e6</code></div></div>
+</div>
+<h3>Identidade HOG (apenas na marca)</h3>
+<div class="swatches">
+  <div class="sw"><div class="cor" style="background:#0F4C81"></div><div class="info"><b>Azul escuro</b><code>#0F4C81</code> · símbolo</div></div>
+  <div class="sw"><div class="cor" style="background:#1B9CE0"></div><div class="info"><b>Azul claro</b><code>#1B9CE0</code> · "Guanabara"</div></div>
+</div>
+<p style="margin-top:10px"><b>Regra:</b> as cores da marca são usadas <b>somente no logo</b>. A interface usa as cores de ação — assim nada destoa do sistema atual.</p>
+
+<h2><span class="n">3</span> Botões</h2>
+<div class="demo"><div class="lbl">Padrão — tamanho normal</div>
+  <div class="row">
+    <button class="btn btn-primary">Primário</button>
+    <button class="btn btn-success">Sucesso</button>
+    <button class="btn btn-danger">Perigo</button>
+    <button class="btn btn-warning">Atenção</button>
+    <button class="btn btn-secondary">Secundário</button>
+    <button class="btn btn-light">Claro</button>
+    <button class="btn btn-outline-primary">Contorno</button>
+  </div>
+</div>
+<div class="demo"><div class="lbl">Pequeno (<code>.btn-sm</code>) — usado dentro de tabelas</div>
+  <div class="row">
+    <button class="btn btn-sm btn-warning">Agendamento</button>
+    <button class="btn btn-sm btn-primary">Dados</button>
+    <button class="btn btn-sm btn-success">✓</button>
+    <button class="btn btn-sm btn-danger">faltou</button>
+    <button class="btn btn-sm btn-secondary">Entrada</button>
+  </div>
+</div>
+<div class="demo">
+<table class="man">
+<tr><th style="width:150px">Botão</th><th>Quando usar</th></tr>
+<tr><td><span class="badge bg-warning">Agendamento</span></td><td>abrir/editar o agendamento daquela linha (amarelo — padrão do sistema atual)</td></tr>
+<tr><td><span class="badge bg-primary">Dados</span></td><td>abrir a ficha do paciente (azul — padrão do sistema atual)</td></tr>
+<tr><td><span class="badge bg-success">Salvar / ✓</span></td><td>confirmar, presença, concluir</td></tr>
+<tr><td><span class="badge bg-danger">Excluir / faltou</span></td><td>ações destrutivas ou negativas</td></tr>
+<tr><td><span class="badge bg-secondary">Cancelar</span></td><td>fechar sem salvar</td></tr>
+</table>
+</div>
+
+<h2><span class="n">4</span> Tabelas</h2>
+<p>Classe padrão do sistema atual: <code>table table-sm table-striped table-hover align-middle</code></p>
+<div class="demo">
+<table class="table table-sm table-striped table-hover align-middle">
+<thead><tr><th></th><th></th><th>Horário</th><th>Atendimento</th><th></th><th>Paciente</th><th>Entrada</th></tr></thead>
+<tbody>
+<tr><td class="text-muted">1</td><td><button class="btn btn-sm btn-warning">Agendamento</button></td><td>07:00</td><td>PÓS OP</td>
+    <td><button class="btn btn-sm btn-primary">Dados</button></td>
+    <td><div class="hog-pac">Flavia Cristina Nascimento</div><div class="hog-pac-sub">(BENEFICIENCIA) PÓS OP DRA ANA CAROLINA</div></td>
+    <td><span class="st st-ok">finalizado</span></td></tr>
+<tr><td class="text-muted">2</td><td><button class="btn btn-sm btn-warning">Agendamento</button></td><td>07:10</td><td>CONSULTA</td>
+    <td><button class="btn btn-sm btn-primary">Dados</button></td>
+    <td><div class="hog-pac">Eliana de Cassia Vianna</div><div class="hog-pac-sub">(BENE VITAL 400) <span class="st st-aviso">NÃO SOBE ESCADA</span></div></td>
+    <td><button class="btn btn-sm btn-primary">Entrada</button></td></tr>
+</tbody></table>
+</div>
+<p><b>Nome do paciente</b> sempre em <b>MAIÚSCULO e negrito</b>, com o <b>(CONVÊNIO)</b> e a observação na linha de baixo — exatamente como no sistema atual.</p>
+
+<h2><span class="n">5</span> Status (as cores contam a história)</h2>
+<div class="demo"><div class="row">
+  <span class="st st-neutro">agendado</span>
+  <span class="st st-aviso">aguardando</span>
+  <span class="st st-info">em atendimento</span>
+  <span class="st st-ok">finalizado / compareceu</span>
+  <span class="st st-erro">faltou</span>
+  <span class="st st-roxo">externo</span>
+</div></div>
+
+<h2><span class="n">6</span> Avisos e validações <span style="font-size:12px;color:#6c757d;font-weight:400">— aqui entram as melhorias</span></h2>
+<div class="demo">
+  <div class="alert alert-danger">🔴 <b>Bloqueio</b> — impede a ação. Ex.: CPF já cadastrado; consulta em menos de 30 dias; cirurgia sem médico executor.</div>
+  <div class="alert alert-warning">🟠 <b>Atenção</b> — permite seguir, mas exige cuidado. Ex.: 3 faltas no histórico; paciente não sobe escada.</div>
+  <div class="alert alert-info">🔵 <b>Informação contextual</b> — orientação do médico, lembrete da coordenação.</div>
+  <div class="alert alert-success">🟢 <b>Confirmação</b> — ação concluída.</div>
+</div>
+<div class="regra">
+  <div class="sim"><b>✓ Faça</b>Mostre o alerta <b>antes</b> do erro acontecer (ao escolher o paciente, não ao salvar). Explique o motivo e o caminho: “já existe consulta em 12/08 — requer aprovação”.</div>
+  <div class="nao"><b>✕ Evite</b>Mensagens genéricas (“erro ao salvar”), pop-ups do navegador para regras de negócio, ou bloquear sem dizer o porquê.</div>
+</div>
+
+<h2><span class="n">7</span> Estrutura de tela (todas iguais)</h2>
+<div class="demo">
+<pre>┌──────────────────────────────────────────────┐
+│ NAVBAR escura #212529  logo + menus          │  ← igual em todo o sistema
+├──────────────────────────────────────────────┤
+│ BARRA DE AGENDAS  #dce9f7  (chips)           │  ← só em telas de agenda
+├──────────────────────────────────────────────┤
+│ NAVEGAÇÃO DE DIA  #dce9f7  ‹ data ›  ações   │
+├──────────────────────────────────────────────┤
+│ TÍTULO vermelho + data + 🖨                   │
+│ KPIs (quando houver)                          │
+│ ALERTAS (bloqueio / atenção / informação)     │
+├──────────────────────────────────────────────┤
+│ TABELA densa                                  │
+└──────────────────────────────────────────────┘</pre>
+</div>
+
+<h2><span class="n">8</span> Menus — a mesma organização de sempre</h2>
+<div class="demo">
+<table class="man">
+<tr><th style="width:150px">Menu</th><th>Submenus</th></tr>
+<tr><td><b>Administrativo</b></td><td>Convênios · Empresa · Grupos · Médicos (Listar, Regras) · Outras agendas · Procedimentos · TUSS · Unificar Pacientes · Usuário</td></tr>
+<tr><td><b>Call Center</b></td><td>Agenda Interna · Agenda Médicos · Pacientes (Adicionar, Procurar)</td></tr>
+<tr><td><b>Centro Cirúrgico</b></td><td>Administrar · Agenda · Agenda interna · Agenda Médicos · Atendimento · Estoque · Pacientes</td></tr>
+<tr><td><b>Exames</b></td><td>Agenda · Reti</td></tr>
+<tr><td><b>Lentes</b></td><td>Administrar · Agenda interna · Agenda médicos · Atendimento · Pacientes</td></tr>
+<tr><td><b>Médicos</b></td><td>Atendimento</td></tr>
+<tr><td><b>Recepção</b></td><td>Agenda · Agenda diária · Auto · Pacientes</td></tr>
+<tr><td><b>Relatórios</b></td><td>Atendimentos · Log</td></tr>
+</table>
+</div>
+<p><b>Regra:</b> manter os nomes e a posição dos menus. Itens novos entram <b>dentro</b> do menu que já faz sentido, nunca criando um menu novo no meio dos existentes.</p>
+
+<h2><span class="n">9</span> Como usar em um módulo novo</h2>
+<div class="demo">
+<pre>&lt;link rel="stylesheet" href="hog-ui.css"&gt;
+
+&lt;div class="hog-agbar"&gt;…chips de agenda…&lt;/div&gt;
+&lt;div class="hog-daybar"&gt;
+  &lt;button class="btn btn-sm btn-primary"&gt;Dia anterior&lt;/button&gt;
+  &lt;input type="date" class="form-control" style="width:auto"&gt;
+  &lt;button class="btn btn-sm btn-primary"&gt;Próximo dia&lt;/button&gt;
+&lt;/div&gt;
+&lt;div class="hog-head"&gt;&lt;span class="titulo"&gt;Dr. Nilson&lt;/span&gt;&lt;span class="data"&gt;21/08/2026 (Sexta)&lt;/span&gt;&lt;/div&gt;
+&lt;table class="table table-sm table-striped table-hover align-middle"&gt;…&lt;/table&gt;</pre>
+</div>
+
+<h2><span class="n">10</span> Checklist antes de publicar um módulo</h2>
+<div class="demo">
+<table class="man">
+<tr><td>☐ Importa o <code>hog-ui.css</code>?</td></tr>
+<tr><td>☐ A navbar e o logo estão iguais aos outros módulos?</td></tr>
+<tr><td>☐ Os botões usam <code>btn-warning</code> (Agendamento) e <code>btn-primary</code> (Dados)?</td></tr>
+<tr><td>☐ A tabela usa <code>table table-sm table-striped table-hover align-middle</code>?</td></tr>
+<tr><td>☐ O nome do paciente está em maiúsculo/negrito com o convênio embaixo?</td></tr>
+<tr><td>☐ Tem <b>filtros</b> e campo de <b>observação</b> (padrão obrigatório do sistema)?</td></tr>
+<tr><td>☐ Os avisos aparecem <b>antes</b> do erro, com motivo explícito?</td></tr>
+<tr><td>☐ A impressão sai limpa (sem botões e barras)?</td></tr>
+</table>
+</div>
+
+<p class="text-muted small" style="margin-top:22px;text-align:center">Hospital dos Olhos Guanabara · Manual de Design do HOG Gestão · v1</p>
+</div>
+</body>
+</html>

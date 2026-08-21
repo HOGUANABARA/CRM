@@ -1,0 +1,177 @@
+/* ============================================================
+   HOG GESTÃO — Design System  (hog-ui.css)
+   Tokens extraídos do sistema atual (Bootstrap 5.3.3) para que a
+   troca de sistema NÃO seja perceptível ao usuário.
+   Todo módulo deve importar este arquivo.
+   ============================================================ */
+
+:root{
+  /* --- Cores base (idênticas ao Bootstrap 5.3.3 do sistema atual) --- */
+  --hog-primary:#0d6efd;      --hog-primary-h:#0b5ed7;
+  --hog-danger:#dc3545;       --hog-danger-h:#bb2d3b;
+  --hog-success:#198754;      --hog-success-h:#157347;
+  --hog-warning:#ffc107;      --hog-warning-h:#ffca2c;
+  --hog-info:#0dcaf0;
+  --hog-light:#f8f9fa;        --hog-light-h:#e9ecef;
+  --hog-secondary:#6c757d;
+  --hog-dark:#212529;         /* navbar e texto */
+
+  /* --- Identidade HOG (logo) --- */
+  --hog-marca-escura:#0F4C81;
+  --hog-marca-clara:#1B9CE0;
+
+  /* --- Superfícies --- */
+  --hog-bg:#ffffff;
+  --hog-bg-alt:#f8f9fa;
+  --hog-barra:#dce9f7;        /* barra de agendas / navegação de dia */
+  --hog-barra-bd:#c5d9ee;
+  --hog-borda:#dee2e6;
+  --hog-borda-forte:#ced4da;
+  --hog-texto:#212529;
+  --hog-texto-fraco:#6c757d;
+
+  /* --- Tipografia (mesma stack do sistema atual) --- */
+  --hog-fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
+  --hog-fs:16px;              /* base */
+  --hog-fs-sm:14px;           /* botões pequenos, tabelas densas */
+  --hog-fs-xs:12px;           /* rótulos */
+
+  /* --- Formas --- */
+  --hog-radius:.375rem;       /* 6px  */
+  --hog-radius-sm:.25rem;     /* 4px  */
+  --hog-sombra:0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--hog-fonte);font-size:var(--hog-fs);color:var(--hog-texto);background:var(--hog-bg);}
+
+/* ============ NAVBAR (idêntica ao sistema atual) ============ */
+.hog-navbar{background:var(--hog-dark);color:#fff;display:flex;align-items:center;padding:8px 14px;
+  flex-wrap:wrap;position:relative;z-index:40;}
+.hog-brand{display:flex;align-items:center;gap:8px;padding-right:14px;margin-right:6px;
+  border-right:1px solid #34495e;white-space:nowrap;}
+.hog-brand .bn{font-size:13px;font-weight:500;line-height:1.15;color:#fff;}
+.hog-brand .bn b{color:var(--hog-marca-clara);font-weight:700;}
+.hog-brand small{display:block;font-size:8.5px;color:#7FA8C4;text-transform:uppercase;letter-spacing:1px;}
+.hog-menu{display:flex;align-items:stretch;flex:1;flex-wrap:wrap;}
+.hog-mi{position:relative;}
+.hog-mi>a{display:block;padding:8px 11px;color:rgba(255,255,255,.55);text-decoration:none;
+  font-size:var(--hog-fs);cursor:pointer;white-space:nowrap;border-radius:var(--hog-radius-sm);}
+.hog-mi>a:hover,.hog-mi.open>a{color:#fff;}
+.hog-dd{display:none;position:absolute;top:100%;left:0;z-index:80;background:#fff;min-width:210px;
+  border:1px solid rgba(0,0,0,.15);border-radius:var(--hog-radius);box-shadow:var(--hog-sombra);padding:.5rem 0;}
+.hog-mi.open .hog-dd{display:block;}
+.hog-dd a{display:block;padding:.25rem 1rem;color:var(--hog-texto);text-decoration:none;font-size:var(--hog-fs);cursor:pointer;}
+.hog-dd a:hover{background:var(--hog-light-h);}
+.hog-dd .sep{height:1px;background:var(--hog-borda);margin:.5rem 0;}
+.hog-dd .tt{padding:.25rem 1rem;font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--hog-texto-fraco);font-weight:700;}
+
+/* ============ BARRAS AZUIS (agendas / navegação de dia) ============ */
+.hog-agbar{background:var(--hog-barra);padding:7px 10px;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:2px;border-bottom:1px solid var(--hog-barra-bd);}
+.hog-agbar a{padding:6px 12px;color:#1a3d5c;text-decoration:none;font-size:var(--hog-fs);cursor:pointer;
+  border-radius:var(--hog-radius-sm);white-space:nowrap;}
+.hog-agbar a:hover{background:#fff;}
+.hog-agbar a.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.hog-daybar{background:var(--hog-barra);padding:9px;display:flex;justify-content:center;align-items:center;
+  gap:6px;flex-wrap:wrap;}
+
+/* ============ BOTÕES (classes do sistema atual) ============ */
+.btn{display:inline-block;font-weight:400;text-align:center;vertical-align:middle;cursor:pointer;
+  user-select:none;border:1px solid transparent;padding:.375rem .75rem;font-size:var(--hog-fs);
+  line-height:1.5;border-radius:var(--hog-radius);transition:.15s ease-in-out;font-family:inherit;}
+.btn-sm{padding:.25rem .5rem;font-size:var(--hog-fs-sm);border-radius:var(--hog-radius-sm);}
+.btn-primary{background:var(--hog-primary);border-color:var(--hog-primary);color:#fff;}
+.btn-primary:hover{background:var(--hog-primary-h);}
+.btn-danger{background:var(--hog-danger);border-color:var(--hog-danger);color:#fff;}
+.btn-danger:hover{background:var(--hog-danger-h);}
+.btn-success{background:var(--hog-success);border-color:var(--hog-success);color:#fff;}
+.btn-success:hover{background:var(--hog-success-h);}
+.btn-warning{background:var(--hog-warning);border-color:var(--hog-warning);color:#000;}
+.btn-warning:hover{background:var(--hog-warning-h);}
+.btn-light{background:var(--hog-light);border-color:var(--hog-light);color:#000;}
+.btn-light:hover{background:var(--hog-light-h);}
+.btn-secondary{background:var(--hog-secondary);border-color:var(--hog-secondary);color:#fff;}
+.btn-outline-primary{background:#fff;border-color:var(--hog-primary);color:var(--hog-primary);}
+.btn-outline-primary:hover{background:var(--hog-primary);color:#fff;}
+
+/* ============ TABELAS (mesma classe do sistema atual) ============ */
+.table{width:100%;border-collapse:collapse;color:var(--hog-texto);}
+.table th{font-weight:700;font-size:var(--hog-fs);padding:.5rem;background:#fff;text-align:left;
+  border-bottom:2px solid var(--hog-borda);white-space:nowrap;}
+.table td{padding:.5rem;border-bottom:1px solid var(--hog-borda);}
+.table-sm th,.table-sm td{padding:.25rem;}
+.table-striped tbody tr:nth-of-type(odd){background:rgba(0,0,0,.05);}
+.table-hover tbody tr:hover{background:rgba(0,0,0,.075);}
+.table-bordered th,.table-bordered td{border:1px solid var(--hog-borda);}
+.text-center{text-align:center;} .align-middle td,.align-middle th{vertical-align:middle;}
+
+/* ============ BADGES / TAGS DE STATUS ============ */
+.badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;line-height:1;
+  text-align:center;white-space:nowrap;vertical-align:baseline;border-radius:var(--hog-radius);}
+.bg-primary{background:var(--hog-primary);color:#fff;} .bg-danger{background:var(--hog-danger);color:#fff;}
+.bg-success{background:var(--hog-success);color:#fff;} .bg-warning{background:var(--hog-warning);color:#000;}
+.bg-secondary{background:var(--hog-secondary);color:#fff;} .bg-info{background:var(--hog-info);color:#000;}
+/* variantes suaves para status em tabela */
+.st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;}
+.st-ok{background:#d1e7dd;color:#0a3622;} .st-erro{background:#f8d7da;color:#58151c;}
+.st-aviso{background:#fff3cd;color:#664d03;} .st-info{background:#cfe2ff;color:#052c65;}
+.st-neutro{background:#e9ecef;color:#495057;} .st-roxo{background:#e2d9f3;color:#341c66;}
+
+/* ============ ALERTAS ============ */
+.alert{padding:.75rem 1rem;border:1px solid transparent;border-radius:var(--hog-radius);
+  margin-bottom:.75rem;font-size:var(--hog-fs-sm);}
+.alert-warning{background:#fff3cd;border-color:#ffe69c;color:#664d03;}
+.alert-danger{background:#f8d7da;border-color:#f1aeb5;color:#58151c;}
+.alert-success{background:#d1e7dd;border-color:#a3cfbb;color:#0a3622;}
+.alert-info{background:#cff4fc;border-color:#9eeaf9;color:#055160;}
+
+/* ============ FORMULÁRIOS ============ */
+.form-label{font-size:var(--hog-fs-xs);font-weight:600;color:#495057;display:block;margin-bottom:.25rem;}
+.form-control,.form-select{width:100%;padding:.375rem .75rem;font-size:var(--hog-fs-sm);
+  font-family:inherit;color:var(--hog-texto);background:#fff;border:1px solid var(--hog-borda-forte);
+  border-radius:var(--hog-radius);}
+.form-control:focus,.form-select:focus{outline:0;border-color:#86b7fe;box-shadow:0 0 0 .2rem rgba(13,110,253,.25);}
+.hog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:.75rem;}
+
+/* ============ CARTÕES E KPIs ============ */
+.card{background:#fff;border:1px solid var(--hog-borda);border-radius:var(--hog-radius);padding:1rem;margin-bottom:.75rem;}
+.card-title{font-size:var(--hog-fs-sm);font-weight:600;margin-bottom:.5rem;}
+.hog-kpis{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;padding:0 .625rem .5rem;}
+.hog-kpi{background:var(--hog-bg-alt);border:1px solid var(--hog-borda);border-radius:var(--hog-radius);
+  padding:.45rem .9rem;text-align:center;min-width:96px;}
+.hog-kpi .n{font-size:19px;font-weight:700;}
+.hog-kpi .l{font-size:10px;color:var(--hog-texto-fraco);text-transform:uppercase;}
+.hog-kpi.alerta{background:#fff3cd;border-color:var(--hog-warning);}
+.hog-kpi.alerta .n{color:#664d03;}
+
+/* ============ CABEÇALHO DE AGENDA ============ */
+.hog-head{display:flex;justify-content:center;align-items:center;gap:12px;padding:9px;flex-wrap:wrap;}
+.hog-head .titulo{background:var(--hog-danger);color:#fff;padding:.4rem .9rem;border-radius:var(--hog-radius);
+  font-size:15px;font-weight:500;}
+.hog-head .data{font-size:16px;font-weight:600;}
+.hog-head .acao{background:none;border:none;font-size:17px;cursor:pointer;color:#495057;}
+
+/* ============ MODAL ============ */
+.hog-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;
+  justify-content:center;z-index:1050;padding:2rem 1rem;overflow-y:auto;}
+.hog-ov.on{display:flex;}
+.hog-modal{background:#fff;border-radius:var(--hog-radius);width:100%;max-width:640px;box-shadow:var(--hog-sombra);}
+.hog-modal .mh{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--hog-borda);}
+.hog-modal .mh b{font-size:1.25rem;font-weight:500;}
+.hog-modal .mh button{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--hog-texto-fraco);}
+.hog-modal .mb{padding:1rem;}
+.hog-modal .mf{padding:.75rem 1rem;border-top:1px solid var(--hog-borda);display:flex;gap:.5rem;
+  justify-content:flex-end;flex-wrap:wrap;}
+
+/* ============ NOME DO PACIENTE (padrão do sistema) ============ */
+.hog-pac{font-weight:700;text-transform:uppercase;}
+.hog-pac-sub{color:#495057;font-size:var(--hog-fs-sm);}
+
+/* ============ UTILITÁRIOS ============ */
+.hog-vazio{padding:2.5rem;text-align:center;color:#adb5bd;font-style:italic;}
+.hog-status{position:absolute;right:12px;top:8px;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;z-index:5;}
+.text-muted{color:var(--hog-texto-fraco);}
+.small{font-size:var(--hog-fs-sm);}
+@media print{.hog-navbar,.hog-agbar,.hog-daybar,.hog-ov,.hog-kpis,.btn,.hog-status{display:none!important}}
