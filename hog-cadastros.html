@@ -50,6 +50,13 @@
   .dup{background:#FFF8F0;border:1px solid #F4A261;border-radius:7px;padding:9px 12px;margin-bottom:9px;font-size:11.5px;display:none;}
   .dup.on{display:block;} .dup b{color:#9A5700;}
   .dup .item{padding:4px 0;border-top:1px solid #F7DCBB;margin-top:4px;}
+  .btn-e{background:#EDF3F9;color:#2B6CA3;padding:3px 8px;font-size:10.5px;margin-right:4px;}
+  .ov{position:fixed;inset:0;background:rgba(13,33,55,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow-y:auto;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:10px;width:100%;max-width:620px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .mdl-h{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid #EEF1F5;}
+  .mdl-h b{font-size:14px;color:#0D2137;} .mdl-h button{background:none;border:none;font-size:17px;cursor:pointer;color:#6B7E90;}
+  .mdl-b{padding:15px 17px;} .mdl-f{padding:12px 17px;border-top:1px solid #EEF1F5;display:flex;gap:8px;justify-content:flex-end;}
 </style>
 </head>
 <body>
@@ -79,6 +86,14 @@
 <div class="main">
   <div class="top"><h1 id="tt">Pacientes</h1><span id="st" class="ld">conectando…</span></div>
   <div class="content" id="ct"></div>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeEd()">
+  <div class="mdl">
+    <div class="mdl-h"><b id="mtit">Editar</b><button onclick="closeEd()">✕</button></div>
+    <div class="mdl-b" id="mbody"></div>
+    <div class="mdl-f"><button class="btn btn-o" onclick="closeEd()">Cancelar</button><button class="btn btn-g" onclick="saveEd()">💾 Salvar alterações</button></div>
+  </div>
 </div>
 
 <script>
@@ -348,8 +363,62 @@ feriados_bloqueios:{t:'Feriados / Bloqueios',form:()=>`
 function tbl(cols,rows){return '<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+
   rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
 function empty(m){return '<div class="empty">'+(m||'Nenhum registro ainda.')+'</div>'}
-function del(t,q){return '<button class="btn btn-x" onclick="rm(\''+t+'\',\''+q+'\')">excluir</button>'}
+function del(t,q){return '<button class="btn btn-e" onclick="ed(\''+t+'\',\''+q+'\')">✏️ editar</button>'+
+  '<button class="btn btn-x" onclick="rm(\''+t+'\',\''+q+'\')">excluir</button>'}
 async function rm(t,q){if(!confirm('Excluir este registro?'))return;try{await api.del(t,q);render()}catch(e){alert('Erro: '+e.message)}}
+
+/* ============ EDIÇÃO (genérica, serve para todos os cadastros) ============ */
+const SKIP=['criado_em','importado_em','ultimo_acesso','total_faltas','data_ultima_falta'];
+const REFMAP={sala_id:'salas',sala_padrao_id:'salas',medico_id:'medicos',especialidade_id:'especialidades',
+  equipamento_id:'equipamentos',convenio_id:'convenios',perfil_id:'perfis',parceiro_id:'parceiros',preceptor_id:'medicos'};
+const LBL={sobe_escada:'Sobe escada / exige escada?',capacidade_simultanea:'Capacidade simultânea',
+  duracao_min:'Duração (min)',codigo_tuss:'Código TUSS',local_execucao:'Onde é feito',
+  observacao_agendamento:'💬 Lembrete da coordenação',alerta_ativo:'🔔 Alerta ativo?',
+  cota_nao_sobe_escada:'Cota "não sobe escada"',modo_contagem:'Modo de contagem',
+  status_cadastro:'Status do cadastro',abre_hora_extra:'Abre como hora extra?',movel:'Equipamento móvel?'};
+let EDT={t:null,q:null,row:null};
+async function ed(t,q){
+  try{
+    const r=await api.get(t+'?'+q+'&select=*'); if(!r.length)return alert('Registro não encontrado.');
+    EDT={t,q,row:r[0]};
+    const cols=Object.keys(r[0]).filter(k=>!SKIP.includes(k));
+    document.getElementById('mtit').textContent='Editar — '+(r[0].nome||r[0].id||'registro');
+    document.getElementById('mbody').innerHTML='<div class="msg" id="e_msg"></div><div class="grid">'+
+      cols.map(k=>{
+        const v=r[0][k], isPk=(k==='id');
+        let inp;
+        if(isPk) inp=`<input id="e_${k}" value="${E(v)}" disabled style="background:#F5F7FA">`;
+        else if(typeof v==='boolean'||['sobe_escada','movel','alerta_ativo','abre_hora_extra','ativo','dilata','exige_guia','exige_autorizacao','tem_exame','aluga_sala','lateralidade_aplicavel','exige_pre_op'].includes(k))
+          inp=`<select id="e_${k}"><option value="">—</option><option value="true"${v===true?' selected':''}>Sim</option><option value="false"${v===false?' selected':''}>Não</option></select>`;
+        else if(REFMAP[k]) inp=`<select id="e_${k}">${opt(ref[REFMAP[k]]||[],'—',v)}</select>`;
+        else if(Array.isArray(v)) inp=`<input id="e_${k}" value="${E((v||[]).join(','))}" placeholder="separados por vírgula">`;
+        else if(typeof v==='object'&&v!==null) inp=`<input id="e_${k}" value='${E(JSON.stringify(v))}'>`;
+        else if(typeof v==='number') inp=`<input id="e_${k}" type="number" value="${v??''}">`;
+        else if(k.includes('data')||k==='nascimento'||k.includes('validade')) inp=`<input id="e_${k}" type="date" value="${E(v)}">`;
+        else inp=`<input id="e_${k}" value="${E(v)}">`;
+        const span=(k==='nome'||k.includes('observacao')||k==='preparo'||k==='endereco')?' style="grid-column:span 2"':'';
+        return `<div${span}><label>${LBL[k]||k.replace(/_/g,' ')}</label>${inp}</div>`;
+      }).join('')+'</div>';
+    document.getElementById('ov').classList.add('on');
+  }catch(e){alert('Erro: '+e.message)}
+}
+function closeEd(){document.getElementById('ov').classList.remove('on')}
+async function saveEd(){
+  const {t,q,row}=EDT, o={};
+  for(const k of Object.keys(row)){
+    if(SKIP.includes(k)||k==='id')continue;
+    const el=document.getElementById('e_'+k); if(!el)continue;
+    let v=el.value.trim(); const old=row[k];
+    if(v==='')o[k]=null;
+    else if(v==='true'||v==='false')o[k]=(v==='true');
+    else if(Array.isArray(old))o[k]=v.split(',').map(s=>s.trim()).filter(Boolean);
+    else if(typeof old==='object'&&old!==null){try{o[k]=JSON.parse(v)}catch(_){o[k]=old}}
+    else if(typeof old==='number')o[k]=Number(v);
+    else o[k]=v;
+  }
+  try{await api.patch(t,q,o);closeEd();render()}
+  catch(e){say('e_msg','e','Erro ao salvar: '+E(e.message))}
+}
 function simpleForm(pfx,fields,table,title,hint){
   return `<div class="panel"><h2>Novo registro — ${title}</h2><div class="hint">${hint||''}</div>
   <div class="msg" id="${pfx}_msg"></div><div class="grid">`+
@@ -408,6 +477,8 @@ async function render(){
 document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
   document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on');
   cur=n.dataset.t;busca='';render();});
+document.querySelectorAll('.nav').forEach(n=>{if(n.dataset.t===cur){document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));n.classList.add('on')}});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(T[h]){cur=h;busca='';document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.t===h));render()}});
 render();
 </script>
 </body>

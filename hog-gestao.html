@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#F0F4F8;color:#1A2B3C;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;}
+  /* ===== barra de menu (mesma lógica do VoxComm) ===== */
+  .topbar{background:#1c2833;color:#fff;display:flex;align-items:center;padding:0 14px;flex-shrink:0;position:relative;z-index:40;}
+  .brand{font-weight:700;font-size:14px;padding:12px 14px 12px 0;color:#fff;white-space:nowrap;}
+  .brand small{display:block;font-size:8.5px;color:#7FA8C4;text-transform:uppercase;letter-spacing:1px;font-weight:400;}
+  .menu{display:flex;align-items:stretch;flex:1;overflow-x:auto;}
+  .mi{position:relative;}
+  .mi>a{display:block;padding:15px 13px;color:#e8eef3;text-decoration:none;font-size:13.5px;cursor:pointer;white-space:nowrap;}
+  .mi>a:hover,.mi.open>a{background:#2c3e50;color:#fff;}
+  .mi>a .car{font-size:9px;opacity:.75;margin-left:3px;}
+  .dd{display:none;position:absolute;top:100%;left:0;background:#fff;min-width:210px;border:1px solid #d9e0e6;border-radius:0 0 6px 6px;box-shadow:0 6px 18px rgba(0,0,0,.16);padding:5px 0;}
+  .mi.open .dd{display:block;}
+  .dd a{display:block;padding:8px 16px;color:#22313f;text-decoration:none;font-size:13px;cursor:pointer;}
+  .dd a:hover{background:#eaf3fb;color:#0a5e96;}
+  .dd .sep{height:1px;background:#eef1f5;margin:4px 0;}
+  .dd .tt{padding:5px 16px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#93a3b0;font-weight:700;}
+  .right{display:flex;align-items:center;gap:10px;padding-left:10px;}
+  .right .who{font-size:11.5px;color:#9fb6c7;white-space:nowrap;}
+  .right a{color:#e8eef3;text-decoration:none;font-size:13.5px;padding:15px 12px;}
+  .right a:hover{background:#2c3e50;}
+  /* ===== conteúdo ===== */
+  .crumb{background:#fff;border-bottom:1px solid #DDE3EB;padding:8px 20px;font-size:12px;color:#6B7E90;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .crumb b{color:#0D2137;font-size:13.5px;}
+  .crumb .badge{margin-left:auto;font-size:10.5px;background:#E4F7EC;color:#0F6A30;padding:2px 9px;border-radius:9px;font-weight:600;}
+  .stage{flex:1;overflow:hidden;background:#F0F4F8;}
+  iframe{width:100%;height:100%;border:none;background:#F0F4F8;}
+  /* home */
+  .home{padding:22px;overflow-y:auto;height:100%;}
+  .home h2{font-size:16px;color:#0D2137;margin-bottom:4px;}
+  .home p.s{color:#6B7E90;font-size:12.5px;margin-bottom:16px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;}
+  .c{background:#fff;border:1px solid #DDE3EB;border-radius:10px;padding:15px 16px;cursor:pointer;transition:.12s;}
+  .c:hover{border-color:#2B9BE8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(43,155,232,.12);}
+  .c .ic{font-size:22px;} .c h3{font-size:13.5px;color:#0D2137;margin:7px 0 3px;}
+  .c p{font-size:11.5px;color:#6B7E90;line-height:1.45;}
+  .c .st{display:inline-block;margin-top:8px;font-size:9.5px;padding:2px 8px;border-radius:9px;font-weight:700;text-transform:uppercase;}
+  .ok{background:#D4F7E1;color:#0F6A30;} .wip{background:#FEF0DC;color:#9A5700;}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin-bottom:18px;}
+  .k{background:#fff;border:1px solid #DDE3EB;border-radius:9px;padding:12px 14px;}
+  .k .n{font-size:23px;font-weight:700;color:#0D2137;} .k .l{font-size:10px;color:#6B7E90;text-transform:uppercase;margin-top:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">👁 HOG Gestão<small>Sistema</small></div>
+  <div class="menu" id="menu">
+    <div class="mi"><a data-go="home">Home</a></div>
+
+    <div class="mi"><a>Administrativo <span class="car">▼</span></a><div class="dd">
+      <div class="tt">Cadastros</div>
+      <a data-src="hog-cadastros.html#pacientes">Pacientes</a>
+      <a data-src="hog-cadastros.html#medicos">Médicos</a>
+      <a data-src="hog-cadastros.html#convenios">Convênios</a>
+      <a data-src="hog-cadastros.html#procedimentos">Procedimentos / TUSS</a>
+      <a data-src="hog-cadastros.html#salas">Salas</a>
+      <a data-src="hog-cadastros.html#equipamentos">Equipamentos</a>
+      <a data-src="hog-cadastros.html#especialidades">Especialidades</a>
+      <div class="sep"></div>
+      <div class="tt">Agendas</div>
+      <a data-src="hog-cadastros.html#agendas_logicas">Padrões de Atendimento</a>
+      <a data-src="hog-cadastros.html#feriados_bloqueios">Feriados / Bloqueios</a>
+      <div class="sep"></div>
+      <div class="tt">Acesso</div>
+      <a data-src="hog-cadastros.html#usuarios">Usuários</a>
+      <a data-src="hog-cadastros.html#perfis">Perfis / Grupos</a>
+    </div></div>
+
+    <div class="mi"><a>Call Center <span class="car">▼</span></a><div class="dd">
+      <a data-src="demo-agenda-exames.html">Agenda Interna (exames)</a>
+      <a data-soon="Agenda Médicos">Agenda Médicos</a>
+      <a data-src="hog-cadastros.html#pacientes">Pacientes</a>
+      <div class="sep"></div>
+      <a data-soon="Lista de espera">Lista de espera</a>
+    </div></div>
+
+    <div class="mi"><a>Centro Cirúrgico <span class="car">▼</span></a><div class="dd">
+      <a data-soon="Agenda cirúrgica">Agenda Cirúrgica</a>
+      <a data-soon="Espera cirúrgica">Espera Cirúrgica</a>
+      <a data-soon="Atendimento">Atendimento</a>
+      <a data-soon="Estoque">Estoque</a>
+      <div class="sep"></div>
+      <a data-src="hog-cadastros.html#lios">LIOs</a>
+    </div></div>
+
+    <div class="mi"><a>Exames <span class="car">▼</span></a><div class="dd">
+      <a data-src="demo-agenda-exames.html">Agenda de Exames</a>
+      <a data-src="hog-cadastros.html#exames">Catálogo de Exames</a>
+      <a data-src="hog-cadastros.html#exame_combos">Combos</a>
+    </div></div>
+
+    <div class="mi"><a>Lentes <span class="car">▼</span></a><div class="dd">
+      <a data-soon="Atendimento da consultora">Atendimento (consultora)</a>
+      <a data-soon="Pré-agenda cirúrgica">Pré-Agenda Cirúrgica</a>
+      <a data-soon="Fechamento do dia">Fechamento do Dia</a>
+      <div class="sep"></div>
+      <a data-src="hog-cadastros.html#lios">Cadastro de LIOs</a>
+    </div></div>
+
+    <div class="mi"><a>Médicos <span class="car">▼</span></a><div class="dd">
+      <a data-src="hog-cadastros.html#medicos">Cadastro de Médicos</a>
+      <a data-src="hog-cadastros.html#agendas_logicas">Agendas por Médico</a>
+      <a data-soon="Mapa de ocupação">Mapa de Ocupação</a>
+    </div></div>
+
+    <div class="mi"><a>Recepção <span class="car">▼</span></a><div class="dd">
+      <a data-soon="Entrada do paciente">Entrada / Chegada</a>
+      <a data-soon="Agenda diária">Agenda Diária</a>
+      <a data-soon="Autorefrator">Autorefrator</a>
+      <a data-soon="Solicitações / guias">Solicitações &amp; Guias</a>
+      <a data-src="hog-cadastros.html#pacientes">Pacientes</a>
+    </div></div>
+
+    <div class="mi"><a>Relatórios <span class="car">▼</span></a><div class="dd">
+      <a data-soon="Atendimentos">Atendimentos</a>
+      <a data-src="modulo-faturamento.html">Faturamento / Repasse</a>
+      <a data-soon="Log">Log / Auditoria</a>
+    </div></div>
+
+    <div class="mi"><a>Referência <span class="car">▼</span></a><div class="dd">
+      <a data-src="mockup-sistema-v5.html">Mockup do sistema completo</a>
+      <a data-src="modulo-agendas-sivoe.html">Módulo de Agendas (SIVOE)</a>
+      <a data-src="pauta-reuniao-sivoe.html">Pauta reunião SIVOE</a>
+      <a data-src="mapa-mestre-crm-hog.html">Mapa-Mestre</a>
+      <a data-src="projeto-implantacao.html">Projeto de Implantação</a>
+    </div></div>
+  </div>
+  <div class="right"><span class="who">Evelise Soares</span><a href="index.html">Sair</a></div>
+</div>
+
+<div class="crumb"><b id="tt">Home</b><span id="sub"></span><span class="badge" id="bd">Supabase · São Paulo</span></div>
+<div class="stage" id="stage">
+  <div class="home" id="home">
+    <h2>HOG Gestão</h2>
+    <p class="s">Sistema de gestão do Hospital dos Olhos Guanabara — em substituição ao VoxComm. Os menus seguem a mesma lógica do sistema atual.</p>
+    <div class="kpi" id="kpi"></div>
+    <div class="cards">
+      <div class="c" data-src="hog-cadastros.html"><div class="ic">🗂️</div><h3>Cadastros</h3><p>16 cadastros conectados ao banco: pacientes, médicos, salas, exames, padrões de atendimento…</p><span class="st ok">funcional</span></div>
+      <div class="c" data-src="demo-agenda-exames.html"><div class="ic">🔬</div><h3>Agenda de Exames</h3><p>Motor contínuo — a sala é o recurso e o paciente ocupa o tempo dos seus exames.</p><span class="st ok">funcional</span></div>
+      <div class="c" data-soon="Mapa de ocupação"><div class="ic">🗓️</div><h3>Mapa de Ocupação</h3><p>Reserva (camada 1) e liberação (camada 2) da capacidade de médicos e salas.</p><span class="st wip">em construção</span></div>
+      <div class="c" data-soon="Recepção"><div class="ic">🚶</div><h3>Recepção</h3><p>Entrada do paciente, encaminhamento, fila e rastreio.</p><span class="st wip">em construção</span></div>
+      <div class="c" data-soon="Consultora"><div class="ic">🩺</div><h3>Consultora Cirúrgica</h3><p>Atendimento pré-cirúrgico, orçamento de LIO e fechamento do dia.</p><span class="st wip">em construção</span></div>
+      <div class="c" data-src="modulo-faturamento.html"><div class="ic">💰</div><h3>Faturamento</h3><p>Caixa, aprovação de desconto, conciliação e repasse por profissional.</p><span class="st wip">mockup</span></div>
+    </div>
+  </div>
+  <iframe id="fr" style="display:none"></iframe>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+// menus abrem no clique (não no hover) — igual ao VoxComm
+document.querySelectorAll('.mi').forEach(mi=>{
+  const a=mi.querySelector(':scope>a');
+  a.onclick=e=>{
+    if(a.dataset.go==='home'){goHome();closeAll();return}
+    if(!mi.querySelector('.dd'))return;
+    e.stopPropagation();const was=mi.classList.contains('open');closeAll();if(!was)mi.classList.add('open');
+  };
+});
+function closeAll(){document.querySelectorAll('.mi').forEach(m=>m.classList.remove('open'))}
+document.addEventListener('click',closeAll);
+document.querySelectorAll('.dd a, .c').forEach(el=>{
+  el.onclick=e=>{e.stopPropagation();closeAll();
+    if(el.dataset.src)open(el.dataset.src,el.textContent.trim());
+    else if(el.dataset.soon)soon(el.dataset.soon);};
+});
+function open(src,titulo){
+  document.getElementById('home').style.display='none';
+  const f=document.getElementById('fr');f.style.display='block';f.src=src;
+  document.getElementById('tt').textContent=titulo||'';
+  document.getElementById('sub').textContent='';
+}
+function goHome(){
+  document.getElementById('fr').style.display='none';
+  document.getElementById('home').style.display='block';
+  document.getElementById('tt').textContent='Home';document.getElementById('sub').textContent='';
+}
+function soon(nome){
+  document.getElementById('home').style.display='none';
+  const f=document.getElementById('fr');f.style.display='none';
+  document.getElementById('tt').textContent=nome;
+  document.getElementById('sub').textContent='— módulo em construção';
+  const st=document.getElementById('stage');
+  let ph=document.getElementById('ph');
+  if(!ph){ph=document.createElement('div');ph.id='ph';ph.className='home';st.appendChild(ph)}
+  ph.style.display='block';
+  ph.innerHTML='<h2>'+nome+'</h2><p class="s">Este módulo ainda está em construção. Os cadastros e a agenda de exames já estão funcionais e conectados ao banco.</p>'+
+    '<div class="cards"><div class="c" onclick="location.reload()"><div class="ic">↩</div><h3>Voltar ao início</h3><p>Ver os módulos disponíveis.</p></div></div>';
+}
+// KPIs da home
+(async()=>{
+  const h={apikey:KEY,Authorization:'Bearer '+KEY};
+  const t=['pacientes','medicos','salas','exames','agendas_logicas','exame_agendamentos'];
+  const l=['Pacientes','Médicos','Salas','Exames','Agendas','Exames agendados'];
+  const r=await Promise.all(t.map(x=>fetch(SB+'/'+x+'?select=id',{headers:h}).then(r=>r.json()).then(a=>a.length).catch(()=>'–')));
+  document.getElementById('kpi').innerHTML=r.map((v,i)=>'<div class="k"><div class="n">'+v+'</div><div class="l">'+l[i]+'</div></div>').join('');
+})();
+</script>
+</body>
+</html>
