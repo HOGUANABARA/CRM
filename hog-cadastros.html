@@ -138,7 +138,7 @@ async function savePaciente(){
     await api.post('pacientes',{nome,cpf:sn(cpf),nascimento:sn(V('p_nasc')),sexo:sn(V('p_sexo')),telefone:sn(V('p_tel')),
       whatsapp:sn(V('p_wpp')),email:sn(V('p_email')),convenio_id:sn(V('p_conv')),carteirinha:sn(V('p_cart')),
       sobe_escada:escada==='sim',mobilidade_obs:sn(V('p_mob')),observacao:sn(V('p_obs')),
-      status_cadastro:cpf?'completo':'pre_cadastro',origem:'manual'});
+      status_cadastro:cpf?'completo':'pre_cadastro'});
     say('p_msg','s','✅ Paciente cadastrado!'); render();
   }catch(e){say('p_msg','e','Erro: '+E(e.message))}
 }
