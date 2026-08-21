@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauta Técnica — Reunião HOG × SIVOE</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EEF2F6;color:#1A2B3C;font-size:14px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px 70px}
+header{background:#0D2137;color:#fff;padding:28px 0;margin-bottom:22px}
+header .wrap{padding-bottom:0}
+header h1{font-size:22px}
+header .sub{color:#8BAFC9;font-size:14px;margin-top:6px}
+h2{font-size:17px;color:#0D2137;margin:26px 0 12px;padding-bottom:8px;border-bottom:2px solid #D7DFE8;display:flex;align-items:center;gap:9px}
+h2 .n{background:#2B9BE8;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+h3{font-size:14px;color:#0D2137;margin:14px 0 6px}
+p{margin-bottom:10px;color:#3C4E60}
+.card{background:#fff;border:1px solid #D7DFE8;border-radius:10px;padding:15px 18px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:#F5F7FA;text-align:left;padding:8px 10px;color:#5A6B7B;font-size:11px;text-transform:uppercase;border-bottom:1px solid #D7DFE8}
+td{padding:7px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top}
+tr:last-child td{border-bottom:none}
+code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:12px}
+.note{background:#EEF6FD;border:1px dashed #2B9BE8;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#274b66;margin-bottom:12px}
+.warn{background:#FFF8F0;border:1px dashed #F4A261;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#7a5a1e;margin-bottom:12px}
+.q{background:#fff;border-left:3px solid #2B9BE8;padding:9px 14px;margin-bottom:8px;font-size:13px}
+.q b{color:#0D2137}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+pre{background:#F5F7FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto}
+.foot{color:#6B7E90;font-size:12px;margin-top:24px;text-align:center}
+@media print{body{background:#fff}}
+</style></head><body>
+<header><div class="wrap">
+<h1>Pauta Técnica — Reunião HOG × SIVOE</h1>
+<div class="sub">Transição do VoxComm para o <strong>HOG Gestão</strong> · migração de dados e integração</div>
+</div></header>
+<div class="wrap">
+
+<div class="note"><strong>Objetivo da reunião:</strong> alinhar a saída do VoxComm. O HOG está implantando o <strong>HOG Gestão</strong> (sistema próprio de gestão de agendas, recepção, exames, centro cirúrgico, comercial e financeiro) que <strong>substitui o VoxComm</strong>. O <strong>SIVOE permanece como prontuário</strong>. A SIVOE tem acesso ao VoxComm e ao banco, e dará suporte à transição.</div>
+
+<h2><span class="n">1</span> Cenário atual e alvo</h2>
+<div class="card">
+<table>
+<thead><tr><th>Domínio</th><th>Hoje</th><th>Depois</th></tr></thead>
+<tbody>
+<tr><td>Cadastro do paciente</td><td>VoxComm (replica na SIVOE)</td><td><strong>HOG Gestão</strong> (master) → replica na SIVOE</td></tr>
+<tr><td>Prontuário</td><td>VoxComm <em>e</em> SIVOE</td><td><strong>SIVOE</strong> (exclusivo)</td></tr>
+<tr><td>Agendas, recepção, exames, CC</td><td>VoxComm</td><td><strong>HOG Gestão</strong></td></tr>
+<tr><td>Comercial e financeiro</td><td>planilhas / WBudget</td><td><strong>HOG Gestão</strong></td></tr>
+</tbody></table>
+<div class="note" style="margin-top:12px;margin-bottom:0"><strong>Ponto de partida favorável:</strong> o VoxComm <strong>já é integrado à SIVOE</strong> — ao criar um cadastro, gera automaticamente na SIVOE. Não pedimos uma integração nova: pedimos <strong>replicar esse mesmo mecanismo com o HOG Gestão</strong>.</div>
+</div>
+
+<h2><span class="n">2</span> As três frentes de trabalho</h2>
+<div class="card">
+<h3>Frente A — Migração de dados: VoxComm → HOG Gestão</h3>
+<p>Extração <strong>completa (100%)</strong> do banco do VoxComm.</p>
+<table>
+<thead><tr><th>Dado</th><th>Por que é necessário</th></tr></thead>
+<tbody>
+<tr><td><strong>Pacientes</strong> (CPF, nome, nascimento, sexo, telefone/e-mail, convênio, carteirinha)</td><td>base principal do sistema</td></tr>
+<tr><td><strong>Agendamentos FUTUROS</strong> (consultas, exames, cirurgias, pré e pós-op)</td><td>⚠️ crítico — nenhum paciente agendado pode se perder na virada</td></tr>
+<tr><td><strong>Histórico de agendamentos/visitas</strong> (com presença, falta, cancelamento)</td><td>histórico de faltas e faturamento</td></tr>
+<tr><td><strong>Anotações</strong> do paciente (cronológicas)</td><td>histórico operacional</td></tr>
+<tr><td><strong>Convênios</strong> · <strong>Procedimentos + TUSS</strong></td><td>cadastros base</td></tr>
+<tr><td><strong>Médicos</strong> · <strong>Usuários e permissões</strong></td><td>operação no dia 1</td></tr>
+<tr><td><strong>Configuração das agendas</strong> (grades, tipos, “agendas Z”)</td><td>reconstruir a capacidade</td></tr>
+<tr><td><strong>Identificadores</strong>: id do paciente no VoxComm <em>e</em> na SIVOE</td><td>🔑 reconciliação entre os sistemas</td></tr>
+</tbody></table>
+<p style="margin-top:10px"><strong>Formato aceito:</strong> dump SQL, CSV por tabela, ou acesso de leitura ao banco. O HOG Gestão roda em <strong>PostgreSQL (Supabase)</strong>.</p>
+</div>
+
+<div class="card">
+<h3>Frente B — Prontuários: VoxComm → SIVOE</h3>
+<p>Os prontuários que hoje estão no VoxComm devem passar a residir <strong>somente na SIVOE</strong>.</p>
+<div class="warn"><strong>Requisito crítico — preservar o vínculo:</strong> o identificador do paciente no VoxComm (<code>id_voxcomm</code>) precisa ser mantido <strong>nos dois destinos</strong> (SIVOE e HOG Gestão), para que o prontuário migrado corresponda ao cadastro correto.</div>
+<p>Conferência amostral obrigatória: um paciente escolhido deve ter, na SIVOE, o mesmo histórico que tinha no VoxComm.</p>
+</div>
+
+<div class="card">
+<h3>Frente C — Integração HOG Gestão ↔ SIVOE (contínua)</h3>
+<pre>  HOG GESTÃO                                  SIVOE
+1. cadastra/atualiza paciente ─────────────▶  recebe (mesmo mecanismo do VoxComm hoje)
+2. envia o agendamento do dia ─────────────▶  agenda do médico
+3.                                            médico finaliza o PRONTUÁRIO
+4. abre "exames solicitados"  ◀─────────────  devolve evento "atendimento finalizado"
+5. gera a guia → agenda o exame</pre>
+<p>As <strong>solicitações de exame e as guias ficam no HOG Gestão</strong>. Da SIVOE precisamos apenas do <strong>evento de finalização</strong> (e do identificador do paciente).</p>
+</div>
+
+<h2><span class="n">3</span> Perguntas objetivas para a SIVOE</h2>
+<div class="card">
+<h3>Sobre a integração existente</h3>
+<div class="q"><b>1.</b> Como funciona hoje o casamento VoxComm ↔ SIVOE? (mesma base de dados · trigger/procedure · API · job de sincronização)</div>
+<div class="q"><b>2.</b> Existe uma coluna/identificador da SIVOE gravado na tabela de pacientes do VoxComm? Qual?</div>
+<div class="q"><b>3.</b> Esse mesmo mecanismo pode ser apontado para o <strong>HOG Gestão</strong>? O que é necessário do nosso lado?</div>
+<div class="q"><b>4.</b> A SIVOE expõe <strong>API</strong> para criar/atualizar paciente? Há documentação?</div>
+<div class="q"><b>5.</b> Existe (ou é viável criar) um <strong>webhook/evento</strong> de “prontuário finalizado”? Quais campos ele devolve?</div>
+<div class="q"><b>6.</b> A SIVOE aceita receber o <strong>agendamento do dia</strong> para montar a agenda do médico?</div>
+<h3>Sobre a migração</h3>
+<div class="q"><b>7.</b> A SIVOE consegue fornecer a <strong>extração completa</strong> do banco do VoxComm? Em que formato e prazo?</div>
+<div class="q"><b>8.</b> Existe o <strong>dicionário de dados / modelo</strong> do VoxComm (tabelas e colunas)?</div>
+<div class="q"><b>9.</b> A SIVOE assume a <strong>migração dos prontuários</strong> do VoxComm? Consegue preservar o <code>id_voxcomm</code>?</div>
+<div class="q"><b>10.</b> Há <strong>ambiente de homologação</strong> para testarmos a integração e a carga antes da virada?</div>
+<h3>Comercial e prazos</h3>
+<div class="q"><b>11.</b> Prazo, custo e SLA da integração e da migração.</div>
+<div class="q"><b>12.</b> Há impedimento contratual ou técnico na saída do VoxComm? (o VoxComm é da SIVOE ou de terceiro?)</div>
+</div>
+
+<h2><span class="n">4</span> Plano de cutover proposto</h2>
+<div class="card">
+<table>
+<thead><tr><th>#</th><th>Etapa</th><th>Responsável</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Dicionário de dados do VoxComm + amostra de extração</td><td>SIVOE</td></tr>
+<tr><td>2</td><td>Mapa de-para (VoxComm → HOG Gestão) e script de importação</td><td>HOG</td></tr>
+<tr><td>3</td><td>Carga em <strong>homologação</strong> + conferência (contagem por dia/médico + amostral)</td><td>HOG + SIVOE</td></tr>
+<tr><td>4</td><td>Integração HOG Gestão ↔ SIVOE testada em homologação</td><td>SIVOE + HOG</td></tr>
+<tr><td>5</td><td><strong>Congelamento</strong>: nada novo é marcado no VoxComm</td><td>HOG (operação)</td></tr>
+<tr><td>6</td><td>Carga final (cadastros → capacidade → <strong>agendas futuras</strong> → histórico)</td><td>HOG</td></tr>
+<tr><td>7</td><td>Migração dos prontuários para a SIVOE</td><td>SIVOE</td></tr>
+<tr><td>8</td><td>Virada + VoxComm em modo leitura por alguns dias (plano B)</td><td>ambos</td></tr>
+</tbody></table>
+<div class="warn" style="margin-top:12px;margin-bottom:0"><strong>Ordem obrigatória da carga:</strong> cadastros → capacidade (grades/reservas das datas futuras) → agendamentos futuros → histórico. Sem a capacidade criada antes, os agendamentos futuros não têm onde ser alocados.</div>
+</div>
+
+<h2><span class="n">5</span> O que o HOG já tem pronto</h2>
+<div class="card">
+<div class="grid2">
+<div>
+<h3>Banco</h3>
+<p style="font-size:12.5px">PostgreSQL (Supabase, região São Paulo) com o schema completo: 16 cadastros, capacidade em 4 camadas, agendamentos, solicitações/guias, e campos de rastreio de origem (<code>id_voxcomm</code>, <code>id_sivoe</code>) prontos para a importação.</p>
+</div>
+<div>
+<h3>Sistema</h3>
+<p style="font-size:12.5px">Motor de agendamento de exames em tempo contínuo já funcional, mockups do sistema completo, módulo de agendas documentado e área de <em>staging</em> para conferência dos dados importados.</p>
+</div>
+</div>
+</div>
+
+<div class="foot">Hospital dos Olhos Guanabara · pauta técnica para a reunião com a SIVOE · v1</div>
+</div></body></html>
