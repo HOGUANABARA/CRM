@@ -1,4 +1,4 @@
-digisac_user_id:achaParam(['userId','user'])||null<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -116,7 +116,7 @@ async function init(){
     }
     /* registra a conversa (chamado) para o histórico */
     if(TICKET){ po('conversas',[{digisac_ticket_id:TICKET,contato_id:CONTATO.id,
-      paciente_id:null,digisac_user_id:Q.get('userId')||null}]).catch(()=>{}) }
+      paciente_id:null,digisac_user_id:achaParam(['userId','user'])||null}]).catch(()=>{}) }
     /* pacientes já ligados a este contato */
     const lig=await g(`contato_paciente?select=*,pacientes(*)&contato_id=eq.${CONTATO.id}`).catch(()=>[]);
     if(lig.length===1){ PACIENTE=lig[0].pacientes; await painelPaciente(lig[0].relacao) }
