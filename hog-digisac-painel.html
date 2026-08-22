@@ -80,6 +80,8 @@ window.addEventListener('message',ev=>{
     if(!d||typeof d!=='object')return;
     const cand=d.number||d.phone||d.telefone||(d.contact&&(d.contact.number||d.contact.phone))||
                (d.data&&(d.data.number||d.data.phone));
+    const log=document.getElementById('pm_log');
+    if(log)log.textContent=JSON.stringify(d).slice(0,300);
     if(cand&&!TEL){ TEL=digits(cand);
       NOME_CONTATO=NOME_CONTATO||d.name||(d.contact&&d.contact.name)||'';
       init(); }
@@ -124,6 +126,16 @@ function semTelefone(){
       <label style="margin-top:11px">ou buscar o paciente pelo nome</label>
       <input id="q" placeholder="digite 3 letras" oninput="buscarDireto()">
       <div id="res"></div>
+    </div>
+    <div class="card" style="background:#f8f9fa">
+      <h3>🔧 O que o DIGISAC mandou para esta página</h3>
+      <div class="hint" style="font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all">
+        ${[...Q.entries()].length?[...Q.entries()].map(([k,v])=>`<b>${E(k)}</b> = ${E(v)}`).join('<br>')
+          :'nenhum parâmetro na URL'}<br>
+        <span style="color:#6c757d">referrer: ${E(document.referrer||'—')}</span><br>
+        <span style="color:#6c757d">postMessage recebido: <span id="pm_log">nenhum ainda</span></span>
+      </div>
+      <div class="hint">Se aparecer aqui um parâmetro com o telefone, me diga o nome dele que eu ligo automático.</div>
     </div>`;
 }
 function usaTelefone(){
