@@ -113,6 +113,20 @@ const fecha=()=>document.getElementById('ov').classList.remove('on');
 const sel=(id,arr,v,ph)=>`<select id="${id}"><option value="">${ph||'—'}</option>`+arr.map(o=>`<option value="${o.id}"${o.id===v?' selected':''}>${E(o.nome)}</option>`).join('')+'</select>';
 const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 let REF={agendas:[],medicos:[],pacientes:[],salas:[]}, AG=[], AGENDA='';
+/* perfil de quem está usando — define se pode encaixar (botão vermelho do VoxComm) */
+let PERFIL=localStorage.getItem('hog_perfil')||'callcenter';
+const PODE_ENCAIXAR=()=>['coordenacao','admin','consultora','centro_cirurgico'].includes(PERFIL);
+function trocaPerfil(v){PERFIL=v;localStorage.setItem('hog_perfil',v)}
+/* vagas do dia naquela agenda: capacidade do padrão + vagas extras negociadas */
+async function vagaDoDia(agid,data){
+  const a=REF.agendas.find(x=>x.id===agid); if(!a)return null;
+  const [ags,ext]=await Promise.all([
+    g(`agendamentos?select=id&agenda_logica_id=eq.${agid}&data=eq.${data}&status=neq.cancelado`).catch(()=>[]),
+    g(`vagas_extras?select=quantidade&status=eq.ativa&agenda_logica_id=eq.${agid}&data=eq.${data}`).catch(()=>[])]);
+  const extras=ext.reduce((s,x)=>s+(x.quantidade||0),0);
+  const vagas=(a.qtd_periodo||0)+extras;
+  return {vagas,base:a.qtd_periodo||0,extras,agendados:ags.length,livre:vagas-ags.length,semCapacidade:!a.qtd_periodo};
+}
 
 async function loadRef(){
   const [a,m,p,s]=await Promise.all([
@@ -277,19 +291,51 @@ function novo(){
       <div><label>Tipo</label><select id="n_tipo"><option value="consulta">Consulta</option><option value="retorno">Retorno</option><option value="pos_op">Pós-op</option></select></div>
       <div style="grid-column:span 2"><label>Observação</label><input id="n_obs"></div>
       <div><label>Quem está agendando</label><input id="n_quem" placeholder="seu nome"></div>
+      <div><label>Perfil</label><select id="n_perfil" onchange="trocaPerfil(this.value);checar()">
+        <option value="callcenter">Call Center</option><option value="recepcao">Recepção</option>
+        <option value="consultora">Consultora</option><option value="centro_cirurgico">Centro Cirúrgico</option>
+        <option value="coordenacao">Coordenação</option></select></div>
     </div>`,
    `<button class="b3" onclick="fecha()">Cancelar</button>
     <button class="b1" onclick="checar()">Verificar</button>
     <button class="b2" id="btn_ok" onclick="salvar(false)">Agendar</button>`);
+  document.getElementById('n_perfil').value=PERFIL;
+  document.getElementById('n_data').onchange=checar;
   document.getElementById('n_pac').onchange=checar;
   document.getElementById('n_ag').onchange=()=>{const a=REF.agendas.find(x=>x.id===V('n_ag'));
     if(a&&a.sala_padrao_id)document.getElementById('n_sala').value=a.sala_padrao_id;checar()};
   if(AGENDA)document.getElementById('n_ag').value=AGENDA;
 }
-let TRAVA=null;
+let TRAVA=null, SEM_VAGA=false;
+async function paraEspera(){
+  const pid=V('n_pac'),agid=V('n_ag');
+  if(!pid||!agid)return alert('Escolha paciente e agenda.');
+  const ag=REF.agendas.find(x=>x.id===agid);
+  const urg=confirm('Marcar como URGENTE na lista de espera?\n\nOK = urgente · Cancelar = normal');
+  try{
+    await po('lista_espera',[{paciente_id:pid,agenda_logica_id:agid,medico_id:ag?ag.medico_id:null,
+      tipo:V('n_tipo')||'consulta',prioridade:urg?'urgente':'normal',
+      observacao:V('n_obs')||'entrou na espera porque a agenda estava lotada',status:'aguardando'}]);
+    fecha(); alert('✅ Paciente na lista de espera. Quando a coordenação liberar vagas, o call center é avisado.');
+  }catch(e){ alert('Erro: '+e.message+'\n(a lista de espera precisa do hog-grade.sql)') }
+}
 async function checar(){
-  const box=document.getElementById('n_alertas');box.innerHTML='';TRAVA=null;
+  const box=document.getElementById('n_alertas');box.innerHTML='';TRAVA=null;SEM_VAGA=false;
   const pid=V('n_pac'),agid=V('n_ag'),data=V('n_data'); if(!pid)return;
+  /* ---- vaga na agenda: é o que separa agendar de encaixar ---- */
+  if(agid&&data){
+    const v=await vagaDoDia(agid,data);
+    if(v&&!v.semCapacidade){
+      if(v.livre>0){
+        box.innerHTML+=`<div class="msg s" style="display:block">🟢 <b>${v.livre} vaga(s) livre(s)</b> — ${v.agendados} de ${v.vagas}${v.extras?` (inclui +${v.extras} extras negociadas)`:''}.</div>`;
+      }else{
+        SEM_VAGA=true;
+        box.innerHTML+= PODE_ENCAIXAR()
+          ? `<div class="msg w" style="display:block">🟠 <b>Agenda lotada</b> (${v.agendados}/${v.vagas}). Seu perfil pode <b>encaixar</b> — será registrado como encaixe, com motivo e autorização.</div>`
+          : `<div class="msg e" style="display:block">🔴 <b>Agenda lotada</b> (${v.agendados}/${v.vagas}). Seu perfil não pode encaixar — coloque o paciente na <b>lista de espera</b>; quando a coordenação liberar mais vagas, o call center é avisado.</div>`;
+      }
+    }
+  }
   const p=REF.pacientes.find(x=>x.id===pid), ag=REF.agendas.find(x=>x.id===agid); let al=[];
   try{
     const d=new Date(data+'T12:00:00'),a1=new Date(d),a2=new Date(d);a1.setDate(a1.getDate()-30);a2.setDate(a2.getDate()+30);
@@ -322,10 +368,31 @@ async function salvar(comAprov){
   let ap={};
   if(comAprov){const q=prompt('Aprovação necessária.\nQuem aprova?');if(!q)return;
     ap={aprovacao_intervalo_por:q,aprovacao_intervalo_motivo:prompt('Motivo:')||''}}
+  /* ---- agenda lotada: só encaixa quem tem perfil, e com motivo ---- */
+  if(SEM_VAGA){
+    if(!PODE_ENCAIXAR()){
+      m.className='msg e';
+      m.innerHTML='🔴 Agenda lotada e seu perfil não pode encaixar. Use <b>“Lista de espera”</b> abaixo.';
+      const pf=document.getElementById('mf');
+      if(pf&&!document.getElementById('btn_esp'))
+        pf.insertAdjacentHTML('beforeend','<button class="b1" id="btn_esp" style="background:#fd7e14" onclick="paraEspera()">📋 Lista de espera</button>');
+      return;
+    }
+    const mot=prompt('ENCAIXE — a agenda está lotada.\n\nMotivo do encaixe:');
+    if(mot===null)return;
+    const quem=prompt('Quem autorizou o encaixe?')||V('n_quem')||PERFIL;
+    ap.encaixe=true; ap.encaixe_motivo=mot; ap.encaixe_por=V('n_quem')||PERFIL; ap.encaixe_autorizado_por=quem;
+  }
   try{const ag=REF.agendas.find(x=>x.id===V('n_ag'));
-    await po('agendamentos',{paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),medico_id:ag?ag.medico_id:null,
+    const base={paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),medico_id:ag?ag.medico_id:null,
       sala_id:V('n_sala')||null,tipo:V('n_tipo'),data:V('n_data'),hora:V('n_hora'),status:'agendado',
-      observacao:V('n_obs')||null,criado_por:V('n_quem')||null,...ap});
+      observacao:V('n_obs')||null,criado_por:V('n_quem')||null,...ap};
+    try{ await po('agendamentos',base) }
+    catch(err){ /* banco ainda sem as colunas de encaixe */
+      const {encaixe,encaixe_motivo,encaixe_por,encaixe_autorizado_por,...limpo}=base;
+      limpo.observacao=(limpo.observacao?limpo.observacao+' · ':'')+(encaixe?('ENCAIXE: '+(encaixe_motivo||'')+' — autorizado por '+(encaixe_autorizado_por||'')):'');
+      await po('agendamentos',limpo);
+    }
     fecha();load()}catch(e){m.className='msg e';m.innerHTML='Erro: '+E(e.message)}
 }
 async function reagendar(id){
