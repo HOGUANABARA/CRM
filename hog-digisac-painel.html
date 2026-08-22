@@ -71,7 +71,7 @@ let NOME_CONTATO=achaParam(['name','contactName','nome']);
 const TICKET=achaParam(['ticketId','ticket','protocolo']);
 const DIGISAC_ID=achaParam(['contactId','contact','idContato']);
 
-let CONTATO=null, PACIENTE=null;
+let CONTATO=null, PACIENTE=null, SOL_ATUAL=null;
 
 /* o DIGISAC pode mandar o contato por postMessage em vez de URL */
 window.addEventListener('message',ev=>{
