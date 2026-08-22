@@ -63,6 +63,8 @@
   .ev .lot{display:inline-block;background:#dc3545;color:#fff;border-radius:3px;font-size:9.5px;font-weight:700;
     padding:0 4px;letter-spacing:.4px;margin-right:4px;}
   .ev .ob{display:block;margin-top:2px;font-size:10.5px;opacity:.92;font-style:italic;}
+  .ev .pa{display:inline-block;margin-top:2px;background:#fff;color:#b02a37;border:1px solid #f1aeb5;
+    border-radius:3px;font-size:10px;font-weight:700;padding:0 4px;}
   .ev .pin{position:absolute;right:3px;top:2px;font-size:10px;}
   .agora{position:absolute;left:0;right:0;height:2px;background:#EA4335;z-index:15;}
   .agora::before{content:'';position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#EA4335;}
@@ -114,6 +116,7 @@
   <span class="mes" id="mes"></span>
   <button class="bl w" onclick="definirSalas()" title="O número do consultório é definido na véspera">&#127968; Consultórios de amanhã</button>
   <button class="bl n" onclick="copiarSemana()">&#9109; Copiar semana anterior</button>
+  <button class="bl" style="background:#b02a37" onclick="coberturaPA()">&#128657; Cobertura de P.A.</button>
   <span class="sino"><button class="bl o" onclick="verAlertas()">&#128276; Avisos ao call center</button><span class="badge" id="badge" style="display:none">0</span></span>
   <span class="leg">
     <span><i style="background:#eef8f1;border-color:#cde8d8"></i>Disponível</span>
@@ -171,8 +174,9 @@ const m2h=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(
 const hm2m=s=>{if(!s)return null;const p=String(s).split(':');return (+p[0])*60+(+p[1])};
 
 let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[],perfis:[],equip:[]},
-    RES=[], AGEND=[], ALERTAS=[], ESPERA=[], MODO='dia', DIA=new Date(), INI=null, SEL=null,
-    FALTA_SQL=false, FALTA_GRADE=false;
+    RES=[], AGEND=[], ALERTAS=[], ESPERA=[], RP={}, PADS=[], MULTI=false,
+    MODO='dia', DIA=new Date(), INI=null, SEL=null,
+    FALTA_SQL=false, FALTA_GRADE=false, FALTA_PA=false;
 
 /* ---------------- datas ---------------- */
 function domingo(d){const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
@@ -214,7 +218,16 @@ async function load(){try{
     g('lista_espera?select=*,pacientes(nome,telefone)&order=entrou_em').catch(()=>[]),
     g(`agendamentos?select=id,data,status,agenda_logica_id,sala_id&data=gte.${d0}&data=lte.${d1}`).catch(()=>[])]);
   RES=res; ALERTAS=al; ESPERA=esp; AGEND=ags;
+  RP={};
+  if(RES.length){
+    const ids=RES.map(r=>'"'+r.id+'"').join(',');
+    const rp=await g(`reserva_padroes?select=*&reserva_id=in.(${ids})&order=ordem`).catch(()=>null);
+    MULTI = rp!==null;
+    (rp||[]).forEach(x=>{ (RP[x.reserva_id]=RP[x.reserva_id]||[]).push(x) });
+  }
+  RES.forEach(r=>{ if(!RP[r.id]&&r.agenda_logica_id)RP[r.id]=[{reserva_id:r.id,agenda_logica_id:r.agenda_logica_id,cota:null,ordem:1}] });
   FALTA_SQL = amostra.length>0 && !('hora_ini' in amostra[0]);
+  FALTA_PA  = amostra.length>0 && !('atende_pa' in amostra[0]);
   const b=document.getElementById('badge');
   b.style.display=ALERTAS.length?'inline':'none'; b.textContent=ALERTAS.length;
   render(); stat('ok','● conectado');
@@ -321,11 +334,27 @@ function vagasDaReserva(r){
   if(s.tipo==='cc')return Math.max(1,Math.round(6*dur/240));
   return Math.max(1,Math.floor(dur/15));
 }
+/* ocupação do bloco: soma os padrões atendidos nele (córnea + catarata, p.ex.) */
+function padroesDe(r){ return RP[r.id]||(r.agenda_logica_id?[{agenda_logica_id:r.agenda_logica_id,cota:null}]:[]) }
+function ocupacaoPorPadrao(r){
+  const lista=padroesDe(r); if(!lista.length)return [];
+  const total=vagasDaReserva(r);
+  const semCota=lista.filter(p=>!p.cota).length;
+  const usadasCota=lista.reduce((s,p)=>s+(p.cota||0),0);
+  const sobra=Math.max(total-usadasCota,0);
+  return lista.map(p=>{
+    const vagas=p.cota||(semCota?Math.max(1,Math.floor(sobra/semCota)):0);
+    const usados=AGEND.filter(x=>x.agenda_logica_id===p.agenda_logica_id&&x.data===r.data&&x.status!=='cancelado').length;
+    return {id:p.agenda_logica_id,nome:nomeAg(p.agenda_logica_id)||p.agenda_logica_id,cota:p.cota,
+            vagas,usados,pct:vagas?Math.round(usados/vagas*100):0,lotada:vagas>0&&usados>=vagas};
+  });
+}
 function ocupacao(r){
-  if(!r.agenda_logica_id)return null;
-  const usados=AGEND.filter(x=>x.agenda_logica_id===r.agenda_logica_id&&x.data===r.data&&x.status!=='cancelado').length;
-  const vagas=vagasDaReserva(r);
-  return {usados,vagas,pct:vagas?Math.round(usados/vagas*100):0,lotada:usados>=vagas};
+  const lista=padroesDe(r); if(!lista.length)return null;
+  const det=ocupacaoPorPadrao(r);
+  const usados=det.reduce((s,d)=>s+d.usados,0);
+  const vagas=det.reduce((s,d)=>s+d.vagas,0)||vagasDaReserva(r);
+  return {usados,vagas,pct:vagas?Math.round(usados/vagas*100):0,lotada:usados>=vagas,det};
 }
 function bloco(e,n){
   const r=e.r, top=(e.i-H0*60)/60*PXH, h=Math.max((e.f-e.i)/60*PXH-2,17), w=100/n, left=e.lane*w;
@@ -336,14 +365,19 @@ function bloco(e,n){
   const extra=r.recorrencia==='extra'?' ⚡':(r.recorrencia==='recorrente'?' ⟳':'');
   const loc=MODO==='dia'?'':(r.sala_id?E(nomeSala(r.sala_id)):'🏠 sala a definir');
   const o=liberada?ocupacao(r):null;
-  const oc=o?`<span class="oc">${o.lotada?'<span class="lot">LOTADA</span>':''}${o.usados}/${o.vagas} · ${o.pct}%</span>`:'';
-  const ob=(r.observacao&&h>52)?`<span class="ob">💬 ${E(r.observacao)}</span>`:'';
+  const det=(o&&o.det&&o.det.length>1)
+    ? '<br>'+o.det.map(d=>`${E(d.nome.split('—')[0].trim())} ${d.usados}/${d.vagas}${d.lotada?' 🔴':''}`).join(' · ') : '';
+  const oc=o?`<span class="oc">${o.lotada?'<span class="lot">LOTADA</span>':''}${o.usados}/${o.vagas} · ${o.pct}%${det}</span>`:'';
+  const pa=r.atende_pa?`<span class="pa">🚑 P.A.${r.pa_limite?' até '+r.pa_limite:''}</span>`:'';
+  const ob=(r.observacao&&h>60)?`<span class="ob">💬 ${E(r.observacao)}</span>`:'';
   const tt=`${tituloDe(r)} — ${m2h(e.i)}–${m2h(e.f)}${r.sala_id?' · '+nomeSala(r.sala_id):''}`+
-    (o?` — ${o.usados}/${o.vagas} agendados${o.lotada?' (LOTADA)':''}`:'')+(r.observacao?` — ${r.observacao}`:'');
+    (o?` — ${o.usados}/${o.vagas} agendados${o.lotada?' (LOTADA)':''}`:'')+
+    (o&&o.det&&o.det.length>1?' | '+o.det.map(d=>`${d.nome}: ${d.usados}/${d.vagas}`).join(' | '):'')+
+    (r.atende_pa?' — disponível para P.A.':'')+(r.observacao?` — ${r.observacao}`:'');
   return `<div class="ev ${cls}" style="top:${top}px;height:${h}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)"
     onclick="event.stopPropagation();editar('${r.id}')" title="${E(tt)}">
     <span class="pin">${pin}</span><b>${E(tituloDe(r))}${extra}</b>
-    <span class="h">${m2h(e.i)}–${m2h(e.f)}${loc?' · '+loc:''}</span>${oc}${ob}</div>`;
+    <span class="h">${m2h(e.i)}–${m2h(e.f)}${loc?' · '+loc:''}</span>${pa}${oc}${ob}</div>`;
 }
 function kpis(L){
   const salas=REF.salas.length, dias=MODO==='dia'?1:7;
@@ -412,14 +446,25 @@ function painelReserva(){
       <div style="margin-top:7px"><label><input type="checkbox" id="hora_extra" style="width:auto" ${r.hora_extra?'checked':''}> Hora extra (sábado, feriado, fora do horário)</label></div>
     </div>
     <div style="margin-top:8px"><label>Observação</label><input id="observacao" value="${E(r.observacao||'')}" placeholder="opcional"></div>
+    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="margin:0"><input type="checkbox" id="atende_pa" style="width:auto" ${r.atende_pa?'checked':''} onchange="document.getElementById('bx_pa').style.display=this.checked?'block':'none'"> 🚑 Disponível para P.A. neste período</label>
+      <span id="bx_pa" style="display:${r.atende_pa?'block':'none'}"><label>Limite de P.A.</label><input id="pa_limite" type="number" value="${r.pa_limite||''}" placeholder="sem limite" style="width:120px"></span>
+    </div>
     <div class="hint" style="margin-top:6px">A reserva só ocupa o local. As regras vêm depois, na liberação.</div>
   </div>
 
   <div class="et lib"><h3><span class="num">2</span> Liberar para agendamento</h3>
     <div id="est_now" style="margin-bottom:8px"></div>
-    <label>Padrão de atendimento (agenda lógica) *</label>
-    <select id="agenda_logica_id" onchange="aplicaPadrao()">${optS(REF.agendas,r.agenda_logica_id)}</select>
+    <label>Padrões atendidos neste bloco *</label>
+    <div id="lst_padroes"></div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <select id="agenda_logica_id" onchange="aplicaPadrao()" style="flex:1">${optS(REF.agendas,r.agenda_logica_id)}</select>
+      <button class="bl" style="padding:.3rem .7rem" onclick="addPadrao()">+ incluir</button>
+    </div>
     <div class="hint" id="hint_padrao">Traz tipo, tempo por paciente, quantidade do período e as regras.</div>
+    <div class="hint">Dois padrões no mesmo período (ex.: córnea e catarata, sem horário fixo)? Inclua os dois e,
+      se quiser, defina a cota de cada um. <b>O repasse sai do contrato de cada padrão</b>, atendimento a atendimento —
+      não do bloco.</div>
 
     <div class="g2" style="margin-top:8px">
       <div><label>Pagamento *</label><select id="pagamento_tipo" onchange="mostraContrato()">${optS(REF.pgto,r.pagamento_tipo)}</select></div>
@@ -446,6 +491,9 @@ function painelReserva(){
   if(r.agenda_logica_id)aplicaPadrao();
   mostraContrato(r.contrato_id);
   marcaPerfis(r); equipDaSala();
+  PADS=(RP[r.id]||(r.agenda_logica_id?[{agenda_logica_id:r.agenda_logica_id,cota:null,ordem:1}]:[]))
+        .map(p=>({agenda_logica_id:p.agenda_logica_id,cota:p.cota,ordem:p.ordem}));
+  renderPadroes();
   const oc=liberada&&r.id?ocupacao(r):null;
   document.getElementById('est_now').innerHTML = liberada
     ? '<span class="tag t-g">✓ liberada — o call center já agenda</span>'+
@@ -460,6 +508,40 @@ function painelReserva(){
     (r.id?`<button class="bl n" onclick="bloquear()">Bloquear</button><button class="bl" style="background:#dc3545" onclick="excluir()">Excluir</button>`:'');
   document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
 }
+/* ---- padrões do bloco (um médico pode atender 2 no mesmo período) ---- */
+function renderPadroes(){
+  const box=document.getElementById('lst_padroes'); if(!box)return;
+  if(!PADS.length){ box.innerHTML='<div class="hint">Nenhum padrão incluído. Escolha abaixo e clique em <b>+ incluir</b>.</div>'; return }
+  const r=SEL||{}; const total=vagasDaReserva({...r,hora_ini:V('hora_ini'),hora_fim:V('hora_fim'),
+    agenda_logica_id:PADS[0]&&PADS[0].agenda_logica_id, sala_id:V('sala_id')});
+  box.innerHTML=PADS.map((p,i)=>{
+    const a=REF.agendas.find(x=>x.id===p.agenda_logica_id)||{};
+    const ct=REF.contratos.find(c=>c.id===a.contrato_id);
+    return `<div class="esp" style="margin-top:6px">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <b style="flex:1">${E(a.nome||p.agenda_logica_id)}</b>
+        <span class="tag t-n">${E(a.tipo||'—')}</span>
+        <button class="bl n" style="padding:.1rem .5rem;font-size:12px" onclick="delPadrao(${i})">remover</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:5px">
+        <label style="margin:0;white-space:nowrap">Cota de vagas</label>
+        <input type="number" value="${p.cota||''}" placeholder="divide o total (${total})" style="width:150px"
+          onchange="PADS[${i}].cota=parseInt(this.value)||null;renderPadroes()">
+      </div>
+      <div class="hint" style="margin-top:4px">💰 ${ct?('<b>'+E(ct.nome)+'</b> · '+(RTIPO[ct.tipo_remuneracao]||'')+
+        (ct.percentual?' '+ct.percentual+'%':'')+(ct.valor?' '+moeda(ct.valor):'')) :
+        '<span class="tag t-a">sem contrato vinculado a este padrão</span> — o faturamento não saberá o repasse'}</div>
+    </div>`}).join('');
+}
+function addPadrao(){
+  const id=V('agenda_logica_id'); if(!id)return say('e','Escolha o padrão antes de incluir.');
+  if(PADS.some(p=>p.agenda_logica_id===id))return say('e','Esse padrão já está no bloco.');
+  PADS.push({agenda_logica_id:id,cota:null,ordem:PADS.length+1}); renderPadroes(); say('','');
+  const a=REF.agendas.find(x=>x.id===id);
+  if(a&&a.contrato_id&&!V('pagamento_tipo')){document.getElementById('pagamento_tipo').value='contrato';mostraContrato(a.contrato_id)}
+}
+function delPadrao(i){PADS.splice(i,1);renderPadroes()}
+
 function pick(box,el){document.querySelectorAll('#'+box+' .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
 function marca(box,v){const el=document.querySelector('#'+box+' .chip[data-v="'+v+'"]');
   if(el)pick(box,el);else{const f=document.querySelector('#'+box+' .chip');if(f)pick(box,f)}}
@@ -543,7 +625,9 @@ function corpo(liberar){
   const o={ medico_id:V('medico_id')||null, sala_id:V('sala_id')||null, data:V('data'),
     recorrencia:val('ch_rec'), hora_extra:document.getElementById('hora_extra').checked,
     observacao:V('observacao')||null, turno:cor==='vaga'?null:cor,
-    agenda_logica_id:V('agenda_logica_id')||null };
+    agenda_logica_id:(PADS[0]&&PADS[0].agenda_logica_id)||V('agenda_logica_id')||null };
+  const pa=document.getElementById('atende_pa');
+  if(pa&&!FALTA_PA){ o.atende_pa=pa.checked; o.pa_limite=parseInt(V('pa_limite'))||null }
   if(!FALTA_SQL)Object.assign(o,{hora_ini:V('hora_ini')||null,hora_fim:V('hora_fim')||null,
     titulo:V('titulo')||null,cor:cor,pagamento_tipo:V('pagamento_tipo')||null,
     pagamento_valor:parseFloat((V('pagamento_valor')||'').replace(/[^0-9,.-]/g,'').replace(',','.'))||null});
@@ -564,7 +648,11 @@ async function salvar(liberar){
     if(choque)return say('e',`Esse horário já está reservado em ${E(nomeSala(V('sala_id')))}: <b>${E(tituloDe(choque))}</b>.`);
 
     if(liberar){
-      if(!V('agenda_logica_id'))return say('e','Para liberar, associe o padrão de atendimento.');
+      if(!PADS.length)return say('e','Para liberar, inclua ao menos um padrão de atendimento.');
+      const semCt=PADS.filter(p=>{const a=REF.agendas.find(x=>x.id===p.agenda_logica_id);return !a||!a.contrato_id});
+      if(V('pagamento_tipo')==='contrato'&&semCt.length&&REF.contratos.length)
+        return say('e','Com pagamento por contrato, todo padrão do bloco precisa de contrato: '+
+          semCt.map(p=>E(nomeAg(p.agenda_logica_id))).join(', ')+'.');
       if(!V('pagamento_tipo'))return say('e','Para liberar, informe o pagamento.');
       if(V('pagamento_tipo')==='contrato'&&REF.contratos.length&&!V('contrato_id'))
         return say('e','Escolha o contrato do médico.');
@@ -587,6 +675,13 @@ async function salvar(liberar){
         while(true){ d.setDate(d.getDate()+7); if(d>fim)break; linhas.push({...o,data:iso(d)}) }
       }
       const criados=await po('reservas',linhas); ids=criados.map(x=>x.id);
+    }
+    /* padrões do bloco (N:N) — é daqui que o faturamento tira o repasse */
+    if(MULTI&&PADS.length){
+      for(const rid of ids){
+        try{ await de('reserva_padroes','reserva_id=eq.'+rid) }catch(_){}
+        try{ await po('reserva_padroes',PADS.map((p,i)=>({reserva_id:rid,agenda_logica_id:p.agenda_logica_id,cota:p.cota||null,ordem:i+1}))) }catch(_){}
+      }
     }
     let aviso='';
     if(liberar) aviso=await avisaCallCenter(o,ids);
@@ -642,6 +737,42 @@ async function tratar(id){ try{ await pa('alertas_call_center','id=eq.'+id,{stat
   await load(); verAlertas() }catch(e){ say('e','Erro: '+E(e.message)) } }
 async function tratarTodos(){ try{ for(const a of ALERTAS)await pa('alertas_call_center','id=eq.'+a.id,{status:'tratado',tratado_em:new Date().toISOString(),tratado_por:'call center'});
   await load(); fecha() }catch(e){ say('e','Erro: '+E(e.message)) } }
+
+/* ---------------- cobertura de P.A. (planejamento) ---------------- */
+async function coberturaPA(){
+  const base=MODO==='dia'?domingo(DIA):INI;
+  const ds=[]; for(let i=0;i<7;i++){const d=new Date(base);d.setDate(d.getDate()+i);ds.push(d)}
+  let dados=RES;
+  if(MODO==='dia'){ const a=iso(ds[0]),b=iso(ds[6]);
+    dados=await g(`reservas?select=*&data=gte.${a}&data=lte.${b}`).catch(()=>RES) }
+  const PER=[{k:'manha',n:'Manhã',i:0,f:720},{k:'tarde',n:'Tarde',i:720,f:1440}];
+  document.getElementById('pt').textContent='Cobertura de P.A. — semana de '+ds[0].getDate()+'/'+(ds[0].getMonth()+1);
+  let h=`<div class="msg" id="msg"></div>
+    <div class="et"><h3><span class="num">🚑</span> Quem cobre o P.A.</h3>
+    <div class="hint">O mesmo médico da grade pode, dependendo do dia, ficar disponível para atender P.A. além das consultas.
+    Marque no bloco a opção <b>“Disponível para P.A.”</b>.</div></div>`;
+  let buracos=0;
+  ds.forEach(d=>{
+    const dstr=iso(d), dd=new Date(dstr+'T12:00:00');
+    h+=`<div class="et" style="padding:9px 11px"><div style="display:flex;gap:8px;align-items:center">
+        <b style="flex:1">${DIAS[dd.getDay()].replace('.','')} ${dd.getDate()}/${dd.getMonth()+1}</b></div>`;
+    PER.forEach(p=>{
+      const cobre=dados.filter(r=>r.data===dstr&&r.atende_pa&&r.estado!=='bloqueado'&&(()=>{const j=janela(r);return j.i<p.f&&j.f>p.i})());
+      const util=(dd.getDay()>=1&&dd.getDay()<=5);
+      if(!cobre.length&&util)buracos++;
+      h+=`<div style="margin-top:5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span class="tag t-n" style="min-width:52px">${p.n}</span>`+
+        (cobre.length
+          ? cobre.map(r=>`<span class="tag t-g">${E(nomeMed(r.medico_id)||tituloDe(r))}${r.pa_limite?' · até '+r.pa_limite:''}</span>`).join('')
+          : `<span class="tag ${util?'t-r':'t-n'}">${util?'⚠ ninguém disponível':'—'}</span>`)+`</div>`;
+    });
+    h+='</div>';
+  });
+  if(buracos)h=h.replace('<div class="et"><h3>',`<div class="msg w" style="display:block">⚠ <b>${buracos} período(s) útil(eis) sem ninguém para o P.A.</b> nesta semana.</div><div class="et"><h3>`);
+  document.getElementById('pb').innerHTML=h;
+  document.getElementById('pf').innerHTML='<button class="bl n" onclick="fecha()">Fechar</button>';
+  document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
+}
 
 /* ---------------- consultórios da véspera ---------------- */
 function definirSalas(dstr){
