@@ -352,7 +352,7 @@ async function pendencias(){
   try{
     const lig=await g(`contato_paciente?select=contatos(digisac_contact_id)&paciente_id=eq.${pid}`);
     const cid=lig.map(x=>x.contatos&&x.contatos.digisac_contact_id).filter(Boolean)[0];
-    if(cid) btnDg=`<button class="b1" style="background:#2c4a80;color:#fff" onclick="abreDigisac('${cid}')">🗨 Abrir no DIGISAC</button>`;
+    if(cid) btnDg=`<button class="b1" style="background:#2c4a80;color:#fff" onclick="abreDigisac('${cid}')">🗨 Abrir DIGISAC</button>`;
   }catch(e){}
   if(tel||btnDg) h+=`<div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       ${tel?`<button class="b1" style="background:#25D366;color:#fff" onclick="zap('${tel}','${E((p.nome||'').split(' ')[0])}')">💬 WhatsApp</button>`:''}
