@@ -62,11 +62,41 @@ const brd=s=>s?String(s).split('T')[0].split('-').reverse().join('/'):'';
 const hhmm=s=>String(s||'').slice(0,5);
 let PRE=[];
 
+const FN='https://prztrrtwrunljapnyaci.supabase.co/functions/v1';
+let CFG={};
 async function load(){try{
   stat('ld','carregando…');
   PRE=await g('vw_pre_reservas?select=*');
+  if(!CFG.digisac_base){ try{ (await g('parametros_sistema?select=chave,valor')).forEach(p=>CFG[p.chave]=p.valor) }catch(e){} }
   render(); stat('ok','● conectado');
+  checaRespostas();
 }catch(e){ document.getElementById('ct').innerHTML='<div class="alerta r">Erro: '+E(e.message)+'</div>'; stat('er','● erro') }}
+
+/* Pergunta ao DIGISAC se o paciente respondeu depois que o horário foi oferecido.
+   Sem deep link para a conversa, é assim que a coordenação sabe se pode fechar. */
+async function checaRespostas(){
+  for(const x of PRE){
+    const cel=document.getElementById('rsp_'+x.id); if(!cel)continue;
+    if(!x.contato_id){ cel.innerHTML='<span class="hint">sem contato vinculado</span>'; continue }
+    try{
+      const c=(await g(`contatos?id=eq.${x.contato_id}&select=digisac_contact_id`))[0];
+      if(!c||!c.digisac_contact_id){ cel.innerHTML='<span class="hint">contato sem WhatsApp</span>'; continue }
+      cel.innerHTML='<span class="hint">consultando…</span>';
+      const r=await fetch(`${FN}/digisac-conversa?contactId=${encodeURIComponent(c.digisac_contact_id)}&desde=${encodeURIComponent(x.criado_em)}`);
+      const j=await r.json();
+      if(j.respondeu){
+        const t=j.ultima_resposta;
+        cel.innerHTML=`<span class="tag t-g">respondeu</span><br><span class="hint">“${E(String(t.texto||'').slice(0,60))}” · ${new Date(t.quando).toLocaleString('pt-BR')}</span>`;
+      }else{
+        cel.innerHTML=`<span class="tag t-a">sem resposta</span><br><span class="hint">desde que o horário foi oferecido</span>`;
+      }
+    }catch(e){ cel.innerHTML='<span class="hint">não consegui consultar</span>' }
+  }
+}
+function abreDigisac(){
+  const base=(CFG.digisac_base||'https://hoguanabara.digisac.biz').replace(/\/$/,'');
+  window.open(base,'_blank');
+}
 
 function render(){
   const venc=PRE.filter(x=>x.vencida), avisa=PRE.filter(x=>x.vencendo);
@@ -87,7 +117,7 @@ function render(){
   if(!PRE.length){document.getElementById('ct').innerHTML='<div class="vazio">Nenhum horário segurado no momento.</div>';return}
   document.getElementById('ct').innerHTML=
     `<table><thead><tr><th>Quando</th><th>Paciente</th><th>Agenda / médico</th><th>Segurado por</th>
-      <th>Prazo</th><th>Situação</th><th></th></tr></thead><tbody>`+
+      <th>Prazo</th><th>Situação</th><th>Resposta no WhatsApp</th><th></th></tr></thead><tbody>`+
     PRE.map(x=>`<tr class="${x.vencida?'venc':(x.vencendo?'avisa':'')}">
       <td><b>${brd(x.data)}</b> ${hhmm(x.hora)}</td>
       <td>${E(x.paciente||'—')}${x.telefone?'<br><span class="hint">'+E(x.telefone)+'</span>':''}</td>
@@ -95,11 +125,13 @@ function render(){
       <td>${E(x.criado_por||'—')}<br><span class="hint">${new Date(x.criado_em).toLocaleString('pt-BR')}</span></td>
       <td>${x.vencida?'<span class="tag t-r">venceu</span>':'<b>'+x.horas_restantes+'h</b>'}<br>
           <span class="hint">até ${new Date(x.expira_em).toLocaleString('pt-BR')}</span></td>
-      <td>${x.vencida?'<span class="tag t-r">sem resposta</span>':(x.vencendo?'<span class="tag t-a">cobrar resposta</span>':'<span class="tag t-g">aguardando</span>')}</td>
+      <td>${x.vencida?'<span class="tag t-r">prazo esgotado</span>':(x.vencendo?'<span class="tag t-a">cobrar resposta</span>':'<span class="tag t-g">aguardando</span>')}</td>
+      <td id="rsp_${x.id}"><span class="hint">…</span></td>
       <td style="white-space:nowrap">
         <button class="b b-g" onclick="confirmar('${x.id}')">confirmar</button>
         <button class="b b-n" style="margin-left:4px" onclick="liberar('${x.id}')">liberar</button>
         <button class="b b-w" style="margin-left:4px" onclick="prorrogar('${x.id}')">+24h</button>
+        <button class="b" style="margin-left:4px;background:#2c4a80;color:#fff" onclick="abreDigisac()">💬 DIGISAC</button>
       </td></tr>`).join('')+'</tbody></table>';
 }
 
