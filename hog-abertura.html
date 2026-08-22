@@ -580,10 +580,13 @@ function equipDaSala(){
   const fixos=REF.equip.filter(e=>e.sala_id===s&&e.movel===false);
   const podem=REF.equip.filter(e=>e.sala_id!==s&&(e.salas_possiveis||[]).includes(s));
   const moveis=REF.equip.filter(e=>e.sala_id===s&&e.movel!==false);
+  const nm=e=>`<span title="${E(e.observacao||'')}">${E(e.nome)}</span>`;
   let h='';
-  if(fixos.length)h+='🔧 fixo aqui: <b>'+fixos.map(e=>E(e.nome)).join(', ')+'</b>. ';
-  if(moveis.length)h+='móvel neste local: '+moveis.map(e=>E(e.nome)).join(', ')+'. ';
-  if(podem.length)h+='pode vir para cá: '+podem.map(e=>E(e.nome)).join(', ')+'.';
+  if(fixos.length)h+='🔧 fixo aqui: <b>'+fixos.map(nm).join(', ')+'</b>. ';
+  if(moveis.length)h+='móvel neste local: '+moveis.map(nm).join(', ')+'. ';
+  if(podem.length)h+='pode vir para cá: '+podem.map(nm).join(', ')+'.';
+  const obs=[...fixos,...moveis].filter(e=>e.observacao).map(e=>E(e.observacao));
+  if(obs.length)h+='<br><span style="color:#856404">ℹ '+obs[0]+'</span>';
   box.innerHTML=h||'Sem aparelho vinculado a este local.';
 }
 
