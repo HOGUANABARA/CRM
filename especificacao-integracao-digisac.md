@@ -130,3 +130,37 @@ novas datas, o aviso sai automaticamente para quem esperava.
 2. Fase 2 (confirmação e lembrete D-1) — reduz falta, que hoje é medida errada.
 3. Fase 3 (agendamento pelo WhatsApp) — só depois das regras estarem rodando
    na tela, para o bot herdar validação madura.
+
+---
+
+## Dados confirmados do ambiente (22/08/2026)
+
+| Item | Valor |
+|---|---|
+| DIGISAC da clínica | `https://hoguanabara.digisac.biz` |
+| **URL base da API** | `https://hoguanabara.digisac.biz/api/v1` |
+| Documentação | Postman — `documenter.getpostman.com/view/53282970/2sBXihpXmF` |
+| Tokens | Configurações → API → aba **Tokens de acesso pessoal** |
+| Webhooks | Configurações → API → aba **Webhooks** ✅ existe |
+| Variáveis do iframe | `{{contactId}}`, `{{ticketId}}`, `{{userId}}` — **não manda telefone** |
+| Deep link por conversa | **não existe** — a URL não muda ao trocar de conversa |
+
+### Consequências para o desenho
+1. O painel lateral funciona por **contactId** e aprende o vínculo com o paciente
+   na primeira conversa (já implementado em `hog-digisac-painel.html`).
+2. Para abrir/mandar mensagem a partir do sistema, o caminho é a **API**, não link.
+3. O webhook existe → a **Fase 1 automática** (foto da requisição entrando sozinha)
+   é viável.
+
+### Endpoint que vamos usar (a confirmar na documentação)
+```
+POST {base}/messages          → enviar texto/arquivo
+GET  {base}/contacts/{id}     → dados do contato (telefone, nome)
+```
+Com `GET /contacts/{id}` o painel deixa de precisar do telefone digitado: o
+`contactId` do iframe basta para achar o paciente sozinho.
+
+### Segurança
+O token **não** pode ficar na página (o HTML é público no GitHub Pages).
+Ele vai para os *secrets* das Edge Functions do Supabase, e o navegador chama
+a Edge Function, nunca o DIGISAC direto.
