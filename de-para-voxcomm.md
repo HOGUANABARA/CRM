@@ -147,3 +147,32 @@ paciente que tinha hora, não cancelou e não deu entrada.
 A flag `origem_incerta` evita que o histórico importado contamine o indicador de falta
 do sistema novo: os primeiros meses de operação já nascem com a medição correta,
 e o histórico fica marcado como aproximado.
+
+---
+
+## Tela "Agendar" do cadastro do paciente (`dados?get=agendar&id=…`)
+
+Botões da linha do paciente: **Dados · Visitas · Agendamentos · Prontuário** (azul),
+**Médicos · Interno** (verde), **Médicos · Interno** (vermelho).
+
+- **Verde = agendar na agenda médica**, e só se houver **horário disponível**.
+  O perfil que usa esse botão **não tem autorização para encaixe**.
+- A tela pede **Médico**, **Data** e o **Atendimento** (lista de chaves) — é o
+  `cao2 atendimento`, o mesmo catálogo que o `atendimentos_permitidos` referencia.
+
+### Catálogo de atendimentos lido da tela
+Angiofluoresce · Aplicação · AVALIAÇÃO ROSSI · Biometria · Campo · Ceratoscopia ·
+Ciclofoto · Cirurgia · Cirurgia Crosslinking · Cirurgia Estrabismo ·
+Cirurgia FACO CONVÊNIO · Cirurgia FACO IMP · Cirurgia FACO Parceiro ·
+Cirurgia Plástica · Cirurgia Refrativa · Cirurgia TREC · Cirurgia Vitre · Coa ·
+Consulta · Consulta 55+ · Consulta Catarata · Consulta Córnea · Consulta Encaixe ·
+Consulta Óculos · Consulta Plástica · Consulta Pré Anestésica · Consultora Cirúrgica ·
+Curva · Eco · PA *(a lista continua abaixo do print)*
+
+Observações:
+- **"Consulta Encaixe" é um atendimento à parte** — hoje o encaixe é disfarçado de
+  tipo de atendimento. No HOG Gestão encaixe é uma **flag do agendamento** com
+  autorização de perfil, e não um tipo — assim o indicador de encaixe fica limpo.
+- **FACO CONVÊNIO / FACO IMP / FACO Parceiro** já separam a origem comercial da
+  cirurgia de catarata — casa com o modelo de LIO (convênio, importada, particular).
+- **Cirurgia TREC** = transplante de córnea, que tem o fluxo próprio de fila estadual.
