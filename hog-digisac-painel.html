@@ -177,6 +177,19 @@ function buscarDireto(){ clearTimeout(tmr2); tmr2=setTimeout(async()=>{
 },350)}
 async function abrirDireto(pid){ const p=await g(`pacientes?id=eq.${pid}`); PACIENTE=p[0]; await painelPaciente('proprio') }
 
+/* Desfaz o vínculo entre esta conversa e o paciente — para quando alguém
+   vincula errado. Não apaga nada do paciente nem do histórico dele. */
+async function desvincular(){
+  if(!CONTATO||!PACIENTE)return;
+  if(!confirm(`Desfazer o vínculo deste contato com ${PACIENTE.nome}?\n\nA conversa volta a pedir identificação. Nada do paciente é apagado.`))return;
+  try{
+    await fetch(`${SB}/contato_paciente?contato_id=eq.${CONTATO.id}&paciente_id=eq.${PACIENTE.id}`,{method:'DELETE',headers:H});
+    if(TICKET) await pa('conversas','digisac_ticket_id=eq.'+TICKET,{paciente_id:null,status:'aberta'}).catch(()=>{});
+    PACIENTE=null; say('s','✅ Vínculo desfeito. Identifique o paciente correto abaixo.');
+    await identificar();
+  }catch(e){ say('e','Erro ao desfazer: '+E(e.message)) }
+}
+
 /* ---------- 1) conversa ainda não identificada ---------- */
 async function identificar(){
   let sug=[];
@@ -245,6 +258,10 @@ async function painelPaciente(rel){
       ${p.sobe_escada===false?' · <span class="tag t-a">não sobe escada</span>':''}
       ${rel&&rel!=='proprio'?' · <span class="tag t-b">falando: '+E(rel)+'</span>':''}
       ${faltas?' · <span class="tag t-r">'+faltas+' falta(s)</span>':''}</div>
+    <div style="margin-top:7px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span class="hint" style="margin:0">Não é este paciente?</span>
+      <button class="b b-n b-s" onclick="desvincular()">desfazer vínculo</button>
+    </div>
   </div>
 
   <div class="card">

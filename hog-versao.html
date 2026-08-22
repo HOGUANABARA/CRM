@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Onde chegamos</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f8f9fa;color:#212529;font-size:16px;}
+  .topo{background:#212529;color:#fff;padding:18px 22px;}
+  .topo h1{font-size:22px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .topo .v{background:#0d6efd;border-radius:999px;font-size:12px;padding:3px 11px;font-weight:700;letter-spacing:.5px;}
+  .topo p{font-size:13.5px;color:#adb5bd;margin-top:5px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px;}
+  h2{font-size:15px;margin:22px 0 10px;display:flex;align-items:center;gap:8px;}
+  h2 .n{font-size:12px;color:#6c757d;font-weight:400;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;}
+  .k{background:#fff;border:1px solid #dee2e6;border-radius:.5rem;padding:11px 13px;}
+  .k .n{font-size:23px;font-weight:700;line-height:1.1;}
+  .k .l{font-size:10.5px;color:#6c757d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:11px;}
+  .c{background:#fff;border:1px solid #dee2e6;border-radius:.5rem;padding:13px 14px;display:flex;flex-direction:column;gap:6px;}
+  .c h3{font-size:15px;display:flex;align-items:center;gap:7px;}
+  .c p{font-size:13.5px;color:#495057;line-height:1.45;flex:1;}
+  .c .rod{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+  .tag{display:inline-block;padding:.18rem .55rem;border-radius:.375rem;font-size:11.5px;font-weight:600;}
+  .t-ok{background:#d1e7dd;color:#0a3622;} .t-wip{background:#fff3cd;color:#664d03;}
+  .t-dep{background:#e2d9f3;color:#341c66;} .t-new{background:#cfe2ff;color:#052c65;}
+  .t-n{background:#e9ecef;color:#495057;}
+  a.btn{background:#0d6efd;color:#fff;text-decoration:none;border-radius:.375rem;padding:.3rem .7rem;font-size:13px;}
+  a.btn.o{background:#fff;color:#0d6efd;border:1px solid #0d6efd;}
+  .linha{background:#fff;border:1px solid #dee2e6;border-radius:.5rem;padding:11px 13px;margin-bottom:8px;font-size:14px;}
+  .linha b{display:block;margin-bottom:3px;}
+  .linha .hint{font-size:12.5px;color:#6c757d;}
+  .barra{height:8px;background:#e9ecef;border-radius:5px;overflow:hidden;margin:10px 0 4px;}
+  .barra i{display:block;height:100%;background:#198754;}
+  .rodape{margin-top:26px;font-size:12.5px;color:#6c757d;line-height:1.6;}
+  code{background:#f1f3f5;border-radius:3px;padding:1px 5px;font-size:12.5px;}
+</style>
+<link rel="stylesheet" href="hog-tema.css">
+</head>
+<body>
+<div class="topo">
+  <h1>👁 HOG Gestão <span class="v" id="versao">v0.9 · demonstração</span></h1>
+  <p>Onde chegamos — atualizado automaticamente com os dados reais do banco.
+     <span id="quando"></span></p>
+</div>
+
+<div class="wrap">
+  <h2>📊 O que já existe no banco <span class="n">números ao vivo</span></h2>
+  <div class="kpis" id="kpis"><div class="k"><div class="l">carregando…</div></div></div>
+
+  <h2>🧩 Módulos</h2>
+  <div class="grid" id="modulos"></div>
+
+  <h2>🔌 Integrações</h2>
+  <div id="integr"></div>
+
+  <h2>🚧 Em construção e o que vem depois</h2>
+  <div id="proximos"></div>
+
+  <div class="rodape" id="rodape"></div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'count=exact'};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+async function conta(tabela,filtro){
+  try{
+    const r=await fetch(`${SB}/${tabela}?select=*${filtro?'&'+filtro:''}&limit=1`,{headers:H});
+    const cr=r.headers.get('content-range')||'';
+    const n=parseInt((cr.split('/')[1]||'0'),10);
+    return r.ok?(isNaN(n)?0:n):null;
+  }catch(e){ return null }
+}
+
+const MODULOS=[
+ {t:'Grade do HOG',ic:'📅',s:'ok',l:'hog-abertura.html',
+  d:'Cada local nasce disponível no horário de funcionamento. Reserva com poucos dados; a liberação exige padrão, pagamento e quem pode agendar. Consultório definido na véspera, vagas extras por negociação, cobertura de P.A.'},
+ {t:'Agenda Médica',ic:'🩺',s:'ok',l:'hog-agenda-medica.html',
+  d:'Agenda do dia no visual do sistema atual. Pendências do paciente antes de agendar, checagem de vaga, encaixe só com perfil e motivo, histórico colorido por falta.'},
+ {t:'Agenda de Exames',ic:'🔬',s:'ok',l:'demo-agenda-exames.html',
+  d:'Motor contínuo: a duração é a soma dos exames, sem vaga fixa. Sai no formato da planilha de avulsos, com requisição, telefone e nascimento.'},
+ {t:'Chamada de Exames',ic:'📢',s:'ok',l:'hog-exames-chamada.html',
+  d:'Fila de chamada com a sala logada, para o painel de senhas direcionar o paciente ao lugar certo.'},
+ {t:'Agenda Cirúrgica',ic:'🏥',s:'ok',l:'hog-agenda-cirurgica.html',
+  d:'Médico executor obrigatório, baixa cirúrgica com LIO, dioptria, anestesista e segundo olho.'},
+ {t:'Recepção',ic:'🚶',s:'ok',l:'hog-recepcao.html',
+  d:'Entrada com CPF obrigatório, encaminhamento e guias. Só as agendas com movimento no dia.'},
+ {t:'Cadastros',ic:'🗂️',s:'ok',l:'hog-cadastros.html',
+  d:'16 cadastros com anti-duplicação, incluindo contratos de repasse e padrões de atendimento.'},
+ {t:'Indicadores',ic:'📈',s:'ok',l:'hog-indicadores.html',
+  d:'Capacidade instalada, liberado por tipo, alerta de ocupação, numerário diário, faltas e encaixes.'},
+ {t:'Mapa de Ocupação',ic:'🗺️',s:'ok',l:'hog-mapa.html',
+  d:'Reserva e liberação por sala e médico, com filtros e agrupamento.'},
+ {t:'Lista de Espera',ic:'⏳',s:'ok',l:'hog-espera.html',
+  d:'Ordem de chegada por médico e procedimento, com urgência.'},
+ {t:'Ficha do paciente no WhatsApp',ic:'💬',s:'novo',l:'hog-digisac-painel.html',
+  d:'Abre na lateral da conversa no DIGISAC: identifica o paciente pelo contato, mostra pendências e autorizações, agenda com checagem de vaga e envia a confirmação.'},
+ {t:'Agendamento Externo',ic:'🌐',s:'wip',l:'demo-agendamento-externo.html',
+  d:'Portal para o paciente/parceiro solicitar. Aguarda a virada do agendamento para o HOG Gestão.'},
+ {t:'Faturamento',ic:'💰',s:'wip',l:'modulo-faturamento.html',
+  d:'Repasse por padrão de atendimento com contrato congelado no atendimento; visão pronta no banco, tela em construção.'},
+];
+
+const INTEGR=[
+ {t:'Supabase (banco)',s:'ok',d:'Projeto HOG GESTAO em São Paulo. Todas as tabelas, visões e gatilhos publicados.'},
+ {t:'DIGISAC — painel na conversa',s:'ok',d:'Integração "Contato - barra lateral" ativa, reconhecendo o contato pelo identificador.'},
+ {t:'DIGISAC — envio de mensagem',s:'ok',d:'Função digisac-send publicada e testada com envio real, com rodízio de números.'},
+ {t:'DIGISAC — recebimento (webhook)',s:'wip',d:'Trará a foto da requisição direto para o cadastro. Depende de publicar a função de entrada.'},
+ {t:'SIVOE (prontuário)',s:'dep',d:'Manual de integração escrito; depende de reunião com o fornecedor.'},
+ {t:'VoxComm (dados)',s:'dep',d:'De-para do banco cao2 mapeado pelo Power BI; carga depende do acesso ao banco.'},
+ {t:'Telefonia',s:'dep',d:'VoxComm. Identificar o paciente pela ligação fica para depois.'},
+];
+
+const PROXIMOS=[
+ ['Tela de parametrização das mensagens','Editar textos, gatilhos e horários sem depender de programação. Banco pronto, tela pendente.'],
+ ['Webhook do DIGISAC','A requisição em foto entra sozinha no cadastro do paciente.'],
+ ['Disparo automático','Confirmação ao agendar e lembrete da véspera com o consultório. Regras já criadas, todas desligadas.'],
+ ['Carga do VoxComm','Histórico de agendamentos e visitas para os indicadores nascerem com base real.'],
+ ['Consultora Cirúrgica','Atendimento pré-cirúrgico, orçamento, fechamento do dia e comissão.'],
+];
+
+const SEL={ok:['t-ok','funcionando'],wip:['t-wip','em construção'],dep:['t-dep','depende de terceiro'],novo:['t-new','novo']};
+
+(async()=>{
+  document.getElementById('quando').textContent='Consulta feita em '+new Date().toLocaleString('pt-BR');
+
+  const [pac,med,ag,res,agd,at,exa,ctr,cont,conex,mod,reg,disp]=await Promise.all([
+    conta('pacientes'),conta('medicos'),conta('agendas_logicas'),conta('reservas'),
+    conta('agendamentos'),conta('atendimentos'),conta('exames'),conta('contratos'),
+    conta('contatos'),conta('conexoes_envio'),conta('modelos_mensagem'),conta('regras_envio'),conta('disparos')]);
+  const kp=[['Pacientes',pac],['Médicos',med],['Padrões de atendimento',ag],['Blocos na grade',res],
+            ['Agendamentos',agd],['Tipos de atendimento',at],['Exames',exa],['Contratos',ctr],
+            ['Contatos do WhatsApp',cont],['Conexões de envio',conex],['Modelos de mensagem',mod],
+            ['Regras de envio',reg],['Mensagens enviadas',disp]];
+  document.getElementById('kpis').innerHTML=kp.map(([l,n])=>
+    `<div class="k"><div class="l">${l}</div><div class="n">${n==null?'—':n}</div></div>`).join('');
+
+  document.getElementById('modulos').innerHTML=MODULOS.map(m=>{
+    const [cls,txt]=SEL[m.s];
+    return `<div class="c"><h3>${m.ic} ${E(m.t)}</h3><p>${E(m.d)}</p>
+      <div class="rod"><span class="tag ${cls}">${txt}</span>
+      <a class="btn o" href="${m.l}" target="_blank">abrir</a></div></div>`}).join('');
+
+  document.getElementById('integr').innerHTML=INTEGR.map(i=>{
+    const [cls,txt]=SEL[i.s];
+    return `<div class="linha"><b>${E(i.t)} <span class="tag ${cls}">${txt}</span></b>
+      <span class="hint">${E(i.d)}</span></div>`}).join('');
+
+  document.getElementById('proximos').innerHTML=PROXIMOS.map(([t,d])=>
+    `<div class="linha"><b>${E(t)}</b><span class="hint">${E(d)}</span></div>`).join('');
+
+  const prontos=MODULOS.filter(m=>m.s==='ok'||m.s==='novo').length;
+  const pct=Math.round(prontos/MODULOS.length*100);
+  document.getElementById('rodape').innerHTML=
+    `<div class="barra"><i style="width:${pct}%"></i></div>
+     <b>${prontos} de ${MODULOS.length} módulos funcionando</b> (${pct}%). Os demais dependem da virada do
+     agendamento ou de terceiros.<br><br>
+     Tudo publicado em <code>hoguanabara.github.io/CRM</code> e ligado ao banco de verdade —
+     o que você faz nas telas grava e aparece nas outras. A ordem da implantação está em
+     <b>plano-coexistencia.md</b>: primeiro o que hoje vive fora do sistema (grade, exames, requisição,
+     lista de espera), depois a leitura do VoxComm, depois a virada módulo a módulo.`;
+})();
+</script>
+</body>
+</html>
