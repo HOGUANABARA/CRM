@@ -294,16 +294,42 @@ async function salvarAgendamento(o){
   await recarregaAG();
 }
 function _agdDia(){const d=document.getElementById('selDia').value;
-  return AG.filter(a=>a.data===d).sort((a,b)=>a.ini-b.ini).map(a=>({cheg:H(a.ini-P.cheg),ini:H(a.ini),fim:H(a.fim),pac:a.pac||'',
-   exames:(a.exames||[]).map(e=>{const x=EX(e);return x?x.sig:e;}).join('+'),
+  return AG.filter(a=>a.data===d).sort((a,b)=>a.ini-b.ini).map((a,i)=>({
+   vaga:'AVULSO '+String(i+1).padStart(2,'0'),
+   cheg:H(a.ini-P.cheg), ini:H(a.ini), fim:H(a.fim), tempo:(a.fim-a.ini),
+   pac:a.pac||'', nasc:a.nascimento||'', tel:a.telefone||'',
+   exames:(a.exames||[]).map(e=>{const x=EX(e);return x?x.sig:e;}).join(' + '),
+   qtd:(a.exames||[]).length,
+   status:(a.status||'agendado').toUpperCase(),
+   obs:a.observacao||[(a.solicitado_em?'Do dia '+String(a.solicitado_em).split('-').reverse().join('/'):''),
+        (a.numero_requisicao?'Requisição: '+a.numero_requisicao:'')].filter(Boolean).join(' - '),
    sala:[...new Set((a.plano||[]).map(x=>DIAS[d]&&DIAS[d].salas[x.sala]?DIAS[d].salas[x.sala].nome:''))].filter(Boolean).join(' / ')}));}
+/* Sai no MESMO formato da planilha de avulsos que a equipe usa hoje,
+   para a etapa do Excel deixar de existir. */
 function imprimirAgenda(){const d=document.getElementById('selDia').value;const rows=_agdDia();
-  const html='<h2 style="font-family:sans-serif">Agenda de Exames — '+((DIAS[d]&&DIAS[d].lab)||d)+'</h2><table border="1" cellpadding="6" style="border-collapse:collapse;font-family:sans-serif;font-size:13px"><tr><th>Chegar</th><th>Início</th><th>Fim</th><th>Paciente</th><th>Exames</th><th>Sala</th></tr>'+rows.map(r=>'<tr><td>'+r.cheg+'</td><td>'+r.ini+'</td><td>'+r.fim+'</td><td>'+r.pac+'</td><td>'+r.exames+'</td><td>'+r.sala+'</td></tr>').join('')+'</table>';
-  const w=window.open('','_blank');if(!w){alert('Permita popups para imprimir.');return;}w.document.write('<html><head><title>Agenda de Exames</title></head><body>'+html+'</body></html>');w.document.close();w.focus();setTimeout(function(){w.print();},300);}
+  const sala=(rows[0]&&rows[0].sala)||'';
+  const th='background:#B8860B;color:#fff;padding:6px;font-size:12px';
+  const html='<div style="font-family:sans-serif">'+
+    '<div style="'+th+';text-align:center;font-weight:700;font-size:15px">AVULSOS — '+(sala||((DIAS[d]&&DIAS[d].lab)||d))+'</div>'+
+    '<table border="1" cellpadding="5" style="border-collapse:collapse;font-family:sans-serif;font-size:12.5px;width:100%">'+
+    '<tr style="background:#FFF8DC;font-weight:700;color:#8B6914"><th>VAGA</th><th>HORÁRIO</th><th>TEMPO</th>'+
+    '<th>EXAME A AGENDAR</th><th>NOME COMPLETO DO PACIENTE</th><th>DATA DE NASCIMENTO</th><th>TELEFONE</th>'+
+    '<th>STATUS</th><th>OBSERVAÇÃO</th><th>QTD. EXAMES</th></tr>'+
+    rows.map((r,i)=>'<tr style="background:'+(i%2?'#FFFDF0':'#FFF8DC')+'"><td>'+r.vaga+'</td><td align="center">'+r.ini+'</td>'+
+      '<td align="center">'+r.tempo+'</td><td align="center">'+r.exames+'</td><td>'+r.pac+'</td>'+
+      '<td align="center">'+(r.nasc||'')+'</td><td align="center">'+(r.tel||'')+'</td>'+
+      '<td align="center">'+r.status+'</td><td>'+(r.obs||'')+'</td><td align="center">'+r.qtd+'</td></tr>').join('')+
+    '</table><p style="font-size:11px;color:#666">Chegada orientada: '+P.cheg+' min antes do horário. HOG Gestão — '+d+'</p></div>';
+  const w=window.open('','_blank');if(!w){alert('Permita popups para imprimir.');return;}
+  w.document.write('<html><head><title>Avulsos '+d+'</title></head><body>'+html+'</body></html>');
+  w.document.close();w.focus();setTimeout(function(){w.print();},300);}
 function exportarCSV(){const d=document.getElementById('selDia').value;const rows=_agdDia();
-  const head=['Chegar','Inicio','Fim','Paciente','Exames','Sala'];
-  const csv=[head.join(';')].concat(rows.map(r=>[r.cheg,r.ini,r.fim,r.pac,r.exames,r.sala].map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(';'))).join('\r\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='agenda-exames-'+d+'.csv';document.body.appendChild(a);a.click();a.remove();}
+  const head=['VAGA','HORÁRIO','TEMPO','EXAME A AGENDAR','NOME COMPLETO DO PACIENTE','DATA DE NASCIMENTO',
+              'TELEFONE','STATUS','OBSERVAÇÃO','QTD. EXAMES','CHEGAR','SALA'];
+  const csv=[head.join(';')].concat(rows.map(r=>[r.vaga,r.ini,r.tempo,r.exames,r.pac,r.nasc,r.tel,r.status,r.obs,r.qtd,r.cheg,r.sala]
+    .map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(';'))).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='avulsos-'+d+'.csv';document.body.appendChild(a);a.click();a.remove();}
 /* ============================================ */
 let EXAMES=[
  {id:'CAMPO',sig:'CV',nome:'Campo visual',equip:'Campímetro',dur:20,ordem:1,dilata:false,cor:'var(--s2)',
