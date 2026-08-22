@@ -13,6 +13,9 @@
   .agbar a:hover{background:#fff;}
   .agbar a.on{background:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
   .agbar a.verTodas{color:#0d6efd;font-size:13px;border-left:1px solid #b9cfe4;margin-left:6px;}
+  .chipm{border:1px solid #ced4da;border-radius:999px;padding:.3rem .8rem;font-size:13px;cursor:pointer;background:#fff;}
+  .chipm.on{background:#0d6efd;border-color:#0d6efd;color:#fff;font-weight:600;}
+  .chipm[data-v=criado].on{background:#dc3545;border-color:#dc3545;}
   /* navegação de dia */
   .daybar{background:#dce9f7;padding:9px;display:flex;justify-content:center;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
   .daybar input[type=date]{padding:6px 9px;border:1px solid #b9c9d8;border-radius:4px;font-size:14px;}
@@ -281,7 +284,20 @@ async function excluir(id){if(!confirm('Excluir este agendamento?'))return;
 function novo(){
   abre('Novo agendamento',
    `<div class="info">O sistema verifica <b>consulta em menos de 30 dias</b>, <b>histórico de faltas</b>, <b>cota de não sobe escada</b> e mostra a <b>orientação do médico</b>.</div>
+    <div style="margin:8px 0 10px">
+      <label style="font-size:11.5px;font-weight:600;color:#495057">Critério do agendamento</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="ch_modo">
+        <span class="chipm on" data-v="padrao" onclick="modo('padrao')">🟢 Horário padrão da agenda</span>
+        <span class="chipm" data-v="criado" onclick="modo('criado')">🔴 Criar horário (encaixe)</span>
+      </div>
+      <div class="hint" id="modo_hint" style="font-size:12px;color:#6c757d;margin-top:4px">
+        Usa uma vaga que já existe na agenda.</div>
+    </div>
     <div class="msg" id="n_msg"></div><div id="n_alertas"></div>
+    <div id="bx_motivo" style="display:none;margin-bottom:9px">
+      <label style="font-size:11.5px;font-weight:600;color:#495057">Motivo de criar o horário *</label>
+      <input id="n_motivo" placeholder="ex.: paciente de fora, retorno de cirurgia, urgência do médico">
+    </div>
     <div class="grid">
       <div style="grid-column:span 2"><label>Paciente *</label>${sel('n_pac',REF.pacientes)}</div>
       <div style="grid-column:span 2"><label>Agenda *</label>${sel('n_ag',REF.agendas,AGENDA)}</div>
@@ -301,12 +317,30 @@ function novo(){
     <button class="b2" id="btn_ok" onclick="salvar(false)">Agendar</button>`);
   document.getElementById('n_perfil').value=PERFIL;
   document.getElementById('n_data').onchange=checar;
+  MODO_AG='padrao'; modo('padrao');
   document.getElementById('n_pac').onchange=checar;
   document.getElementById('n_ag').onchange=()=>{const a=REF.agendas.find(x=>x.id===V('n_ag'));
     if(a&&a.sala_padrao_id)document.getElementById('n_sala').value=a.sala_padrao_id;checar()};
   if(AGENDA)document.getElementById('n_ag').value=AGENDA;
 }
-let TRAVA=null, SEM_VAGA=false;
+let TRAVA=null, SEM_VAGA=false, MODO_AG='padrao';
+/* o botão define o CRITÉRIO: horário padrão da agenda x horário criado por um motivo */
+function modo(v){
+  if(v==='criado'&&!PODE_ENCAIXAR()){
+    alert('Criar horário é encaixe — seu perfil não tem essa autorização.\n\nUse o horário padrão ou coloque o paciente na lista de espera.');
+    return;
+  }
+  MODO_AG=v;
+  document.querySelectorAll('#ch_modo .chipm').forEach(c=>c.classList.toggle('on',c.dataset.v===v));
+  document.getElementById('bx_motivo').style.display = v==='criado'?'block':'none';
+  document.getElementById('modo_hint').innerHTML = v==='criado'
+    ? '<b style="color:#b02a37">Horário fora da grade</b> — entra como <b>encaixe</b>, com motivo e responsável, e conta no indicador de encaixes.'
+    : 'Usa uma vaga que já existe na agenda.';
+  const b=document.getElementById('btn_ok');
+  if(b){b.textContent = v==='criado'?'Criar horário e agendar':'Agendar';
+        b.style.background = v==='criado'?'#dc3545':''}
+  checar();
+}
 async function paraEspera(){
   const pid=V('n_pac'),agid=V('n_ag');
   if(!pid||!agid)return alert('Escolha paciente e agenda.');
@@ -368,20 +402,23 @@ async function salvar(comAprov){
   let ap={};
   if(comAprov){const q=prompt('Aprovação necessária.\nQuem aprova?');if(!q)return;
     ap={aprovacao_intervalo_por:q,aprovacao_intervalo_motivo:prompt('Motivo:')||''}}
-  /* ---- agenda lotada: só encaixa quem tem perfil, e com motivo ---- */
-  if(SEM_VAGA){
-    if(!PODE_ENCAIXAR()){
-      m.className='msg e';
-      m.innerHTML='🔴 Agenda lotada e seu perfil não pode encaixar. Use <b>“Lista de espera”</b> abaixo.';
-      const pf=document.getElementById('mf');
-      if(pf&&!document.getElementById('btn_esp'))
-        pf.insertAdjacentHTML('beforeend','<button class="b1" id="btn_esp" style="background:#fd7e14" onclick="paraEspera()">📋 Lista de espera</button>');
-      return;
-    }
-    const mot=prompt('ENCAIXE — a agenda está lotada.\n\nMotivo do encaixe:');
-    if(mot===null)return;
-    const quem=prompt('Quem autorizou o encaixe?')||V('n_quem')||PERFIL;
-    ap.encaixe=true; ap.encaixe_motivo=mot; ap.encaixe_por=V('n_quem')||PERFIL; ap.encaixe_autorizado_por=quem;
+  /* ---- critério: horário criado = encaixe, com motivo obrigatório ---- */
+  if(MODO_AG==='criado'){
+    if(!PODE_ENCAIXAR()){m.className='msg e';m.textContent='Seu perfil não pode criar horário.';return}
+    if(!V('n_motivo')){m.className='msg e';m.innerHTML='Informe o <b>motivo de criar o horário</b>.';return}
+    ap.encaixe=true; ap.encaixe_motivo=V('n_motivo');
+    ap.encaixe_por=V('n_quem')||PERFIL; ap.encaixe_autorizado_por=V('n_quem')||PERFIL;
+  }
+  /* ---- horário padrão com a agenda lotada: não força; oferece a espera ---- */
+  else if(SEM_VAGA){
+    m.className='msg e';
+    m.innerHTML=PODE_ENCAIXAR()
+      ? '🔴 Não há vaga no horário padrão. Para colocar assim mesmo, escolha <b>🔴 Criar horário (encaixe)</b> acima.'
+      : '🔴 Agenda lotada e seu perfil não pode criar horário. Use <b>“Lista de espera”</b> abaixo.';
+    const pf=document.getElementById('mf');
+    if(pf&&!document.getElementById('btn_esp'))
+      pf.insertAdjacentHTML('beforeend','<button class="b1" id="btn_esp" style="background:#fd7e14" onclick="paraEspera()">📋 Lista de espera</button>');
+    return;
   }
   try{const ag=REF.agendas.find(x=>x.id===V('n_ag'));
     const base={paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),medico_id:ag?ag.medico_id:null,
