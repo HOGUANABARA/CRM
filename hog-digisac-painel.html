@@ -89,19 +89,34 @@ window.addEventListener('message',ev=>{
 });
 
 async function init(){
-  document.getElementById('tel').textContent=TEL?fmtTel(TEL):'—';
-  if(!TEL){ semTelefone(); return }
+  document.getElementById('tel').textContent=TEL?fmtTel(TEL):(DIGISAC_ID?'contato '+DIGISAC_ID.slice(0,8):'—');
+  if(!TEL && !DIGISAC_ID){ semTelefone(); return }
   try{
-    /* contato: acha ou cria */
-    const achados=await g(`contatos?telefone=eq.${TEL}`).catch(()=>[]);
-    CONTATO=achados[0]||null;
+    /* O DIGISAC manda o ID do contato, não o telefone.
+       Achamos pelo ID; se for a primeira vez, pelo telefone; senão, perguntamos. */
+    CONTATO=null;
+    if(DIGISAC_ID){
+      const porId=await g(`contatos?digisac_contact_id=eq.${encodeURIComponent(DIGISAC_ID)}`).catch(()=>[]);
+      CONTATO=porId[0]||null;
+    }
+    if(!CONTATO && TEL){
+      const porTel=await g(`contatos?telefone=eq.${TEL}`).catch(()=>[]);
+      CONTATO=porTel[0]||null;
+      if(CONTATO && DIGISAC_ID) pa('contatos','id=eq.'+CONTATO.id,{digisac_contact_id:DIGISAC_ID}).catch(()=>{});
+    }
     if(!CONTATO){
-      const c=await po('contatos',[{telefone:TEL,nome:NOME_CONTATO||null,digisac_contact_id:DIGISAC_ID||null,ultimo_contato:new Date().toISOString()}]);
+      const c=await po('contatos',[{telefone:TEL||null,nome:NOME_CONTATO||null,
+        digisac_contact_id:DIGISAC_ID||null,ultimo_contato:new Date().toISOString()}]);
       CONTATO=c[0];
     }else{
-      pa('contatos','id=eq.'+CONTATO.id,{ultimo_contato:new Date().toISOString(),
-        nome:CONTATO.nome||NOME_CONTATO||null,digisac_contact_id:CONTATO.digisac_contact_id||DIGISAC_ID||null}).catch(()=>{});
+      if(!CONTATO.telefone && TEL) pa('contatos','id=eq.'+CONTATO.id,{telefone:TEL}).catch(()=>{});
+      pa('contatos','id=eq.'+CONTATO.id,{ultimo_contato:new Date().toISOString()}).catch(()=>{});
+      TEL=TEL||digits(CONTATO.telefone||'');
+      if(TEL)document.getElementById('tel').textContent=fmtTel(TEL);
     }
+    /* registra a conversa (chamado) para o histórico */
+    if(TICKET){ po('conversas',[{digisac_ticket_id:TICKET,contato_id:CONTATO.id,
+      paciente_id:null,digisac_user_id:Q.get('userId')||null}]).catch(()=>{}) }
     /* pacientes já ligados a este contato */
     const lig=await g(`contato_paciente?select=*,pacientes(*)&contato_id=eq.${CONTATO.id}`).catch(()=>[]);
     if(lig.length===1){ PACIENTE=lig[0].pacientes; await painelPaciente(lig[0].relacao) }
@@ -138,6 +153,13 @@ function semTelefone(){
       <div class="hint">Se aparecer aqui um parâmetro com o telefone, me diga o nome dele que eu ligo automático.</div>
     </div>`;
 }
+function usaTelefoneOpcional(){
+  const t=digits(V("tel_op")); if(t.length<10)return;
+  TEL=t.length<=11?("55"+t):t;
+  if(CONTATO)pa("contatos","id=eq."+CONTATO.id,{telefone:TEL}).catch(()=>{});
+  document.getElementById("tel").textContent=fmtTel(TEL);
+  identificar();
+}
 function usaTelefone(){
   const t=digits(V('tel_manual'));
   if(t.length<10)return say('e','Informe o telefone com DDD.');
@@ -163,7 +185,9 @@ async function identificar(){
   document.getElementById('conteudo').innerHTML=`
     <div class="card" style="border-color:#ffc107;background:#fffdf5">
       <h3>🔎 De quem é essa conversa?</h3>
-      <div class="hint">${NOME_CONTATO?'WhatsApp de <b>'+E(NOME_CONTATO)+'</b>. ':''}Ligue uma vez — nas próximas conversas o sistema já reconhece.</div>
+      <div class="hint">${NOME_CONTATO?'WhatsApp de <b>'+E(NOME_CONTATO)+'</b>. ':''}${TEL?'Telefone '+fmtTel(TEL)+'. ':'O DIGISAC manda só o identificador do contato — por isso a primeira vez precisa de você. '}Ligue uma vez: da próxima conversa em diante o sistema reconhece sozinho.</div>
+      ${!TEL?`<label style="margin-top:8px">Telefone (opcional, ajuda a achar o paciente)</label>
+        <input id="tel_op" placeholder="(19) 99999-9999" onchange="usaTelefoneOpcional()">`:''}
       ${sug.length?`<div style="margin-top:8px">${sug.map(s=>`<div class="sug">
           <b>${E(s.nome)}</b><span class="tag t-n">${E(s.motivo)}</span>
           <button class="b b-g b-s" onclick="ligar('${s.paciente_id}','proprio')">é este</button></div>`).join('')}</div>`
