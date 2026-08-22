@@ -346,6 +346,11 @@ async function pendencias(){
         impedimento:x.numero_requisicao?'liberada para agendar':'falta o número da requisição'})) }catch(_){ PEND=[] }
   }
   let h='';
+  /* falar com o paciente no WhatsApp direto do agendamento */
+  const tel=digits(p&&(p.whatsapp||p.telefone||p.telefone_responsavel)||'');
+  if(tel) h+=`<div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="b1" style="background:#25D366;color:#fff" onclick="zap('${tel}','${E((p.nome||'').split(' ')[0])}')">💬 WhatsApp</button>
+      <span class="hint" style="font-size:12px;color:#6c757d">${fmtTelBr(tel)}</span></div>`;
   if(PEND.length){
     h+=`<div style="background:#e7f1ff;border:1px solid #b6d4fe;border-radius:6px;padding:8px 10px;margin-bottom:9px">
       <div style="font-weight:700;font-size:13px;color:#052c65;margin-bottom:5px">
@@ -402,6 +407,23 @@ async function resolverPendencia(id){
   catch(e){ alert('Erro: '+e.message+'\n(precisa do hog-requisicoes.sql)') }
 }
 let SOL_ATUAL=null;
+const digits=s=>String(s||'').replace(/\D/g,'');
+const fmtTelBr=t=>t.length>=10?`(${t.slice(-11,-9)||t.slice(0,2)}) ${t.slice(-9,-4)}-${t.slice(-4)}`:t;
+/* Abre a conversa no WhatsApp já com a mensagem escrita.
+   Quando a API do DIGISAC estiver ligada, este botão passa a abrir o
+   atendimento DENTRO do DIGISAC, preservando histórico e fila. */
+function zap(tel,nome){
+  const t=digits(tel); const num=t.length<=11?('55'+t):t;
+  const ag=REF.agendas.find(x=>x.id===V('n_ag'));
+  const data=V('n_data'), hora=V('n_hora');
+  let msg=`Olá${nome?', '+nome:''}! Aqui é do Hospital dos Olhos Guanabara.`;
+  if(data&&hora) msg+=` Confirmando seu agendamento em ${brData(data)} às ${hora}`+
+    (ag?` — ${ag.nome}`:'')+`. Chegue com 15 minutos de antecedência e traga documento, carteirinha e a requisição.`;
+  else if(PEND.length) msg+=` Você tem ${PEND.length} exame(s) pedido(s) pelo médico aguardando agendamento`+
+    ` (${PEND.slice(0,3).map(x=>x.item).join(', ')}). Podemos agendar?`;
+  else msg+=` Podemos ajudar no seu agendamento?`;
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+}
 /* o botão define o CRITÉRIO: horário padrão da agenda x horário criado por um motivo */
 function modo(v){
   if(v==='criado'&&!PODE_ENCAIXAR()){
