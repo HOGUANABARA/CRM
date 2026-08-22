@@ -250,6 +250,7 @@ async function painelPaciente(rel){
   try{ ags=await g(`agendamentos?paciente_id=eq.${p.id}&status=in.(agendado,aguardando)&select=data,hora,tipo,status,agendas_logicas(nome),medicos(nome)&order=data&limit=6`) }catch(e){}
   try{ vis=await g(`agendamentos?paciente_id=eq.${p.id}&status=in.(compareceu,realizado,faltou)&select=data,status,tipo,medicos(nome)&order=data.desc&limit=5`) }catch(e){}
   try{ aut=await g(`vw_saldo_autorizacao?paciente_id=eq.${p.id}`) }catch(e){}
+  let pre=[]; try{ pre=await g(`vw_pre_reservas?paciente_id=eq.${p.id}`) }catch(e){}
   const faltas=vis.filter(v=>v.status==='faltou').length;
   document.getElementById('conteudo').innerHTML=`
   <div class="card">
@@ -290,7 +291,9 @@ async function painelPaciente(rel){
     <h3>📅 Próximos agendamentos</h3>
     <div class="lista">${ags.length?ags.map(a=>`<div>${brd(a.data)} ${String(a.hora||'').slice(0,5)} ·
       ${E((a.agendas_logicas&&a.agendas_logicas.nome)||a.tipo||'')} ${a.medicos?'· '+E(a.medicos.nome):''}
-      <span class="tag t-b">${E(a.status)}</span></div>`).join(''):'<div class="hint">Nenhum agendamento futuro.</div>'}</div>
+      <span class="tag t-b">${E(a.status)}</span>
+      <button class="b b-n b-s" style="margin-left:6px" onclick="reagendar('${a.id}','${a.agenda_logica_id||''}','${a.data}','${String(a.hora||'').slice(0,5)}')">reagendar</button>
+      </div>`).join(''):'<div class="hint">Nenhum agendamento futuro.</div>'}</div>
   </div>
 
   <div class="card">
@@ -300,6 +303,17 @@ async function painelPaciente(rel){
       <span class="tag ${v.status==='faltou'?'t-r':'t-g'}">${v.status==='faltou'?'faltou':'compareceu'}</span></div>`).join('')
       :'<div class="hint">Sem histórico.</div>'}</div>
   </div>
+
+  ${pre.length?`<div class="card" style="border-color:#ffc107;background:#fffdf5">
+    <h3>🔒 Horários segurados para este paciente</h3>
+    ${pre.map(x=>`<div class="it al">
+      <b>${brd(x.data)} às ${String(x.hora).slice(0,5)}</b> · ${E(x.agenda||'')}
+      <br><span class="hint">segurado por ${E(x.criado_por||'—')} · ${x.vencida?'<b style="color:#b02a37">venceu</b>':'expira em <b>'+x.horas_restantes+'h</b>'}</span>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="b b-g b-s" onclick="confirmarPre('${x.id}')">confirmar agendamento</button>
+        <button class="b b-n b-s" onclick="liberarPre('${x.id}')">liberar horário</button>
+      </div></div>`).join('')}
+  </div>`:''}
 
   <div class="card" id="cd_agendar">
     <h3>📆 Resolver aqui mesmo</h3>
@@ -313,6 +327,7 @@ async function painelPaciente(rel){
     <div class="hint" id="ag_vaga" style="margin-top:6px"></div>
     <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
       <button class="b b-g" onclick="agendarAqui()">Agendar</button>
+      <button class="b" style="background:#ffc107;color:#3d3000" onclick="preReservar()">🔒 Pré-reservar e oferecer</button>
       <button class="b b-w" onclick="esperaAqui()">📋 Lista de espera</button>
       <button class="b b-n" onclick="novaGuia()">+ Registrar guia</button>
     </div>
@@ -358,6 +373,14 @@ async function agendarAqui(){
       tipo:(a&&a.tipo==='exame_medico')?'exame':(a?a.tipo:'consulta'),data:d,hora:h,status:'agendado',
       criado_por:'call center (DIGISAC)',observacao:'agendado pela conversa do WhatsApp'}]);
     ULTIMO_AG=novo[0];
+    if(REAGENDANDO){
+      await pa('agendamentos','id=eq.'+REAGENDANDO,{status:'cancelado',
+        motivo_cancelamento:'reagendado pelo call center',cancelado_por:'call center (DIGISAC)',
+        cancelado_em:new Date().toISOString()}).catch(()=>{});
+      await pa('agendamentos','id=eq.'+novo[0].id,{reagendamento_de:REAGENDANDO,
+        motivo_reagendamento:'paciente_pediu'}).catch(()=>{});
+      REAGENDANDO=null;
+    }
     if(SOL_ATUAL) await pa('solicitacoes','id=eq.'+SOL_ATUAL.solicitacao_id,{status:'agendado',
       agendado_por:'call center (DIGISAC)',agendado_em:new Date().toISOString(),agendamento_id:novo[0].id}).catch(()=>{});
     if(TICKET) await pa('conversas','digisac_ticket_id=eq.'+TICKET,{paciente_id:PACIENTE.id,agendamento_id:novo[0].id,
@@ -406,6 +429,59 @@ async function confirmarPorWhats(){
     box.innerHTML=j.ok?'✅ Confirmação enviada pela conversa.':'⚠ Não enviou: '+E(JSON.stringify(j.resposta||j).slice(0,160));
   }catch(e){ box.innerHTML='Erro: '+E(e.message) }
 }
+/* ---------- pré-reserva: segura o horário enquanto o paciente decide ---------- */
+async function preReservar(){
+  const ag=V('ag_sel'), d=V('ag_data'), h=V('ag_hora');
+  if(!ag||!d||!h)return say('e','Escolha agenda, data e hora para segurar.');
+  const a=REF_AG.find(x=>x.id===ag);
+  let horas=24; try{ const p=await g("parametros_sistema?chave=eq.pre_reserva_horas&select=valor"); horas=parseInt(p[0]&&p[0].valor)||24 }catch(e){}
+  try{
+    const r=await po('pre_reservas',[{paciente_id:PACIENTE.id,contato_id:CONTATO?CONTATO.id:null,
+      agenda_logica_id:ag,medico_id:a?a.medico_id:null,data:d,hora:h,
+      criado_por:'call center (DIGISAC)',
+      expira_em:new Date(Date.now()+horas*3600e3).toISOString(),
+      observacao:'oferecido ao paciente pelo WhatsApp'}]);
+    say('s',`🔒 Horário segurado até ${new Date(r[0].expira_em).toLocaleString('pt-BR')}. Ninguém mais consegue oferecer esse horário.`);
+    await painelPaciente();
+  }catch(e){
+    const m=String(e.message||'');
+    say('e', m.includes('ux_prereserva_slot')
+      ? '⚠ Esse horário já está segurado por outro atendente. Escolha outro.'
+      : 'Erro ao segurar: '+E(m));
+  }
+}
+async function confirmarPre(id){
+  try{
+    const pr=(await g(`pre_reservas?id=eq.${id}`))[0]; if(!pr)return;
+    const a=REF_AG.find(x=>x.id===pr.agenda_logica_id);
+    const novo=await po('agendamentos',[{paciente_id:pr.paciente_id,agenda_logica_id:pr.agenda_logica_id,
+      medico_id:pr.medico_id,tipo:(a&&a.tipo==='exame_medico')?'exame':(a?a.tipo:'consulta'),
+      data:pr.data,hora:pr.hora,status:'agendado',criado_por:'call center (DIGISAC)',
+      observacao:'confirmado a partir de pré-reserva'}]);
+    await pa('pre_reservas','id=eq.'+id,{status:'convertida',agendamento_id:novo[0].id,
+      encerrado_em:new Date().toISOString(),encerrado_por:'call center'});
+    ULTIMO_AG=novo[0];
+    say('s','✅ Agendamento confirmado. Envie a confirmação ao paciente.');
+    await painelPaciente();
+  }catch(e){ say('e','Erro: '+E(e.message)) }
+}
+async function liberarPre(id){
+  if(!confirm('Liberar este horário? Ele volta a ficar disponível para qualquer atendente.'))return;
+  try{ await pa('pre_reservas','id=eq.'+id,{status:'liberada',encerrado_em:new Date().toISOString(),encerrado_por:'call center'});
+    say('s','Horário liberado.'); await painelPaciente();
+  }catch(e){ say('e','Erro: '+E(e.message)) }
+}
+async function reagendar(id,ag,data,hora){
+  document.getElementById('ag_sel').value=ag||'';
+  document.getElementById('ag_data').value='';
+  document.getElementById('ag_hora').value=hora||'08:00';
+  REAGENDANDO=id;
+  await verVagas();
+  say('w',`Reagendando o atendimento de ${brd(data)} ${hora}. Escolha a nova data e clique em <b>Agendar</b> — o antigo é cancelado automaticamente.`);
+  document.getElementById('cd_agendar').scrollIntoView({behavior:'smooth'});
+}
+let REAGENDANDO=null;
+
 async function resolverConversa(){
   try{
     if(TICKET) await pa('conversas','digisac_ticket_id=eq.'+TICKET,{status:'resolvida',fechada_em:new Date().toISOString()});
