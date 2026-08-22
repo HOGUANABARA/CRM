@@ -59,18 +59,36 @@ const digits=s=>String(s||'').replace(/\D/g,'');
 /* o DIGISAC abre a integração passando o contato na URL —
    aceitamos os nomes mais comuns para não depender de um só formato */
 const Q=new URLSearchParams(location.search);
-const TEL=digits(Q.get('number')||Q.get('telefone')||Q.get('phone')||Q.get('contactNumber')||'');
-const NOME_CONTATO=Q.get('name')||Q.get('contactName')||'';
-const TICKET=Q.get('ticketId')||Q.get('ticket')||'';
-const DIGISAC_ID=Q.get('contactId')||Q.get('contact')||'';
+/* aceita qualquer nome de parâmetro que se pareça com telefone/nome,
+   porque cada plataforma nomeia de um jeito */
+function achaParam(chaves){
+  for(const k of chaves){ const v=Q.get(k); if(v)return v }
+  for(const [k,v] of Q.entries()){ if(chaves.some(c=>k.toLowerCase().includes(c.toLowerCase())))return v }
+  return '';
+}
+let TEL=digits(achaParam(['number','telefone','phone','contactNumber','celular','whatsapp']));
+let NOME_CONTATO=achaParam(['name','contactName','nome']);
+const TICKET=achaParam(['ticketId','ticket','protocolo']);
+const DIGISAC_ID=achaParam(['contactId','contact','idContato']);
 
 let CONTATO=null, PACIENTE=null;
 
+/* o DIGISAC pode mandar o contato por postMessage em vez de URL */
+window.addEventListener('message',ev=>{
+  try{
+    const d=typeof ev.data==='string'?JSON.parse(ev.data):ev.data;
+    if(!d||typeof d!=='object')return;
+    const cand=d.number||d.phone||d.telefone||(d.contact&&(d.contact.number||d.contact.phone))||
+               (d.data&&(d.data.number||d.data.phone));
+    if(cand&&!TEL){ TEL=digits(cand);
+      NOME_CONTATO=NOME_CONTATO||d.name||(d.contact&&d.contact.name)||'';
+      init(); }
+  }catch(e){}
+});
+
 async function init(){
-  document.getElementById('tel').textContent=TEL?fmtTel(TEL):'sem telefone na URL';
-  if(!TEL){ document.getElementById('conteudo').innerHTML=
-    `<div class="card"><h3>Sem telefone</h3><div class="hint">Abra este painel pelo DIGISAC, ou acrescente <code>?number=5519999999999</code> na URL para testar.</div></div>`;
-    return }
+  document.getElementById('tel').textContent=TEL?fmtTel(TEL):'—';
+  if(!TEL){ semTelefone(); return }
   try{
     /* contato: acha ou cria */
     const achados=await g(`contatos?telefone=eq.${TEL}`).catch(()=>[]);
@@ -90,6 +108,40 @@ async function init(){
   }catch(e){ say('e','Erro: '+E(e.message)) }
 }
 const fmtTel=t=>t.length>=12?`(${t.slice(2,4)}) ${t.slice(4,-4)}-${t.slice(-4)}`:t;
+
+/* Sem telefone na URL: o painel não trava — a pessoa digita o número
+   da conversa (ou busca o paciente pelo nome) e segue normalmente. */
+function semTelefone(){
+  document.getElementById('ctx').textContent='informe o contato';
+  document.getElementById('conteudo').innerHTML=`
+    <div class="card">
+      <h3>📱 De qual conversa é este atendimento?</h3>
+      <div class="hint">A integração ainda não está enviando o telefone na URL.
+        Digite o número da conversa — ou busque direto pelo nome do paciente.</div>
+      <label style="margin-top:8px">Telefone do contato</label>
+      <input id="tel_manual" placeholder="(19) 99999-9999" onkeyup="if(event.key==='Enter')usaTelefone()">
+      <button class="b b-p" style="margin-top:7px" onclick="usaTelefone()">Abrir contato</button>
+      <label style="margin-top:11px">ou buscar o paciente pelo nome</label>
+      <input id="q" placeholder="digite 3 letras" oninput="buscarDireto()">
+      <div id="res"></div>
+    </div>`;
+}
+function usaTelefone(){
+  const t=digits(V('tel_manual'));
+  if(t.length<10)return say('e','Informe o telefone com DDD.');
+  TEL=t.length<=11?('55'+t):t; init();
+}
+let tmr2=null;
+function buscarDireto(){ clearTimeout(tmr2); tmr2=setTimeout(async()=>{
+  const q=V('q'); const box=document.getElementById('res'); if(q.length<3){box.innerHTML='';return}
+  try{ const r=await g(`pacientes?select=id,nome,nascimento&nome=ilike.*${encodeURIComponent(q)}*&limit=8`);
+    box.innerHTML=r.length?r.map(p=>`<div class="sug"><b>${E(p.nome)}</b>
+      <span class="tag t-n">${p.nascimento?brd(p.nascimento):'—'}</span>
+      <button class="b b-p b-s" onclick="abrirDireto('${p.id}')">abrir</button></div>`).join('')
+      :'<div class="hint">Nenhum paciente com esse nome.</div>';
+  }catch(e){ box.innerHTML='<div class="hint">Erro na busca.</div>' }
+},350)}
+async function abrirDireto(pid){ const p=await g(`pacientes?id=eq.${pid}`); PACIENTE=p[0]; await painelPaciente('proprio') }
 
 /* ---------- 1) conversa ainda não identificada ---------- */
 async function identificar(){
