@@ -207,7 +207,7 @@ async function dados(id){
   const [faltas,sol]=await Promise.all([
     g(`agendamentos?paciente_id=eq.${p.id}&status=eq.faltou&select=data&order=data.desc`).catch(()=>[]),
     g(`solicitacoes?paciente_id=eq.${p.id}&status=in.(pendente,entregue)&select=nome_item,lateralidade,status,observacao_proximo_agendamento,medicos(nome)`).catch(()=>[])]);
-  const hist=await g(`agendamentos?paciente_id=eq.${p.id}&select=data,hora,tipo,status,medicos(nome)&order=data.desc&limit=8`).catch(()=>[]);
+  const hist=await g(`agendamentos?paciente_id=eq.${p.id}&select=data,hora,tipo,status,observacao,exames(nome),procedimentos(nome),agendas_logicas(nome),medicos(nome)&order=data.desc&limit=12`).catch(()=>[]);
   abre('Dados — '+(p.nome||''),
    `<div class="info">
      <b style="font-size:15px">${E(p.nome||'')}</b><br>
@@ -219,14 +219,17 @@ async function dados(id){
     ${sol.length?`<div class="msg" style="display:block;background:#d1ecf1;color:#0c5460">📋 <b>Solicitações do médico</b><br>`+
       sol.map(s=>`• ${E(s.nome_item||'')} ${s.lateralidade?'('+E(s.lateralidade)+')':''} — <b>${E(s.status)}</b>${s.observacao_proximo_agendamento?'<br><i>'+E(s.observacao_proximo_agendamento)+'</i>':''}`).join('<br>')+'</div>':''}
     <div style="font-weight:600;margin:12px 0 5px;font-size:13px">Histórico de agendamentos</div>
-    <table style="font-size:13px"><thead><tr><th>Data</th><th>Hora</th><th>Tipo</th><th>Médico</th><th>Status</th></tr></thead><tbody>`+
+    <table style="font-size:13px"><thead><tr><th>Data</th><th>Hora</th><th>Atendimento</th><th>Médico</th><th>Observação</th><th>Status</th></tr></thead><tbody>`+
     (hist.length?hist.map(h=>{
       const c = h.status==='faltou'    ? 'background:#f8d7da;color:#58151c'
               : h.status==='cancelado' ? 'background:#e9ecef;color:#6c757d;text-decoration:line-through'
               : ['compareceu','realizado'].includes(h.status) ? 'background:#d1e7dd;color:#0a3622' : '';
-      return `<tr style="${c}"><td>${E(brData(h.data))}</td><td>${E((h.hora||'').slice(0,5))}</td><td>${E(h.tipo)}</td>
-      <td>${h.medicos?E(h.medicos.nome):'—'}</td><td>${stTag(h.status)}</td></tr>`}).join('')
-      :'<tr><td colspan="5">Sem histórico</td></tr>')+
+      const at=(h.exames&&h.exames.nome)||(h.procedimentos&&h.procedimentos.nome)||(h.agendas_logicas&&h.agendas_logicas.nome)||h.tipo||'—';
+      const dd=new Date(h.data+'T12:00:00');
+      return `<tr style="${c}"><td>${DIAS[dd.getDay()].slice(0,3)} ${E(brData(h.data))}</td><td>${E((h.hora||'').slice(0,5))}</td>
+      <td>${E(at)}</td><td>${h.medicos?E(h.medicos.nome):'—'}</td>
+      <td style="font-size:12px">${E(h.observacao||'')}</td><td>${stTag(h.status)}</td></tr>`}).join('')
+      :'<tr><td colspan="6">Sem histórico</td></tr>')+
     '</tbody></table>',
    `<button class="b3" onclick="fecha()">Fechar</button>`);
 }
