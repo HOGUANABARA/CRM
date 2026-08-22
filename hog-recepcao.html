@@ -92,7 +92,7 @@ const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',heade
 const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
 const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textContent=t};
-const iso=d=>d.toISOString().slice(0,10);
+const iso=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x.toISOString().slice(0,10)};
 const hoje=()=>{document.getElementById('dt').value=iso(new Date());load()};
 const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
 const fecha=()=>document.getElementById('ov').classList.remove('on');

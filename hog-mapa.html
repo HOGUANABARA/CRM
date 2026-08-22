@@ -116,7 +116,7 @@ const stat=(c,t)=>{const s=document.getElementById('st');s.className=c;s.textCon
 
 const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const TURNOS=[['manha','Manhã'],['tarde','Tarde'],['cirurgico','Cirúrgico']];
-const iso=d=>d.toISOString().slice(0,10);
+const iso=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x.toISOString().slice(0,10)};
 function segunda(d){const x=new Date(d+'T12:00:00');const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
 let REF={medicos:[],salas:[],agendas:[]}, RES=[], BLQ=[], SEL=null;
 
