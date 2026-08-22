@@ -185,12 +185,12 @@ async function identificar(){
   document.getElementById('conteudo').innerHTML=`
     <div class="card" style="border-color:#ffc107;background:#fffdf5">
       <h3>🔎 De quem é essa conversa?</h3>
-      <div class="hint">${NOME_CONTATO?'WhatsApp de <b>'+E(NOME_CONTATO)+'</b>. ':''}${TEL?'Telefone '+fmtTel(TEL)+'. ':'O DIGISAC manda só o identificador do contato — por isso a primeira vez precisa de você. '}Ligue uma vez: da próxima conversa em diante o sistema reconhece sozinho.</div>
+      <div class="hint">${NOME_CONTATO?'WhatsApp de <b>'+E(NOME_CONTATO)+'</b>. ':''}${TEL?'Telefone '+fmtTel(TEL)+'. ':'O DIGISAC manda só o identificador do contato — por isso a primeira vez precisa de você. '}Vincule uma vez: da próxima conversa em diante o sistema reconhece sozinho.</div>
       ${!TEL?`<label style="margin-top:8px">Telefone (opcional, ajuda a achar o paciente)</label>
         <input id="tel_op" placeholder="(19) 99999-9999" onchange="usaTelefoneOpcional()">`:''}
       ${sug.length?`<div style="margin-top:8px">${sug.map(s=>`<div class="sug">
           <b>${E(s.nome)}</b><span class="tag t-n">${E(s.motivo)}</span>
-          <button class="b b-g b-s" onclick="ligar('${s.paciente_id}','proprio')">é este</button></div>`).join('')}</div>`
+          <button class="b b-g b-s" onclick="ligar('${s.paciente_id}','proprio')">é este paciente</button></div>`).join('')}</div>`
         :'<div class="hint" style="margin-top:6px">Nenhuma sugestão automática para este número.</div>'}
       <label style="margin-top:9px">Buscar paciente pelo nome</label>
       <input id="q" placeholder="digite 3 letras e aguarde" oninput="buscar()">
@@ -207,7 +207,7 @@ function buscar(){ clearTimeout(tmr); tmr=setTimeout(async()=>{
         <option value="proprio">é o próprio</option><option value="filho">filho(a)</option>
         <option value="conjuge">cônjuge</option><option value="cuidador">cuidador(a)</option>
         <option value="responsavel">responsável</option></select>
-      <button class="b b-g b-s" onclick="ligar('${p.id}',document.getElementById('rel_${p.id}').value)">ligar</button></div>`).join('')
+      <button class="b b-g b-s" onclick="ligar('${p.id}',document.getElementById('rel_${p.id}').value)">vincular</button></div>`).join('')
       :'<div class="hint">Nenhum paciente com esse nome.</div>';
   }catch(e){ box.innerHTML='<div class="hint">Erro na busca.</div>' }
 },350)}
@@ -216,7 +216,7 @@ async function ligar(pid,rel){
     await po('contato_paciente',[{contato_id:CONTATO.id,paciente_id:pid,relacao:rel||'responsavel',
       confirmado_por:'atendente DIGISAC'}]).catch(()=>{});
     const p=await g(`pacientes?id=eq.${pid}`); PACIENTE=p[0];
-    say('s','✅ Vínculo salvo. Este número já fica reconhecido nas próximas conversas.');
+    say('s','✅ Contato vinculado ao paciente. Nas próximas conversas o sistema já reconhece.');
     await painelPaciente(rel);
   }catch(e){ say('e','Erro ao ligar: '+E(e.message)) }
 }
