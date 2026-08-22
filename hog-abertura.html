@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOG Gestão — Abertura de Agendas</title>
+<title>HOG Gestão — Grade do HOG</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#fff;color:#212529;font-size:16px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
@@ -12,35 +12,45 @@
   .daybar{background:#dce9f7;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid #c5d9ee;}
   .bl{background:#0d6efd;color:#fff;border:none;padding:.375rem .75rem;border-radius:.375rem;font-size:15px;cursor:pointer;}
   .bl.g{background:#198754;} .bl.n{background:#6c757d;} .bl.o{background:#fff;color:#0d6efd;border:1px solid #0d6efd;}
-  .mes{font-size:20px;font-weight:600;margin:0 6px;}
-  .nav{background:#fff;border:1px solid #c5d9ee;color:#1a3d5c;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;}
-  .leg{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap;font-size:12px;color:#1a3d5c;}
-  .leg i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+  .bl.w{background:#fd7e14;}
+  .seg{display:flex;border:1px solid #0d6efd;border-radius:.375rem;overflow:hidden;}
+  .seg button{background:#fff;color:#0d6efd;border:none;padding:.35rem .8rem;font-size:14px;cursor:pointer;}
+  .seg button.on{background:#0d6efd;color:#fff;font-weight:600;}
+  .mes{font-size:19px;font-weight:600;margin:0 4px;}
+  .nav{background:#fff;border:1px solid #c5d9ee;color:#1a3d5c;width:31px;height:31px;border-radius:50%;cursor:pointer;font-size:16px;}
+  .sino{position:relative;}
+  .sino .badge{position:absolute;top:-6px;right:-7px;background:#dc3545;color:#fff;border-radius:9px;font-size:10px;padding:0 5px;font-weight:700;}
+  .leg{display:flex;gap:9px;align-items:center;margin-left:auto;flex-wrap:wrap;font-size:12px;color:#1a3d5c;}
+  .leg i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.08);}
   .filtros{padding:6px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #dee2e6;flex-shrink:0;}
-  .filtros select,.filtros input{font-size:14px;padding:.25rem .5rem;border:1px solid #ced4da;border-radius:.375rem;}
+  .filtros select{font-size:14px;padding:.25rem .5rem;border:1px solid #ced4da;border-radius:.375rem;}
+  .hint{font-size:12px;color:#6c757d;}
   .kpis{display:flex;gap:8px;padding:6px 12px;flex-wrap:wrap;flex-shrink:0;}
-  .k{background:#f8f9fa;border:1px solid #dee2e6;border-radius:.375rem;padding:.35rem .8rem;min-width:92px;text-align:center;}
+  .k{background:#f8f9fa;border:1px solid #dee2e6;border-radius:.375rem;padding:.35rem .8rem;min-width:90px;text-align:center;}
   .k .n{font-size:18px;font-weight:700;} .k .l{font-size:10px;color:#6c757d;text-transform:uppercase;}
   .k.al{background:#fff3cd;border-color:#ffc107;} .k.al .n{color:#664d03;}
+  .k.v{background:#e8f5ec;border-color:#a3cfbb;} .k.v .n{color:#0a3622;}
 
-  /* ---------- grade tipo Google Agenda ---------- */
+  /* ---------- grade ---------- */
   .calwrap{flex:1;overflow:auto;border-top:1px solid #dee2e6;}
-  .calhead{display:grid;grid-template-columns:56px repeat(7,1fr);position:sticky;top:0;background:#fff;z-index:20;border-bottom:1px solid #dee2e6;}
+  .calhead{display:grid;position:sticky;top:0;background:#fff;z-index:20;border-bottom:1px solid #dee2e6;}
   .calhead .gz{border-right:1px solid #e9ecef;}
-  .dh{text-align:center;padding:6px 2px 8px;border-right:1px solid #e9ecef;}
-  .dh .dn{font-size:11px;color:#6c757d;text-transform:uppercase;letter-spacing:.6px;}
-  .dh .dd{font-size:24px;color:#3c4043;line-height:1.25;}
-  .dh.hoje .dd{background:#1a73e8;color:#fff;border-radius:50%;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;}
-  .dh.hoje .dn{color:#1a73e8;font-weight:700;}
-  .dh.fds{background:#fafafa;}
-  .cal{display:grid;grid-template-columns:56px repeat(7,1fr);position:relative;}
+  .dh{text-align:center;padding:6px 3px 8px;border-right:1px solid #e9ecef;}
+  .dh .dn{font-size:11px;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;}
+  .dh .dd{font-size:22px;color:#3c4043;line-height:1.25;}
+  .dh .sl{font-size:14px;font-weight:600;color:#3c4043;line-height:1.2;}
+  .dh .sh{font-size:11px;color:#6c757d;}
+  .dh.hoje .dd{background:#1a73e8;color:#fff;border-radius:50%;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;}
+  .dh.hoje .dn{color:#1a73e8;font-weight:700;} .dh.fds{background:#fafafa;}
+  .cal{display:grid;position:relative;}
   .gutter{border-right:1px solid #e9ecef;}
   .gutter div{height:44px;font-size:11px;color:#70757a;text-align:right;padding-right:6px;transform:translateY(-7px);}
-  .dcol{border-right:1px solid #e9ecef;position:relative;cursor:copy;}
-  .dcol.fds{background:#fafafa;}
+  .dcol{border-right:1px solid #e9ecef;position:relative;cursor:copy;background:#f8f9fa;}
   .hl{height:44px;border-bottom:1px solid #e9ecef;}
+  .aberto{position:absolute;left:0;right:0;background:#eef8f1;border-top:1px solid #cde8d8;border-bottom:1px solid #cde8d8;}
+  .aberto span{position:absolute;top:4px;left:6px;font-size:10.5px;color:#4b7f60;letter-spacing:.3px;}
   .ev{position:absolute;border-radius:4px;color:#fff;font-size:11.5px;line-height:1.2;padding:3px 5px;overflow:hidden;cursor:pointer;
-      border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.18);}
+      border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.18);z-index:5;}
   .ev b{font-weight:600;display:block;} .ev .h{opacity:.92;font-size:11px;}
   .ev.manha{background:#EF6C00;} .ev.tarde{background:#009688;} .ev.cirurgico{background:#7CB342;}
   .ev.vaga{background:#8E24AA;} .ev.atencao{background:#D50000;}
@@ -49,33 +59,36 @@
   .agora{position:absolute;left:0;right:0;height:2px;background:#EA4335;z-index:15;}
   .agora::before{content:'';position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#EA4335;}
 
-  /* ---------- painel lateral (fluxo de abertura) ---------- */
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:70;}
-  .ov.on{display:block;}
-  .pn{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:96vw;background:#fff;z-index:71;display:none;flex-direction:column;box-shadow:-6px 0 22px rgba(0,0,0,.18);}
+  /* ---------- painel ---------- */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:70;} .ov.on{display:block;}
+  .pn{position:fixed;top:0;right:0;bottom:0;width:450px;max-width:96vw;background:#fff;z-index:71;display:none;flex-direction:column;box-shadow:-6px 0 22px rgba(0,0,0,.18);}
   .pn.on{display:flex;}
   .ph{padding:11px 14px;border-bottom:1px solid #dee2e6;display:flex;align-items:center;gap:8px;}
   .ph b{font-size:17px;flex:1;} .ph button{background:none;border:none;font-size:19px;cursor:pointer;color:#6c757d;}
   .pb{flex:1;overflow-y:auto;padding:12px 14px;}
   .pf{padding:10px 14px;border-top:1px solid #dee2e6;display:flex;gap:8px;flex-wrap:wrap;}
   .et{border:1px solid #dee2e6;border-radius:.375rem;padding:10px 12px;margin-bottom:10px;}
+  .et.lib{border-color:#a3cfbb;background:#f6fbf8;}
   .et h3{font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-  .et h3 .num{background:#0d6efd;color:#fff;width:19px;height:19px;border-radius:50%;font-size:11px;display:inline-flex;align-items:center;justify-content:center;}
+  .et h3 .num{background:#0d6efd;color:#fff;min-width:19px;height:19px;padding:0 5px;border-radius:9px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;}
+  .et.lib h3 .num{background:#198754;}
   .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
   label{display:block;font-size:11.5px;font-weight:600;color:#495057;margin-bottom:2px;}
   input,select,textarea{width:100%;font-family:inherit;font-size:14px;padding:.35rem .55rem;border:1px solid #ced4da;border-radius:.375rem;color:#212529;background:#fff;}
   input:focus,select:focus{outline:0;border-color:#86b7fe;box-shadow:0 0 0 .2rem rgba(13,110,253,.25);}
   .chips{display:flex;gap:6px;flex-wrap:wrap;}
-  .chip{border:1px solid #ced4da;border-radius:999px;padding:.28rem .7rem;font-size:13px;cursor:pointer;background:#fff;}
+  .chip{border:1px solid #ced4da;border-radius:999px;padding:.26rem .68rem;font-size:13px;cursor:pointer;background:#fff;}
   .chip.on{background:#0d6efd;border-color:#0d6efd;color:#fff;font-weight:600;}
-  .hint{font-size:12px;color:#6c757d;margin-top:5px;}
+  .chip.mult.on{background:#198754;border-color:#198754;}
   .msg{display:none;padding:8px 10px;border-radius:.375rem;font-size:13px;margin-bottom:10px;}
   .msg.s{display:block;background:#d1e7dd;color:#0a3622;} .msg.e{display:block;background:#f8d7da;color:#58151c;}
   .msg.w{display:block;background:#fff3cd;color:#664d03;}
   .tag{display:inline-block;padding:.15rem .5rem;border-radius:.375rem;font-size:11.5px;font-weight:600;}
-  .t-a{background:#fff3cd;color:#664d03;} .t-g{background:#d1e7dd;color:#0a3622;} .t-n{background:#e9ecef;color:#495057;}
-  @media(max-width:820px){.cal,.calhead{grid-template-columns:44px repeat(7,minmax(96px,1fr));} .calwrap{overflow-x:auto;}}
-  @media print{.daybar,.filtros,.status,.pn,.ov{display:none!important} .calwrap{overflow:visible}}
+  .t-a{background:#fff3cd;color:#664d03;} .t-g{background:#d1e7dd;color:#0a3622;}
+  .t-n{background:#e9ecef;color:#495057;} .t-b{background:#cfe2ff;color:#052c65;} .t-r{background:#f8d7da;color:#58151c;}
+  .esp{background:#fff;border:1px solid #dee2e6;border-radius:.375rem;padding:7px 9px;margin-top:7px;font-size:13px;}
+  @media(max-width:900px){.calwrap{overflow-x:auto;}}
+  @media print{.daybar,.filtros,.status,.pn,.ov,.kpis{display:none!important} .calwrap{overflow:visible}}
 </style>
 <link rel="stylesheet" href="hog-tema.css">
 </head>
@@ -83,45 +96,48 @@
 <span id="st" class="status ld">conectando…</span>
 
 <div class="daybar">
+  <div class="seg">
+    <button data-m="dia" class="on" onclick="setModo('dia')">Dia · por local</button>
+    <button data-m="semana" onclick="setModo('semana')">Semana</button>
+  </div>
   <button class="bl o" onclick="hoje()">Hoje</button>
-  <button class="nav" onclick="semana(-1)">&lsaquo;</button>
-  <button class="nav" onclick="semana(1)">&rsaquo;</button>
+  <button class="nav" onclick="anda(-1)">&lsaquo;</button>
+  <button class="nav" onclick="anda(1)">&rsaquo;</button>
   <span class="mes" id="mes"></span>
-  <button class="bl g" onclick="novo()">+ Abrir agenda</button>
-  <button class="bl n" onclick="copiarSemana()" title="Repete a grade recorrente da semana anterior nesta semana">&#9109; Copiar semana anterior</button>
-  <button class="bl" onclick="liberarSemana()">&#10003; Liberar semana p/ call center</button>
-  <button class="bl" style="background:#fd7e14" onclick="definirSalas()" title="O número do consultório é definido na véspera">&#127968; Consultórios de amanhã</button>
+  <button class="bl w" onclick="definirSalas()" title="O número do consultório é definido na véspera">&#127968; Consultórios de amanhã</button>
+  <button class="bl n" onclick="copiarSemana()">&#9109; Copiar semana anterior</button>
+  <span class="sino"><button class="bl o" onclick="verAlertas()">&#128276; Avisos ao call center</button><span class="badge" id="badge" style="display:none">0</span></span>
   <span class="leg">
+    <span><i style="background:#eef8f1;border-color:#cde8d8"></i>Disponível</span>
     <span><i style="background:#EF6C00"></i>Manhã</span>
     <span><i style="background:#009688"></i>Tarde</span>
     <span><i style="background:#7CB342"></i>Centro Cirúrgico</span>
-    <span><i style="background:#8E24AA"></i>Sala vaga / externo</span>
-    <span><i style="background:#D50000"></i>Bloqueado</span>
-    <span><i style="background:#FFC107"></i>Aguardando liberar</span>
+    <span><i style="background:#8E24AA"></i>Externo</span>
+    <span><i style="background:#FFC107"></i>Reservado, não liberado</span>
   </span>
 </div>
 
 <div class="filtros">
-  <select id="f_sala" onchange="render()"><option value="">Todas as salas</option></select>
+  <span id="f_wrap_sala"><select id="f_sala" onchange="render()"><option value="">Todos os locais</option></select></span>
   <select id="f_med" onchange="render()"><option value="">Todos os médicos</option></select>
   <select id="f_est" onchange="render()">
-    <option value="">Todos os estados</option>
-    <option value="pre_programado">Aguardando liberação</option>
-    <option value="liberado">Liberado p/ call center</option>
-    <option value="bloqueado">Bloqueado</option>
+    <option value="">Reservados e liberados</option>
+    <option value="pre_programado">Só reservados (não liberados)</option>
+    <option value="liberado">Só liberados</option>
+    <option value="bloqueado">Bloqueados</option>
   </select>
-  <span class="hint">Clique num espaço vazio da grade para abrir uma agenda naquele dia e horário.</span>
+  <span class="hint">Todo local nasce <b>disponível</b> no horário de funcionamento. Clique em cima do verde para <b>reservar</b>.</span>
 </div>
 <div class="kpis" id="kpis"></div>
 
 <div class="calwrap">
-  <div class="calhead" id="calhead"><div class="gz"></div></div>
+  <div class="calhead" id="calhead"></div>
   <div class="cal" id="cal"></div>
 </div>
 
 <div class="ov" id="ov" onclick="fecha()"></div>
 <div class="pn" id="pn">
-  <div class="ph"><b id="pt">Abertura de agenda</b><button onclick="fecha()">&#10005;</button></div>
+  <div class="ph"><b id="pt">Reserva</b><button onclick="fecha()">&#10005;</button></div>
   <div class="pb" id="pb"></div>
   <div class="pf" id="pf"></div>
 </div>
@@ -138,44 +154,66 @@ const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'
 const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
 const stat=(c,t)=>{const s=document.getElementById('st');s.className='status '+c;s.textContent=t};
 const iso=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x.toISOString().slice(0,10)};
+const brd=s=>s?s.split('-').reverse().join('/'):'';
 const DIAS=['DOM.','SEG.','TER.','QUA.','QUI.','SEX.','SÁB.'];
 const MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const H0=6, H1=20, PXH=44;                       /* grade das 6h às 20h */
+const H0=6, H1=20, PXH=44;
 const m2h=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const hm2m=s=>{if(!s)return null;const p=String(s).split(':');return (+p[0])*60+(+p[1])};
 
-let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[]}, RES=[], INI=null, SEL=null, FALTA_SQL=false;
+let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[],perfis:[]},
+    RES=[], ALERTAS=[], ESPERA=[], MODO='dia', DIA=new Date(), INI=null, SEL=null,
+    FALTA_SQL=false, FALTA_GRADE=false;
 
-/* ---------------- semana ---------------- */
+/* ---------------- datas ---------------- */
 function domingo(d){const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
 function diasSemana(){const a=[];for(let i=0;i<7;i++){const d=new Date(INI);d.setDate(d.getDate()+i);a.push(d)}return a}
-const hoje=()=>{INI=domingo(new Date());load()};
-const semana=n=>{INI.setDate(INI.getDate()+n*7);load()};
+const hoje=()=>{DIA=new Date();INI=domingo(DIA);load()};
+function anda(n){ if(MODO==='dia'){const d=new Date(DIA);d.setDate(d.getDate()+n);DIA=d;INI=domingo(d)}
+  else{INI.setDate(INI.getDate()+7*n);DIA=new Date(INI)} load() }
+function setModo(m){MODO=m;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  document.getElementById('f_wrap_sala').style.display=m==='dia'?'none':'inline';load()}
 
 /* ---------------- carga ---------------- */
 async function loadRef(){
-  const [s,m,a,p,c]=await Promise.all([
-    g('salas?select=id,nome&order=nome'), g('medicos?select=id,nome,tipo&order=nome'),
+  const [s,m,a,p,c,pf]=await Promise.all([
+    g('salas?select=*&order=nome'), g('medicos?select=id,nome,tipo&order=nome'),
     g('agendas_logicas?select=*&order=nome'),
     g('formas_pagamento_agenda?select=*&order=nome').catch(()=>[]),
-    g('contratos?select=*&ativo=is.true&order=nome').catch(()=>[])]);
+    g('contratos?select=*&ativo=is.true&order=nome').catch(()=>[]),
+    g('perfis?select=id,nome&order=nome').catch(()=>[])]);
   if(!p.length)p.push({id:'contrato',nome:'Conforme contrato'},{id:'repasse',nome:'Repasse ao médico'},
     {id:'aluguel_sala',nome:'Aluguel de sala'},{id:'producao',nome:'Produção'},
     {id:'preceptor',nome:'Residente — repasse ao preceptor'},{id:'sem_pagamento',nome:'Sem pagamento'});
-  REF={salas:s,medicos:m,agendas:a,pgto:p,contratos:c};
-  document.getElementById('f_sala').innerHTML='<option value="">Todas as salas</option>'+s.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
+  FALTA_GRADE = s.length>0 && !('hora_abre' in s[0]);
+  const ativos=s.filter(x=>x.ativo!==false);
+  ativos.forEach(x=>{ if(!x.hora_abre)x.hora_abre='07:00'; if(!x.hora_fecha)x.hora_fecha='19:00'; if(x.ordem==null)x.ordem=50 });
+  ativos.sort((a,b)=>(a.ordem-b.ordem)||a.nome.localeCompare(b.nome));
+  REF={salas:ativos,medicos:m,agendas:a,pgto:p,contratos:c,perfis:pf};
+  document.getElementById('f_sala').innerHTML='<option value="">Todos os locais</option>'+ativos.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
   document.getElementById('f_med').innerHTML='<option value="">Todos os médicos</option>'+m.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
 }
 async function load(){try{
   stat('ld','carregando…');
-  const ds=diasSemana(), d0=iso(ds[0]), d6=iso(ds[6]);
-  RES=await g(`reservas?select=*&data=gte.${d0}&data=lte.${d6}&order=data`);
-  const amostra=await g('reservas?select=*&limit=1');
+  let d0,d1;
+  if(MODO==='dia'){ d0=d1=iso(DIA) } else { const ds=diasSemana(); d0=iso(ds[0]); d1=iso(ds[6]) }
+  const [res,amostra,al,esp]=await Promise.all([
+    g(`reservas?select=*&data=gte.${d0}&data=lte.${d1}&order=data`),
+    g('reservas?select=*&limit=1'),
+    g('alertas_call_center?select=*&status=eq.pendente&order=criado_em.desc').catch(()=>[]),
+    g('lista_espera?select=*,pacientes(nome,telefone)&order=entrou_em').catch(()=>[])]);
+  RES=res; ALERTAS=al; ESPERA=esp;
   FALTA_SQL = amostra.length>0 && !('hora_ini' in amostra[0]);
+  const b=document.getElementById('badge');
+  b.style.display=ALERTAS.length?'inline':'none'; b.textContent=ALERTAS.length;
   render(); stat('ok','● conectado');
 }catch(e){stat('er','● erro');alert('Erro ao carregar: '+e.message)}}
 
-/* ---------------- render da grade ---------------- */
+/* ---------------- helpers ---------------- */
+const nomeMed=id=>{const m=REF.medicos.find(x=>x.id===id);return m?m.nome:''};
+const nomeSala=id=>{const s=REF.salas.find(x=>x.id===id);return s?s.nome:''};
+const nomeAg=id=>{const a=REF.agendas.find(x=>x.id===id);return a?a.nome:''};
+const tituloDe=r=>r.titulo||nomeAg(r.agenda_logica_id)||nomeMed(r.medico_id)||'Reservado';
 function corDe(r){
   if(r.cor)return r.cor;
   if(r.turno==='cirurgico')return 'cirurgico';
@@ -184,399 +222,421 @@ function corDe(r){
   if(i!=null)return i<720?'manha':'tarde';
   return r.turno==='tarde'?'tarde':'manha';
 }
-function nomeMed(id){const m=REF.medicos.find(x=>x.id===id);return m?m.nome:''}
-function nomeSala(id){const s=REF.salas.find(x=>x.id===id);return s?s.nome:''}
-function nomeAg(id){const a=REF.agendas.find(x=>x.id===id);return a?a.nome:''}
-function tituloDe(r){ return r.titulo || nomeAg(r.agenda_logica_id) || nomeMed(r.medico_id) || 'Sala vaga' }
-
+function janela(r){
+  let i=hm2m(r.hora_ini), f=hm2m(r.hora_fim);
+  if(i==null)i = r.turno==='tarde'?13*60 : r.turno==='cirurgico'?12*60 : 7*60+30;
+  if(f==null)f = r.turno==='manha'?11*60+30 : i+240;
+  return {i,f:Math.max(f,i+30)};
+}
 function filtra(){
   let L=RES.slice();
-  if(V('f_sala'))L=L.filter(r=>r.sala_id===V('f_sala'));
+  if(MODO==='semana'&&V('f_sala'))L=L.filter(r=>r.sala_id===V('f_sala'));
   if(V('f_med'))L=L.filter(r=>r.medico_id===V('f_med'));
   if(V('f_est'))L=L.filter(r=>r.estado===V('f_est'));
+  else L=L.filter(r=>r.estado!=='bloqueado'||true);
   return L;
 }
-function render(){
-  const ds=diasSemana(), hj=iso(new Date());
-  document.getElementById('mes').textContent=MES[ds[3].getMonth()]+' de '+ds[3].getFullYear();
-  let hh='<div class="gz"></div>';
-  ds.forEach(d=>{const f=(d.getDay()===0||d.getDay()===6)?' fds':'';
-    hh+=`<div class="dh${iso(d)===hj?' hoje':''}${f}"><div class="dn">${DIAS[d.getDay()]}</div><div class="dd">${d.getDate()}</div></div>`});
-  document.getElementById('calhead').innerHTML=hh;
 
-  const alt=(H1-H0)*PXH;
-  let gut='<div class="gutter">';
-  for(let h=H0;h<H1;h++)gut+=`<div>${h}:00</div>`; gut+='</div>';
+/* ---------------- grade ---------------- */
+function render(){
   const L=filtra();
-  let cols='';
-  ds.forEach(d=>{
-    const dstr=iso(d), f=(d.getDay()===0||d.getDay()===6)?' fds':'';
-    let linhas=''; for(let h=H0;h<H1;h++)linhas+='<div class="hl"></div>';
-    const evs=posiciona(L.filter(r=>r.data===dstr));
-    const agora=(dstr===hj)?linhaAgora():'';
-    cols+=`<div class="dcol${f}" style="height:${alt}px" data-d="${dstr}" onclick="cliqueVazio(event,'${dstr}')">${linhas}${agora}${evs}</div>`;
-  });
+  const alt=(H1-H0)*PXH, hj=iso(new Date());
+  let gut='<div class="gutter">'; for(let h=H0;h<H1;h++)gut+=`<div>${h}:00</div>`; gut+='</div>';
+  let cols='', head='<div class="gz"></div>', ncols;
+
+  if(MODO==='dia'){
+    const dstr=iso(DIA), dd=new Date(dstr+'T12:00:00');
+    document.getElementById('mes').textContent=
+      `${DIAS[dd.getDay()].replace('.','')} , ${dd.getDate()} de ${MES[dd.getMonth()]}`.replace(' ,',',');
+    const salas=REF.salas;
+    ncols=salas.length;
+    salas.forEach(s=>{ head+=`<div class="dh"><div class="sl">${E(s.nome)}</div>
+      <div class="sh">${String(s.hora_abre).slice(0,5)}–${String(s.hora_fecha).slice(0,5)}</div></div>` });
+    salas.forEach(s=>{
+      const evs=L.filter(r=>r.data===dstr&&r.sala_id===s.id);
+      cols+=coluna(s,dstr,evs,dstr===hj);
+    });
+  }else{
+    const ds=diasSemana();
+    document.getElementById('mes').textContent=MES[ds[3].getMonth()]+' de '+ds[3].getFullYear();
+    ncols=7;
+    ds.forEach(d=>{const f=(d.getDay()===0||d.getDay()===6)?' fds':'';
+      head+=`<div class="dh${iso(d)===hj?' hoje':''}${f}"><div class="dn">${DIAS[d.getDay()]}</div><div class="dd">${d.getDate()}</div></div>`});
+    const sala=V('f_sala')?REF.salas.find(x=>x.id===V('f_sala')):null;
+    ds.forEach(d=>{ const dstr=iso(d);
+      cols+=coluna(sala,dstr,L.filter(r=>r.data===dstr),dstr===hj) });
+  }
+  const gt=`56px repeat(${ncols},minmax(112px,1fr))`;
+  document.getElementById('calhead').style.gridTemplateColumns=gt;
+  document.getElementById('cal').style.gridTemplateColumns=gt;
+  document.getElementById('calhead').innerHTML=head;
   document.getElementById('cal').innerHTML=gut+cols;
   kpis(L);
 }
-function linhaAgora(){const n=new Date();const m=n.getHours()*60+n.getMinutes();
+function coluna(sala,dstr,evs,ehHoje){
+  const alt=(H1-H0)*PXH;
+  let linhas=''; for(let h=H0;h<H1;h++)linhas+='<div class="hl"></div>';
+  let disp='';
+  const jan=[];
+  if(sala){ jan.push({s:sala,i:hm2m(sala.hora_abre),f:hm2m(sala.hora_fecha)}) }
+  else { const a=Math.min(...REF.salas.map(x=>hm2m(x.hora_abre)||420)), b=Math.max(...REF.salas.map(x=>hm2m(x.hora_fecha)||1140));
+         jan.push({s:null,i:a,f:b}) }
+  jan.forEach(j=>{ const top=(j.i-H0*60)/60*PXH, h=(j.f-j.i)/60*PXH;
+    disp+=`<div class="aberto" style="top:${top}px;height:${h}px"><span>disponível</span></div>` });
+  const blocos=posiciona(evs);
+  const agora=ehHoje?linhaAgora():'';
+  const dataSala=sala?`data-s="${sala.id}"`:'';
+  return `<div class="dcol" style="height:${alt}px" data-d="${dstr}" ${dataSala}
+    onclick="cliqueVazio(event,'${dstr}','${sala?sala.id:''}')">${linhas}${disp}${agora}${blocos}</div>`;
+}
+function linhaAgora(){const n=new Date(),m=n.getHours()*60+n.getMinutes();
   if(m<H0*60||m>H1*60)return '';return `<div class="agora" style="top:${(m-H0*60)/60*PXH}px"></div>`}
-
 function posiciona(lista){
-  const evs=lista.map(r=>{
-    let i=hm2m(r.hora_ini), f=hm2m(r.hora_fim);
-    if(i==null){ i = r.turno==='tarde'?13*60 : r.turno==='cirurgico'?12*60 : 7*60+30 }
-    if(f==null){ f = r.turno==='manha'?11*60+30 : i+240 }
-    return {r,i,f:Math.max(f,i+30)};
-  }).sort((a,b)=>a.i-b.i||a.f-b.f);
-  let out='', grupo=[], fimG=-1;
-  const solta=()=>{ if(!grupo.length)return;
-    const faixas=[];
-    grupo.forEach(e=>{ let k=faixas.findIndex(ff=>ff<=e.i); if(k<0)k=faixas.length; faixas[k]=e.f; e.lane=k });
-    const n=faixas.length;
-    grupo.forEach(e=>{ out+=bloco(e,n) });
-    grupo=[]; fimG=-1;
-  };
-  evs.forEach(e=>{ if(grupo.length && e.i>=fimG) solta(); grupo.push(e); fimG=Math.max(fimG,e.f) });
-  solta();
-  return out;
+  const evs=lista.map(r=>{const j=janela(r);return {r,i:j.i,f:j.f}}).sort((a,b)=>a.i-b.i||a.f-b.f);
+  let out='',grupo=[],fimG=-1;
+  const solta=()=>{ if(!grupo.length)return; const faixas=[];
+    grupo.forEach(e=>{let k=faixas.findIndex(ff=>ff<=e.i); if(k<0)k=faixas.length; faixas[k]=e.f; e.lane=k});
+    const n=faixas.length; grupo.forEach(e=>{out+=bloco(e,n)}); grupo=[]; fimG=-1 };
+  evs.forEach(e=>{ if(grupo.length&&e.i>=fimG)solta(); grupo.push(e); fimG=Math.max(fimG,e.f) });
+  solta(); return out;
 }
 function bloco(e,n){
-  const r=e.r, top=(e.i-H0*60)/60*PXH, h=Math.max((e.f-e.i)/60*PXH-2,17);
-  const w=100/n, left=e.lane*w;
+  const r=e.r, top=(e.i-H0*60)/60*PXH, h=Math.max((e.f-e.i)/60*PXH-2,17), w=100/n, left=e.lane*w;
+  const bloq=r.estado==='bloqueado', cls=bloq?'atencao':corDe(r);
   const pre=r.estado==='pre_programado'?' pre':'';
-  const bloq=r.estado==='bloqueado';
-  const cls=bloq?'atencao':corDe(r);
   const pin=r.estado==='liberado'?'✓':(bloq?'⛔':'⏳');
   const extra=r.recorrencia==='extra'?' ⚡':(r.recorrencia==='recorrente'?' ⟳':'');
+  const loc=MODO==='dia'?'':(r.sala_id?E(nomeSala(r.sala_id)):'🏠 sala a definir');
   return `<div class="ev ${cls}${pre}" style="top:${top}px;height:${h}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)"
-    onclick="event.stopPropagation();editar('${r.id}')" title="${E(tituloDe(r))} — ${E(nomeSala(r.sala_id))}">
+    onclick="event.stopPropagation();editar('${r.id}')" title="${E(tituloDe(r))}">
     <span class="pin">${pin}</span><b>${E(tituloDe(r))}${extra}</b>
-    <span class="h">${m2h(e.i)}–${m2h(e.f)} · ${r.sala_id?E(nomeSala(r.sala_id)):'🏠 sala a definir'}</span></div>`;
+    <span class="h">${m2h(e.i)}–${m2h(e.f)}${loc?' · '+loc:''}</span></div>`;
 }
 function kpis(L){
+  const salas=REF.salas.length, dias=MODO==='dia'?1:7;
   const lib=L.filter(r=>r.estado==='liberado').length, pre=L.filter(r=>r.estado==='pre_programado').length;
-  const vaga=L.filter(r=>!r.medico_id).length, ext=L.filter(r=>r.recorrencia==='extra'||r.hora_extra).length;
   const amanha=iso(new Date(Date.now()+864e5));
   const semSala=L.filter(r=>!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
   const semSalaAmanha=L.filter(r=>r.data===amanha&&!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
+  /* minutos disponíveis x reservados */
+  let capMin=0; REF.salas.forEach(s=>{capMin+=((hm2m(s.hora_fecha)-hm2m(s.hora_abre))||720)*dias});
+  let usadoMin=0; L.filter(r=>r.estado!=='bloqueado').forEach(r=>{const j=janela(r);usadoMin+=j.f-j.i});
+  const livre=Math.max(capMin-usadoMin,0), pctLivre=capMin?Math.round(livre/capMin*100):0;
   document.getElementById('kpis').innerHTML=
-    `<div class="k"><div class="n">${L.length}</div><div class="l">Blocos na semana</div></div>`+
-    `<div class="k"><div class="n">${lib}</div><div class="l">Liberados</div></div>`+
-    `<div class="k ${pre?'al':''}"><div class="n">${pre}</div><div class="l">Aguardando liberar</div></div>`+
-    `<div class="k ${semSalaAmanha?'al':''}" onclick="definirSalas()" style="cursor:pointer" title="O consultório é definido na véspera">`+
-      `<div class="n">${semSala}</div><div class="l">Sem consultório${semSalaAmanha?' · '+semSalaAmanha+' é amanhã':''}</div></div>`+
-    `<div class="k"><div class="n">${vaga}</div><div class="l">Salas vagas</div></div>`+
-    `<div class="k"><div class="n">${ext}</div><div class="l">Extra / hora extra</div></div>`+
-    (semSalaAmanha?`<div class="k al" style="min-width:auto;cursor:pointer" onclick="definirSalas()"><div class="l">🏠 defina os consultórios de amanhã</div></div>`:'')+
-    (FALTA_SQL?`<div class="k al" style="min-width:auto"><div class="l">⚠ rode hog-abertura-agenda.sql no Supabase</div></div>`:'');
+    `<div class="k v"><div class="n">${pctLivre}%</div><div class="l">Grade livre (${salas} locais)</div></div>`+
+    `<div class="k"><div class="n">${Math.round(livre/60)}h</div><div class="l">Horas disponíveis</div></div>`+
+    `<div class="k"><div class="n">${L.length}</div><div class="l">Reservas</div></div>`+
+    `<div class="k"><div class="n">${lib}</div><div class="l">Liberadas p/ agendar</div></div>`+
+    `<div class="k ${pre?'al':''}"><div class="n">${pre}</div><div class="l">Reservadas, não liberadas</div></div>`+
+    `<div class="k ${semSalaAmanha?'al':''}" style="cursor:pointer" onclick="definirSalas()"><div class="n">${semSala}</div>`+
+      `<div class="l">Sem consultório${semSalaAmanha?' · '+semSalaAmanha+' é amanhã':''}</div></div>`+
+    (FALTA_GRADE?`<div class="k al" style="min-width:auto"><div class="l">⚠ rode hog-grade.sql</div></div>`:'')+
+    (FALTA_SQL?`<div class="k al" style="min-width:auto"><div class="l">⚠ rode hog-abertura-agenda.sql</div></div>`:'');
 }
 
-/* ---------------- painel: fluxo de abertura ---------------- */
-function cliqueVazio(ev,dstr){
+/* ---------------- 1) RESERVAR (poucos campos) ---------------- */
+function cliqueVazio(ev,dstr,salaId){
   const col=ev.currentTarget, y=ev.clientY-col.getBoundingClientRect().top;
   let min=H0*60+Math.round(y/PXH*60/30)*30; if(min<H0*60)min=H0*60;
-  novo(dstr,m2h(min),m2h(Math.min(min+240,H1*60)));
+  SEL={id:null,data:dstr,sala_id:salaId||'',hora_ini:m2h(min),hora_fim:m2h(Math.min(min+240,H1*60)),
+       recorrencia:'recorrente',estado:'pre_programado',medico_id:'',agenda_logica_id:''};
+  painelReserva();
 }
-function novo(dstr,hi,hf){
-  const d=dstr||iso(diasSemana()[1]);
-  SEL={id:null,data:d,hora_ini:hi||'07:30',hora_fim:hf||'11:30',recorrencia:'recorrente',estado:'pre_programado',
-       medico_id:'',sala_id:'',agenda_logica_id:'',pagamento_tipo:'',pagamento_valor:'',hora_extra:false};
-  painel();
-}
-function editar(id){SEL=RES.find(r=>r.id===id);if(SEL)painel()}
+function editar(id){SEL=RES.find(r=>r.id===id);if(SEL)painelReserva()}
 function fecha(){document.getElementById('pn').classList.remove('on');document.getElementById('ov').classList.remove('on')}
+const optS=(a,v)=>`<option value="">—</option>`+a.map(x=>`<option value="${x.id}"${x.id===v?' selected':''}>${E(x.nome)}</option>`).join('');
+const say=(c,t)=>{const m=document.getElementById('msg');if(m){m.className='msg '+c;m.innerHTML=t}};
 
-function painel(){
-  const r=SEL, novoReg=!r.id;
+function painelReserva(){
+  const r=SEL, novo=!r.id, liberada=r.estado==='liberado';
   const dd=new Date(r.data+'T12:00:00');
-  const optS=a=>`<option value="">—</option>`+a.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
-  document.getElementById('pt').textContent=(novoReg?'Abrir agenda — ':'Agenda — ')+
+  document.getElementById('pt').textContent=(novo?'Reservar — ':'Reserva — ')+
     dd.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
   document.getElementById('pb').innerHTML=`
   <div class="msg" id="msg"></div>
-  ${FALTA_SQL?'<div class="msg w" style="display:block">⚠ As colunas de horário e pagamento ainda não existem no banco. Rode <b>hog-abertura-agenda.sql</b> no Supabase para gravar tudo.</div>':''}
-
-  <div class="et"><h3><span class="num">1</span> Médico, sala e padrão de atendimento</h3>
+  <div class="et"><h3><span class="num">1</span> Reserva do local</h3>
     <div class="g2">
-      <div><label>Médico</label><select id="medico_id" onchange="sugerePadrao()">${optS(REF.medicos)}</select></div>
-      <div><label>Sala / recurso <span style="font-weight:400;color:#6c757d">— definida na véspera</span></label>
-        <select id="sala_id">${optS(REF.salas)}</select></div>
+      <div><label>Local</label><select id="sala_id">${optS(REF.salas,r.sala_id)}</select></div>
+      <div><label>Médico / responsável</label><select id="medico_id">${optS(REF.medicos,r.medico_id)}</select></div>
     </div>
-    <div class="hint">Pode deixar a sala em branco: o número do consultório é definido no dia anterior,
-      pelo botão <b>🏠 Consultórios de amanhã</b>.</div>
-    <div style="margin-top:8px"><label>Padrão de atendimento (agenda lógica)</label>
-      <select id="agenda_logica_id" onchange="aplicaPadrao()">${optS(REF.agendas)}</select>
-      <div class="hint" id="hint_padrao">O padrão traz o tipo, o tempo de atendimento e a quantidade do período.</div></div>
-    <div style="margin-top:8px"><label>Título no quadro</label>
-      <input id="titulo" placeholder="ex.: Dr. Nilson — Catarata"></div>
+    <div class="g3" style="margin-top:8px">
+      <div><label>Data</label><input type="date" id="data" value="${r.data||''}"></div>
+      <div><label>Início</label><input type="time" id="hora_ini" step="900" value="${(r.hora_ini||'').slice(0,5)}"></div>
+      <div><label>Fim</label><input type="time" id="hora_fim" step="900" value="${(r.hora_fim||'').slice(0,5)}"></div>
+    </div>
+    <div style="margin-top:8px"><label>Repetição</label>
+      <div class="chips" id="ch_rec">
+        <span class="chip" data-v="recorrente" onclick="pick('ch_rec',this);mostraRepete()">⟳ Recorrente</span>
+        <span class="chip" data-v="eventual" onclick="pick('ch_rec',this);mostraRepete()">Eventual</span>
+        <span class="chip" data-v="extra" onclick="pick('ch_rec',this);mostraRepete()">⚡ Extra</span>
+      </div>
+      <div id="bx_repete" style="margin-top:7px;display:none">
+        <label>Repetir toda semana até</label><input type="date" id="repete_ate" value="${r.repete_ate||''}">
+      </div>
+      <div style="margin-top:7px"><label><input type="checkbox" id="hora_extra" style="width:auto" ${r.hora_extra?'checked':''}> Hora extra (sábado, feriado, fora do horário)</label></div>
+    </div>
+    <div style="margin-top:8px"><label>Observação</label><input id="observacao" value="${E(r.observacao||'')}" placeholder="opcional"></div>
+    <div class="hint" style="margin-top:6px">A reserva só ocupa o local. As regras vêm depois, na liberação.</div>
   </div>
 
-  <div class="et"><h3><span class="num">2</span> Horário da agenda</h3>
-    <div class="g3">
-      <div><label>Data</label><input type="date" id="data"></div>
-      <div><label>Início</label><input type="time" id="hora_ini" step="900"></div>
-      <div><label>Fim</label><input type="time" id="hora_fim" step="900"></div>
-    </div>
-    <div style="margin-top:8px"><label>Turno / cor no quadro</label>
-      <div class="chips" id="ch_turno">
-        <span class="chip" data-v="manha" onclick="pick('ch_turno',this)">Manhã</span>
-        <span class="chip" data-v="tarde" onclick="pick('ch_turno',this)">Tarde</span>
-        <span class="chip" data-v="cirurgico" onclick="pick('ch_turno',this)">Centro Cirúrgico</span>
-        <span class="chip" data-v="vaga" onclick="pick('ch_turno',this)">Sala vaga</span>
-      </div></div>
-  </div>
+  <div class="et lib"><h3><span class="num">2</span> Liberar para agendamento</h3>
+    <div id="est_now" style="margin-bottom:8px"></div>
+    <label>Padrão de atendimento (agenda lógica) *</label>
+    <select id="agenda_logica_id" onchange="aplicaPadrao()">${optS(REF.agendas,r.agenda_logica_id)}</select>
+    <div class="hint" id="hint_padrao">Traz tipo, tempo por paciente, quantidade do período e as regras.</div>
 
-  <div class="et"><h3><span class="num">3</span> Pagamento</h3>
-    <div class="g2">
-      <div><label>Forma</label><select id="pagamento_tipo" onchange="mostraContrato()">${optS(REF.pgto)}</select></div>
-      <div id="bx_valor"><label>Valor combinado (R$)</label><input id="pagamento_valor" placeholder="ex.: 350,00"></div>
+    <div class="g2" style="margin-top:8px">
+      <div><label>Pagamento *</label><select id="pagamento_tipo" onchange="mostraContrato()">${optS(REF.pgto,r.pagamento_tipo)}</select></div>
+      <div id="bx_valor"><label>Valor (R$)</label><input id="pagamento_valor" value="${r.pagamento_valor||''}"></div>
     </div>
     <div id="bx_contrato" style="margin-top:8px;display:none">
       <label>Contrato do médico</label>
-      <select id="contrato_id" onchange="resumoContrato()"><option value="">— selecione o contrato —</option></select>
+      <select id="contrato_id" onchange="resumoContrato()"></select>
       <div class="hint" id="hint_contrato"></div>
     </div>
-    <div style="margin-top:8px"><label>Observação do pagamento</label><input id="pagamento_obs" placeholder="ex.: taxa de sala paga na véspera / 30% de repasse"></div>
-    <div class="hint">Residente: use <b>Repasse ao preceptor</b> — essa informação não aparece nas telas de agendamento.</div>
-  </div>
 
-  <div class="et"><h3><span class="num">4</span> Recorrente ou extra</h3>
-    <div class="chips" id="ch_rec">
-      <span class="chip" data-v="recorrente" onclick="pick('ch_rec',this);mostraRepete()">⟳ Recorrente</span>
-      <span class="chip" data-v="eventual" onclick="pick('ch_rec',this);mostraRepete()">Eventual</span>
-      <span class="chip" data-v="extra" onclick="pick('ch_rec',this);mostraRepete()">⚡ Extra</span>
+    <div style="margin-top:9px"><label>Quem pode agendar neste bloco</label>
+      <div class="chips" id="ch_perfis">${(REF.perfis.length?REF.perfis:[{id:'callcenter',nome:'Call Center'},
+        {id:'recepcao',nome:'Recepção'},{id:'consultora',nome:'Consultora'},{id:'centro_cirurgico',nome:'Centro Cirúrgico'},
+        {id:'coordenacao',nome:'Coordenação'}]).map(p=>`<span class="chip mult" data-v="${p.id}" onclick="this.classList.toggle('on')">${E(p.nome)}</span>`).join('')}</div>
+      <div class="hint">O Centro Cirúrgico já vem restrito ao perfil autorizado.</div>
     </div>
-    <div id="bx_repete" style="margin-top:8px;display:none">
-      <label>Repetir toda semana até</label><input type="date" id="repete_ate">
-      <div class="hint">Cria um bloco por semana, no mesmo dia e horário, até a data escolhida.</div>
-    </div>
-    <div style="margin-top:8px"><label><input type="checkbox" id="hora_extra" style="width:auto"> Hora extra (sábado, feriado ou fora do horário)</label></div>
-    <div style="margin-top:8px"><label>Observação da coordenação</label><input id="observacao" placeholder="aparece para quem agenda"></div>
-  </div>
-
-  <div class="et"><h3><span class="num">5</span> Liberar para agendamento</h3>
-    <div id="est_now"></div>
-    <div class="hint">Enquanto não liberar, a agenda fica no quadro em amarelo e o call center <b>não</b> consegue agendar.</div>
+    <div style="margin-top:8px"><label>Título no quadro</label><input id="titulo" value="${E(r.titulo||'')}" placeholder="ex.: Dr. Nilson — Catarata"></div>
+    <div id="bx_espera"></div>
   </div>`;
 
-  ['medico_id','sala_id','agenda_logica_id','titulo','data','hora_ini','hora_fim','pagamento_tipo','pagamento_valor','pagamento_obs','observacao','repete_ate']
-    .forEach(k=>{const e=document.getElementById(k); if(e&&r[k]!=null&&r[k]!==undefined)e.value=r[k]});
-  document.getElementById('hora_extra').checked=!!r.hora_extra;
-  marca('ch_turno', r.cor||r.turno||'manha');
-  marca('ch_rec', r.recorrencia||'recorrente');
-  mostraRepete();
+  marca('ch_rec', r.recorrencia||'recorrente'); mostraRepete();
+  document.getElementById('pagamento_tipo').value=r.pagamento_tipo||'';
   if(r.agenda_logica_id)aplicaPadrao();
   mostraContrato(r.contrato_id);
-  const est=r.estado||'pre_programado';
-  document.getElementById('est_now').innerHTML= est==='liberado'
-    ? `<span class="tag t-g">✓ liberado para o call center</span>`
-    : est==='bloqueado' ? `<span class="tag t-n">⛔ bloqueado${r.motivo_bloqueio?' — '+E(r.motivo_bloqueio):''}</span>`
-    : `<span class="tag t-a">⏳ aguardando liberação</span>`;
+  marcaPerfis(r);
+  document.getElementById('est_now').innerHTML = liberada
+    ? '<span class="tag t-g">✓ liberada — o call center já agenda</span>'
+    : r.estado==='bloqueado' ? `<span class="tag t-r">⛔ bloqueada${r.motivo_bloqueio?' — '+E(r.motivo_bloqueio):''}</span>`
+    : '<span class="tag t-a">⏳ reservada — ainda não liberada para agendamento</span>';
+  mostraEspera();
 
   document.getElementById('pf').innerHTML=
-    `<button class="bl g" onclick="salvar(true)">${est==='liberado'?'Salvar':'Salvar e liberar'}</button>`+
-    `<button class="bl" onclick="salvar(false)">Salvar sem liberar</button>`+
+    `<button class="bl" onclick="salvar(false)">${novo?'Reservar':'Salvar reserva'}</button>`+
+    `<button class="bl g" onclick="salvar(true)">${liberada?'Salvar':'Liberar para agendamento'}</button>`+
     (r.id?`<button class="bl n" onclick="bloquear()">Bloquear</button><button class="bl" style="background:#dc3545" onclick="excluir()">Excluir</button>`:'');
   document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
 }
 function pick(box,el){document.querySelectorAll('#'+box+' .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
 function marca(box,v){const el=document.querySelector('#'+box+' .chip[data-v="'+v+'"]');
-  if(el)pick(box,el); else {const f=document.querySelector('#'+box+' .chip'); if(f)pick(box,f)}}
+  if(el)pick(box,el);else{const f=document.querySelector('#'+box+' .chip');if(f)pick(box,f)}}
 function val(box){const el=document.querySelector('#'+box+' .chip.on');return el?el.dataset.v:''}
 function mostraRepete(){document.getElementById('bx_repete').style.display=val('ch_rec')==='recorrente'?'block':'none'}
-function sugerePadrao(){
-  const m=V('medico_id'); if(!m){mostraContrato();return}
-  const as=REF.agendas.filter(a=>a.medico_id===m);
-  if(as.length===1){document.getElementById('agenda_logica_id').value=as[0].id;aplicaPadrao()}
-  mostraContrato();
+function marcaPerfis(r){
+  let lista=r.perfis_agendamento;
+  if(!lista||!lista.length){ const s=REF.salas.find(x=>x.id===(r.sala_id||V('sala_id')));
+    lista=(s&&s.agendavel_por&&s.agendavel_por.length)?s.agendavel_por
+      :((s&&s.tipo==='cc')?['centro_cirurgico','consultora','coordenacao']:['callcenter','recepcao','coordenacao']) }
+  document.querySelectorAll('#ch_perfis .chip').forEach(c=>c.classList.toggle('on',lista.includes(c.dataset.v)));
 }
-/* ---- contrato: mora no padrão de atendimento do médico ---- */
-const RTIPO={repasse_percentual:'repasse',valor_fixo_periodo:'valor fixo por período',
-  valor_por_atendimento:'valor por atendimento',aluguel_sala:'aluguel de sala',
-  preceptoria:'preceptoria (repasse ao preceptor)',sem_pagamento:'sem pagamento'};
-const moeda=v=>v==null?'':('R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}));
-function contratoDoPadrao(){
-  const a=REF.agendas.find(x=>x.id===V('agenda_logica_id'));
-  return a&&a.contrato_id?a.contrato_id:'';
-}
-function mostraContrato(preferido){
-  const ehContrato=V('pagamento_tipo')==='contrato';
-  document.getElementById('bx_contrato').style.display=ehContrato?'block':'none';
-  document.getElementById('bx_valor').style.display=ehContrato?'none':'block';
-  if(!ehContrato)return;
-  const med=V('medico_id');
-  const lista=REF.contratos.filter(c=>!med||!c.medico_id||c.medico_id===med);
-  const sel=document.getElementById('contrato_id');
-  const atual=preferido||V('contrato_id')||contratoDoPadrao();
-  sel.innerHTML='<option value="">— selecione o contrato —</option>'+
-    lista.map(c=>`<option value="${c.id}"${c.id===atual?' selected':''}>${E(c.nome)}</option>`).join('');
-  if(!lista.length)sel.innerHTML='<option value="">— nenhum contrato cadastrado para este médico —</option>';
-  resumoContrato();
-}
-function resumoContrato(){
-  const c=REF.contratos.find(x=>x.id===V('contrato_id'));
-  const h=document.getElementById('hint_contrato');
-  if(!c){ h.innerHTML=REF.contratos.length
-      ? 'Cadastre ou escolha o contrato — ele fica <b>vinculado ao padrão de atendimento</b>, valendo para todos os blocos dessa agenda.'
-      : '⚠ Nenhum contrato cadastrado. Rode <b>hog-contratos.sql</b> e cadastre em Administrativo › Contratos.';
-    return }
-  const vig=(c.vigencia_ini?('vigência desde '+c.vigencia_ini.split('-').reverse().join('/')):'')+
-            (c.vigencia_fim?(' até '+c.vigencia_fim.split('-').reverse().join('/')):'');
-  h.innerHTML=`<b>${E(c.nome)}</b> · ${RTIPO[c.tipo_remuneracao]||E(c.tipo_remuneracao||'—')}`+
-    (c.percentual?` <b>${c.percentual}%</b>`:'')+(c.valor?` <b>${moeda(c.valor)}</b>`:'')+
-    (c.base_calculo?` · base: ${E(c.base_calculo)}`:'')+(c.periodicidade?` · ${E(c.periodicidade).replace('_',' ')}`:'')+
-    (vig?` · ${vig}`:'')+
-    (contratoDoPadrao()===c.id?' <span class="tag t-g">já vinculado ao padrão</span>'
-      :' <span class="tag t-a">será vinculado ao padrão ao salvar</span>');
-}
+const perfisSel=()=>[...document.querySelectorAll('#ch_perfis .chip.on')].map(c=>c.dataset.v);
 
+/* ---- padrão e contrato ---- */
 function aplicaPadrao(){
   const a=REF.agendas.find(x=>x.id===V('agenda_logica_id')); if(!a)return;
-  if(a.contrato_id){ document.getElementById('pagamento_tipo').value='contrato'; mostraContrato(a.contrato_id) }
-  if(a.medico_id)document.getElementById('medico_id').value=a.medico_id;
-  if(a.sala_padrao_id&&!V('sala_id'))document.getElementById('sala_id').value=a.sala_padrao_id;
+  if(a.contrato_id){document.getElementById('pagamento_tipo').value='contrato';mostraContrato(a.contrato_id)}
+  if(a.medico_id&&!V('medico_id'))document.getElementById('medico_id').value=a.medico_id;
   if(!V('titulo'))document.getElementById('titulo').value=a.nome;
-  if(a.turno)marca('ch_turno',a.turno==='cirurgico'?'cirurgico':a.turno);
   document.getElementById('hint_padrao').innerHTML=
     `<b>${E(a.nome)}</b> · ${E(a.tipo||'—')} · ${E(a.modo_contagem||'—')}`+
     (a.tempo_atendimento_min?` · ${a.tempo_atendimento_min} min por paciente`:'')+
     (a.qtd_periodo?` · ${a.qtd_periodo} vagas no período`:'')+
     (a.cota_nao_sobe_escada?` · cota ${a.cota_nao_sobe_escada} que não sobem escada`:'');
+  mostraEspera();
 }
-const say=(c,t)=>{const m=document.getElementById('msg');m.className='msg '+c;m.innerHTML=t};
+const RTIPO={repasse_percentual:'repasse',valor_fixo_periodo:'valor fixo por período',valor_por_atendimento:'valor por atendimento',
+  aluguel_sala:'aluguel de sala',preceptoria:'preceptoria (repasse ao preceptor)',sem_pagamento:'sem pagamento'};
+const moeda=v=>v==null?'':('R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}));
+function contratoDoPadrao(){const a=REF.agendas.find(x=>x.id===V('agenda_logica_id'));return a&&a.contrato_id?a.contrato_id:''}
+function mostraContrato(preferido){
+  const eh=V('pagamento_tipo')==='contrato';
+  document.getElementById('bx_contrato').style.display=eh?'block':'none';
+  document.getElementById('bx_valor').style.display=eh?'none':'block';
+  if(!eh)return;
+  const med=V('medico_id'), lista=REF.contratos.filter(c=>!med||!c.medico_id||c.medico_id===med);
+  const sel=document.getElementById('contrato_id'), atual=preferido||V('contrato_id')||contratoDoPadrao();
+  sel.innerHTML=lista.length?('<option value="">— selecione —</option>'+lista.map(c=>
+    `<option value="${c.id}"${c.id===atual?' selected':''}>${E(c.nome)}</option>`).join(''))
+    :'<option value="">— nenhum contrato cadastrado —</option>';
+  resumoContrato();
+}
+function resumoContrato(){
+  const c=REF.contratos.find(x=>x.id===V('contrato_id')), h=document.getElementById('hint_contrato');
+  if(!c){h.innerHTML=REF.contratos.length?'O contrato fica <b>vinculado ao padrão de atendimento</b>.'
+    :'⚠ Nenhum contrato cadastrado — rode <b>hog-contratos.sql</b>.';return}
+  h.innerHTML=`<b>${E(c.nome)}</b> · ${RTIPO[c.tipo_remuneracao]||E(c.tipo_remuneracao||'—')}`+
+    (c.percentual?` <b>${c.percentual}%</b>`:'')+(c.valor?` <b>${moeda(c.valor)}</b>`:'')+
+    (contratoDoPadrao()===c.id?' <span class="tag t-g">vinculado ao padrão</span>':' <span class="tag t-a">será vinculado ao padrão</span>');
+}
+/* ---- espera: quem está esperando essa agenda ---- */
+function mostraEspera(){
+  const box=document.getElementById('bx_espera'); if(!box)return;
+  const ag=V('agenda_logica_id'), med=V('medico_id');
+  const fila=ESPERA.filter(e=>e.status!=='agendado'&&((ag&&e.agenda_logica_id===ag)||(med&&e.medico_id===med)));
+  box.innerHTML=fila.length?`<div class="esp">🔔 <b>${fila.length} paciente(s) na lista de espera</b> desta agenda.
+    Ao liberar, o call center recebe o aviso para chamar:<br>${fila.slice(0,6).map(e=>
+      `${E(e.pacientes?e.pacientes.nome:'—')}${e.prioridade==='urgente'?' <span class="tag t-r">urgente</span>':''}`).join(' · ')}</div>`:'';
+}
 
-function corpo(){
-  const cor=val('ch_turno');
-  const o={ medico_id:V('medico_id')||null, sala_id:V('sala_id')||null,
-    agenda_logica_id:V('agenda_logica_id')||null, data:V('data'),
-    turno: cor==='vaga'?null:cor, recorrencia:val('ch_rec'),
-    hora_extra:document.getElementById('hora_extra').checked, observacao:V('observacao')||null };
-  if(!FALTA_SQL)Object.assign(o,{ hora_ini:V('hora_ini')||null, hora_fim:V('hora_fim')||null,
-    titulo:V('titulo')||null, cor:cor, pagamento_tipo:V('pagamento_tipo')||null,
-    pagamento_valor:parseFloat((V('pagamento_valor')||'').replace(/[^0-9,.-]/g,'').replace(',','.'))||null,
-    pagamento_obs:V('pagamento_obs')||null });
+/* ---------------- salvar / liberar ---------------- */
+function corpo(liberar){
+  const sala=REF.salas.find(x=>x.id===V('sala_id'));
+  const i=hm2m(V('hora_ini'));
+  const cor = (sala&&sala.tipo==='cc')?'cirurgico' : (!V('medico_id')?'vaga' : (i!=null&&i<720?'manha':'tarde'));
+  const o={ medico_id:V('medico_id')||null, sala_id:V('sala_id')||null, data:V('data'),
+    recorrencia:val('ch_rec'), hora_extra:document.getElementById('hora_extra').checked,
+    observacao:V('observacao')||null, turno:cor==='vaga'?null:cor,
+    agenda_logica_id:V('agenda_logica_id')||null };
+  if(!FALTA_SQL)Object.assign(o,{hora_ini:V('hora_ini')||null,hora_fim:V('hora_fim')||null,
+    titulo:V('titulo')||null,cor:cor,pagamento_tipo:V('pagamento_tipo')||null,
+    pagamento_valor:parseFloat((V('pagamento_valor')||'').replace(/[^0-9,.-]/g,'').replace(',','.'))||null});
   if(V('pagamento_tipo')==='contrato'&&REF.contratos.length)o.contrato_id=V('contrato_id')||null;
+  if(!FALTA_GRADE)o.perfis_agendamento=perfisSel();
   return o;
 }
 async function salvar(liberar){
   try{
     if(!V('data'))return say('e','Informe a data.');
-    if(!V('hora_ini')||!V('hora_fim'))return say('e','Informe o horário de início e fim.');
+    if(!V('sala_id'))return say('e','Escolha o local.');
+    if(!V('hora_ini')||!V('hora_fim'))return say('e','Informe início e fim.');
     if(hm2m(V('hora_fim'))<=hm2m(V('hora_ini')))return say('e','O fim precisa ser depois do início.');
-    if(val('ch_turno')!=='vaga'&&!V('medico_id'))return say('e','Escolha o médico (ou marque a cor "Sala vaga").');
-    /* o número do consultório é definido na véspera — sala não trava a abertura */
-    if(liberar&&val('ch_turno')!=='vaga'&&!V('agenda_logica_id'))
-      return say('e','Para liberar é preciso associar o padrão de atendimento (etapa 1).');
-    if(liberar&&!V('pagamento_tipo'))return say('e','Para liberar é preciso informar o pagamento (etapa 3).');
-    if(V('pagamento_tipo')==='contrato'&&REF.contratos.length&&!V('contrato_id'))
-      return say('e','Escolha o contrato do médico — ele fica vinculado ao padrão de atendimento.');
+    /* choque de horário no mesmo local */
+    const i=hm2m(V('hora_ini')), f=hm2m(V('hora_fim'));
+    const choque=RES.find(r=>r.id!==(SEL.id||'')&&r.data===V('data')&&r.sala_id===V('sala_id')&&r.estado!=='bloqueado'
+      &&(()=>{const j=janela(r);return i<j.f&&f>j.i})());
+    if(choque)return say('e',`Esse horário já está reservado em ${E(nomeSala(V('sala_id')))}: <b>${E(tituloDe(choque))}</b>.`);
 
-    /* contrato mora no padrão: vincula lá se ainda não estiver */
-    if(V('pagamento_tipo')==='contrato'&&V('contrato_id')&&V('agenda_logica_id')&&contratoDoPadrao()!==V('contrato_id')){
-      try{ await pa('agendas_logicas','id=eq.'+V('agenda_logica_id'),{contrato_id:V('contrato_id')});
-           const a=REF.agendas.find(x=>x.id===V('agenda_logica_id')); if(a)a.contrato_id=V('contrato_id'); }
-      catch(e){ return say('e','Não consegui vincular o contrato ao padrão: '+E(e.message)+' — rode hog-contratos.sql.') }
+    if(liberar){
+      if(!V('agenda_logica_id'))return say('e','Para liberar, associe o padrão de atendimento.');
+      if(!V('pagamento_tipo'))return say('e','Para liberar, informe o pagamento.');
+      if(V('pagamento_tipo')==='contrato'&&REF.contratos.length&&!V('contrato_id'))
+        return say('e','Escolha o contrato do médico.');
+      if(!perfisSel().length)return say('e','Escolha quem pode agendar neste bloco.');
+      if(V('pagamento_tipo')==='contrato'&&V('contrato_id')&&contratoDoPadrao()!==V('contrato_id')){
+        try{ await pa('agendas_logicas','id=eq.'+V('agenda_logica_id'),{contrato_id:V('contrato_id')});
+             const a=REF.agendas.find(x=>x.id===V('agenda_logica_id')); if(a)a.contrato_id=V('contrato_id') }catch(e){}
+      }
     }
-
-    const o=corpo();
+    const o=corpo(liberar);
     o.estado = liberar?'liberado':(SEL.estado==='liberado'?'liberado':'pre_programado');
-    if(liberar&&!FALTA_SQL){o.liberado_por='sistema';o.liberado_em=new Date().toISOString()}
+    if(liberar&&!FALTA_SQL){o.liberado_por='coordenação';o.liberado_em=new Date().toISOString()}
 
-    if(SEL.id){ await pa('reservas','id=eq.'+SEL.id,o) }
+    let ids=[];
+    if(SEL.id){ await pa('reservas','id=eq.'+SEL.id,o); ids=[SEL.id] }
     else{
       const linhas=[o];
       if(val('ch_rec')==='recorrente'&&V('repete_ate')){
         let d=new Date(o.data+'T12:00:00'); const fim=new Date(V('repete_ate')+'T12:00:00');
         while(true){ d.setDate(d.getDate()+7); if(d>fim)break; linhas.push({...o,data:iso(d)}) }
       }
-      await po('reservas',linhas);
+      const criados=await po('reservas',linhas); ids=criados.map(x=>x.id);
     }
-    if(liberar&&V('agenda_logica_id')){
-      await po('liberacoes',[{agenda_logica_id:V('agenda_logica_id'),data:V('data'),liberado_por:'sistema'}]).catch(()=>{});
-    }
-    fecha(); load();
+    let aviso='';
+    if(liberar) aviso=await avisaCallCenter(o,ids);
+    fecha(); await load();
+    if(aviso)alert(aviso);
   }catch(e){ say('e','Erro ao salvar: '+E(e.message)) }
+}
+/* ---- alerta ao call center: quem esperava essa agenda ---- */
+async function avisaCallCenter(o,ids){
+  if(!o.agenda_logica_id&&!o.medico_id)return '';
+  const fila=ESPERA.filter(e=>e.status!=='agendado'&&
+    ((o.agenda_logica_id&&e.agenda_logica_id===o.agenda_logica_id)||(o.medico_id&&e.medico_id===o.medico_id)));
+  const nome=nomeAg(o.agenda_logica_id)||nomeMed(o.medico_id);
+  const linhas=[{tipo:'agenda_liberada',reserva_id:ids[0]||null,agenda_logica_id:o.agenda_logica_id,
+    medico_id:o.medico_id,data_agenda:o.data,paciente_id:null,
+    mensagem:`Agenda liberada: ${nome} em ${brd(o.data)} ${o.hora_ini?String(o.hora_ini).slice(0,5):''}. ${fila.length?fila.length+' paciente(s) na lista de espera.':'Sem lista de espera.'}`,
+    status:'pendente'}];
+  fila.forEach(e=>linhas.push({tipo:'agenda_liberada',reserva_id:ids[0]||null,agenda_logica_id:o.agenda_logica_id,
+    medico_id:o.medico_id,data_agenda:o.data,paciente_id:e.paciente_id,
+    mensagem:`${e.pacientes?e.pacientes.nome:'Paciente'} está na espera de ${nome}${e.prioridade==='urgente'?' (URGENTE)':''} — agenda liberada em ${brd(o.data)}.`,
+    status:'pendente'}));
+  try{ await po('alertas_call_center',linhas);
+    for(const e of fila){ try{ await pa('lista_espera','id=eq.'+e.id,{status:'avisado',avisado_em:new Date().toISOString()}) }catch(_){} }
+    return fila.length?`✅ Agenda liberada. O call center foi avisado sobre ${fila.length} paciente(s) da lista de espera.`
+                      :'✅ Agenda liberada e o call center foi avisado.';
+  }catch(err){ return '✅ Agenda liberada. (Avisos ao call center exigem o hog-grade.sql.)' }
 }
 async function bloquear(){
   const m=prompt('Motivo do bloqueio (falta, congresso, férias…):'); if(m===null)return;
-  try{ await pa('reservas','id=eq.'+SEL.id,{estado:'bloqueado',motivo_bloqueio:m}); fecha(); load() }
-  catch(e){ say('e','Erro: '+E(e.message)) }
+  try{ await pa('reservas','id=eq.'+SEL.id,{estado:'bloqueado',motivo_bloqueio:m}); fecha(); load() }catch(e){ say('e','Erro: '+E(e.message)) }
 }
 async function excluir(){
-  if(!confirm('Excluir este bloco da grade?'))return;
+  if(!confirm('Excluir esta reserva? O horário volta a ficar disponível.'))return;
   try{ await de('reservas','id=eq.'+SEL.id); fecha(); load() }catch(e){ say('e','Erro: '+E(e.message)) }
 }
-async function liberarSemana(){
-  const pend=filtra().filter(r=>r.estado==='pre_programado');
-  if(!pend.length)return alert('Não há blocos aguardando liberação nesta semana.');
-  const prontos=pend.filter(x=>x.agenda_logica_id||!x.medico_id);
-  const falta=pend.length-prontos.length;
-  if(!confirm(`Liberar ${prontos.length} bloco(s) para o call center?`+
-    (falta?`\n\n⚠ ${falta} bloco(s) sem padrão de atendimento associado ficam de fora — abra um a um para completar.`:'')))return;
-  try{ for(const r of prontos) await pa('reservas','id=eq.'+r.id,{estado:'liberado'}); load() }
-  catch(e){ alert('Erro: '+e.message) }
+
+/* ---------------- avisos ao call center ---------------- */
+function verAlertas(){
+  document.getElementById('pt').textContent='Avisos ao call center';
+  document.getElementById('pb').innerHTML=`<div class="msg" id="msg"></div>`+
+    (ALERTAS.length?ALERTAS.map(a=>`<div class="et" style="padding:9px 11px">
+        <div style="font-size:13.5px">${E(a.mensagem)}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;align-items:center">
+          <span class="tag t-n">${brd(a.data_agenda)}</span>
+          <button class="bl g" style="padding:.2rem .6rem;font-size:13px" onclick="tratar('${a.id}')">✓ tratado</button>
+        </div></div>`).join('')
+      :'<div class="hint">Nenhum aviso pendente. Quando uma agenda for liberada, os pacientes da lista de espera aparecem aqui.</div>');
+  document.getElementById('pf').innerHTML=`<button class="bl n" onclick="fecha()">Fechar</button>`+
+    (ALERTAS.length?`<button class="bl" onclick="tratarTodos()">Marcar todos como tratados</button>`:'');
+  document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
 }
-/* ---------------- definição dos consultórios na véspera (D-1) ---------------- */
+async function tratar(id){ try{ await pa('alertas_call_center','id=eq.'+id,{status:'tratado',tratado_em:new Date().toISOString(),tratado_por:'call center'});
+  await load(); verAlertas() }catch(e){ say('e','Erro: '+E(e.message)) } }
+async function tratarTodos(){ try{ for(const a of ALERTAS)await pa('alertas_call_center','id=eq.'+a.id,{status:'tratado',tratado_em:new Date().toISOString(),tratado_por:'call center'});
+  await load(); fecha() }catch(e){ say('e','Erro: '+E(e.message)) } }
+
+/* ---------------- consultórios da véspera ---------------- */
 function definirSalas(dstr){
-  const d=dstr||iso(new Date(Date.now()+864e5));         /* amanhã */
-  SEL=null;
-  const lista=RES.filter(r=>r.data===d&&r.estado!=='bloqueado')
-                 .sort((a,b)=>String(a.hora_ini||'').localeCompare(String(b.hora_ini||'')));
+  const d=dstr||iso(new Date(Date.now()+864e5));
+  const lista=RES.filter(r=>r.data===d&&r.estado!=='bloqueado').sort((a,b)=>String(a.hora_ini||'').localeCompare(String(b.hora_ini||'')));
   const dd=new Date(d+'T12:00:00');
-  const opts=s=>'<option value="">— a definir —</option>'+REF.salas.map(x=>
-    `<option value="${x.id}"${x.id===s?' selected':''}>${E(x.nome)}</option>`).join('');
+  const opts=s=>'<option value="">— a definir —</option>'+REF.salas.map(x=>`<option value="${x.id}"${x.id===s?' selected':''}>${E(x.nome)}</option>`).join('');
   document.getElementById('pt').textContent='Consultórios de '+dd.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
-  document.getElementById('pb').innerHTML=`
-    <div class="msg" id="msg"></div>
+  document.getElementById('pb').innerHTML=`<div class="msg" id="msg"></div>
     <div class="et"><h3><span class="num">🏠</span> Definição da véspera</h3>
-      <div class="hint">O número do consultório é definido no dia anterior. Escolha a sala de cada bloco e salve —
-      a recepção, o call center e o painel de senhas passam a mostrar o local certo.</div>
-      <div style="margin-top:8px"><label>Dia</label><input type="date" id="dia_salas" value="${d}" onchange="definirSalas(this.value)"></div>
-    </div>
-    ${lista.length?lista.map((r,i)=>`
-      <div class="et" style="padding:8px 10px">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <span class="tag ${r.sala_id?'t-g':'t-a'}">${r.hora_ini?String(r.hora_ini).slice(0,5):'—'}</span>
-          <b style="flex:1;font-size:13.5px">${E(tituloDe(r))}</b>
-          <span class="tag t-n">${r.estado==='liberado'?'liberado':'aguardando'}</span>
-        </div>
-        <select id="sl_${i}" data-id="${r.id}" style="margin-top:6px">${opts(r.sala_id)}</select>
-      </div>`).join('')
-      :'<div class="hint">Nenhum bloco na grade neste dia.</div>'}`;
+      <div class="hint">O número do consultório é definido no dia anterior. Ajuste e salve — recepção, call center e painel de senhas passam a mostrar o local certo.</div>
+      <div style="margin-top:8px"><label>Dia</label><input type="date" id="dia_salas" value="${d}" onchange="definirSalas(this.value)"></div></div>
+    ${lista.length?lista.map((r,i)=>`<div class="et" style="padding:8px 10px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="tag ${r.sala_id?'t-g':'t-a'}">${r.hora_ini?String(r.hora_ini).slice(0,5):'—'}</span>
+        <b style="flex:1;font-size:13.5px">${E(tituloDe(r))}</b>
+        <span class="tag t-n">${r.estado==='liberado'?'liberada':'reservada'}</span></div>
+      <select id="sl_${i}" data-id="${r.id}" style="margin-top:6px">${opts(r.sala_id)}</select></div>`).join('')
+      :'<div class="hint">Nenhuma reserva neste dia.</div>'}`;
   document.getElementById('pf').innerHTML=lista.length
-    ? `<button class="bl g" onclick="salvarSalas(${lista.length})">Salvar consultórios</button>
-       <button class="bl n" onclick="fecha()">Fechar</button>` : `<button class="bl n" onclick="fecha()">Fechar</button>`;
+    ?`<button class="bl g" onclick="salvarSalas(${lista.length})">Salvar consultórios</button><button class="bl n" onclick="fecha()">Fechar</button>`
+    :`<button class="bl n" onclick="fecha()">Fechar</button>`;
   document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
 }
 async function salvarSalas(n){
-  try{
-    let mudou=0;
-    for(let i=0;i<n;i++){
-      const el=document.getElementById('sl_'+i); if(!el)continue;
+  try{ let mudou=0;
+    for(let i=0;i<n;i++){ const el=document.getElementById('sl_'+i); if(!el)continue;
       const r=RES.find(x=>x.id===el.dataset.id); if(!r)continue;
       const novo=el.value||null; if((r.sala_id||null)===novo)continue;
       const o={sala_id:novo};
       if(!FALTA_SQL)Object.assign(o,{sala_definida_por:'coordenação',sala_definida_em:new Date().toISOString()});
-      try{ await pa('reservas','id=eq.'+r.id,o) }
-      catch(e){ await pa('reservas','id=eq.'+r.id,{sala_id:novo}) }
-      mudou++;
-    }
-    fecha(); load();
-    if(!mudou)alert('Nenhuma alteração para salvar.');
+      try{ await pa('reservas','id=eq.'+r.id,o) }catch(e){ await pa('reservas','id=eq.'+r.id,{sala_id:novo}) }
+      mudou++; }
+    fecha(); load(); if(!mudou)alert('Nenhuma alteração para salvar.');
   }catch(e){ say('e','Erro ao salvar: '+E(e.message)) }
 }
 
 async function copiarSemana(){
-  const ds=diasSemana(); const a0=new Date(ds[0]); a0.setDate(a0.getDate()-7);
-  const a6=new Date(ds[6]); a6.setDate(a6.getDate()-7);
+  const base=MODO==='dia'?domingo(DIA):INI;
+  const a0=new Date(base); a0.setDate(a0.getDate()-7);
+  const a6=new Date(a0); a6.setDate(a6.getDate()+6);
   try{
     const ant=await g(`reservas?select=*&data=gte.${iso(a0)}&data=lte.${iso(a6)}&recorrencia=eq.recorrente`);
-    if(!ant.length)return alert('A semana anterior não tem blocos recorrentes para copiar.');
-    if(!confirm(`Copiar ${ant.length} bloco(s) recorrente(s) da semana anterior para esta semana?\nEles entram como "aguardando liberação".`))return;
+    if(!ant.length)return alert('A semana anterior não tem reservas recorrentes para copiar.');
+    if(!confirm(`Copiar ${ant.length} reserva(s) recorrente(s) da semana anterior?\nElas entram como reservadas, ainda sem liberação.`))return;
     const novos=ant.map(r=>{const o={...r};delete o.id;delete o.liberado_por;delete o.liberado_em;
-      const d=new Date(r.data+'T12:00:00');d.setDate(d.getDate()+7);
-      return {...o,data:iso(d),estado:'pre_programado'}});
+      const d=new Date(r.data+'T12:00:00');d.setDate(d.getDate()+7);return {...o,data:iso(d),estado:'pre_programado'}});
     await po('reservas',novos); load();
   }catch(e){ alert('Erro ao copiar: '+e.message) }
 }
