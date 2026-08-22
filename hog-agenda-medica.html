@@ -105,6 +105,7 @@ const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'
 const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
 const stat=(c,t)=>{const s=document.getElementById('st');s.className='status '+c;s.textContent=t};
 const iso=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x.toISOString().slice(0,10)};
+const brData=s=>s?String(s).split('-').reverse().join('/'):'';
 const hoje=()=>{document.getElementById('dt').value=iso(new Date());load()};
 const dia=n=>{const d=new Date(V('dt')+'T12:00:00');d.setDate(d.getDate()+n);document.getElementById('dt').value=iso(d);load()};
 const abre=(t,b,f)=>{document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('mf').innerHTML=f;document.getElementById('ov').classList.add('on')};
@@ -219,8 +220,13 @@ async function dados(id){
       sol.map(s=>`• ${E(s.nome_item||'')} ${s.lateralidade?'('+E(s.lateralidade)+')':''} — <b>${E(s.status)}</b>${s.observacao_proximo_agendamento?'<br><i>'+E(s.observacao_proximo_agendamento)+'</i>':''}`).join('<br>')+'</div>':''}
     <div style="font-weight:600;margin:12px 0 5px;font-size:13px">Histórico de agendamentos</div>
     <table style="font-size:13px"><thead><tr><th>Data</th><th>Hora</th><th>Tipo</th><th>Médico</th><th>Status</th></tr></thead><tbody>`+
-    (hist.length?hist.map(h=>`<tr><td>${E(h.data)}</td><td>${E((h.hora||'').slice(0,5))}</td><td>${E(h.tipo)}</td>
-      <td>${h.medicos?E(h.medicos.nome):'—'}</td><td>${stTag(h.status)}</td></tr>`).join(''):'<tr><td colspan="5">Sem histórico</td></tr>')+
+    (hist.length?hist.map(h=>{
+      const c = h.status==='faltou'    ? 'background:#f8d7da;color:#58151c'
+              : h.status==='cancelado' ? 'background:#e9ecef;color:#6c757d;text-decoration:line-through'
+              : ['compareceu','realizado'].includes(h.status) ? 'background:#d1e7dd;color:#0a3622' : '';
+      return `<tr style="${c}"><td>${E(brData(h.data))}</td><td>${E((h.hora||'').slice(0,5))}</td><td>${E(h.tipo)}</td>
+      <td>${h.medicos?E(h.medicos.nome):'—'}</td><td>${stTag(h.status)}</td></tr>`}).join('')
+      :'<tr><td colspan="5">Sem histórico</td></tr>')+
     '</tbody></table>',
    `<button class="b3" onclick="fecha()">Fechar</button>`);
 }
