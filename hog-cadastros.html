@@ -79,6 +79,7 @@
   <div class="nav" data-t="procedimentos">⚕️ Procedimentos <span class="c" id="c-procedimentos">–</span></div>
   <div class="nav" data-t="lios">👁 LIOs <span class="c" id="c-lios">–</span></div>
   <div class="sec">Comercial</div>
+  <div class="nav" data-t="contratos">📄 Contratos <span class="c" id="c-contratos">–</span></div>
   <div class="nav" data-t="convenios">🏥 Convênios <span class="c" id="c-convenios">–</span></div>
   <div class="nav" data-t="parceiros">🤝 Parceiros <span class="c" id="c-parceiros">–</span></div>
   <div class="sec">Calendário</div>
@@ -115,12 +116,12 @@ const opt=(a,ph,val)=>'<option value="">'+(ph||'—')+'</option>'+a.map(o=>`<opt
 const sn=v=>v===''?null:v; const nn=v=>v===''?null:Number(v);
 let ref={};
 async function loadRef(){
-  const [sal,med,esp,eq,conv,perf,par,ex]=await Promise.all(['salas','medicos','especialidades','equipamentos','convenios','perfis','parceiros','exames']
+  const [sal,med,esp,eq,conv,perf,par,ex,ctr]=await Promise.all(['salas','medicos','especialidades','equipamentos','convenios','perfis','parceiros','exames','contratos']
     .map(t=>api.get(t+'?select=id,nome&order=nome').catch(()=>[])));
-  ref={salas:sal,medicos:med,especialidades:esp,equipamentos:eq,convenios:conv,perfis:perf,parceiros:par,exames:ex};
+  ref={salas:sal,medicos:med,especialidades:esp,equipamentos:eq,convenios:conv,perfis:perf,parceiros:par,exames:ex,contratos:ctr};
 }
 async function counts(){
-  for(const t of ['pacientes','medicos','usuarios','perfis','salas','equipamentos','especialidades','agendas_logicas','exames','exame_combos','procedimentos','lios','convenios','parceiros','feriados_bloqueios']){
+  for(const t of ['pacientes','medicos','usuarios','perfis','salas','equipamentos','especialidades','agendas_logicas','exames','exame_combos','procedimentos','lios','contratos','convenios','parceiros','feriados_bloqueios']){
     api.get(t+'?select=id').then(r=>{const e=document.getElementById('c-'+t);if(e)e.textContent=r.length}).catch(()=>{});
   }
 }
@@ -237,6 +238,7 @@ agendas_logicas:{t:'Padrões de Atendimento',form:()=>`
     <div><label>Qtd por período</label><input id="ag_qtd" type="number"></div>
     <div><label>Idade mínima</label><input id="ag_idade" type="number"></div>
     <div><label>Cota "não sobe escada"</label><input id="ag_cota" type="number" placeholder="máx. por agenda"></div>
+    <div><label>📄 Contrato do médico</label><select id="ag_contrato">${opt(ref.contratos||[])}</select></div>
     <div style="grid-column:span 2"><label>💬 Lembrete da coordenação (aparece ao agendar)</label><input id="ag_obs" placeholder="ex: sem encaixe após 11h"></div>
     <div><label>Alerta ativo?</label><select id="ag_alerta"><option value="false">Desligado</option><option value="true">Ligado</option></select></div>
   </div>
@@ -298,6 +300,30 @@ lios:{t:'LIOs',form:()=>simpleForm('lio',[
   list:async()=>{const r=await api.get('lios?select=*&order=valor_venda.desc');
     return {n:r.length,html:tbl(['ID','LIO','Categoria','Venda','Custo','Repasse',''],r.map(l=>['<code>'+E(l.id)+'</code>',E(l.nome),E(l.categoria),
       'R$ '+(l.valor_venda||0),'R$ '+(l.custo||0),'R$ '+(l.repasse_cirurgiao||0),del('lios','id=eq.'+l.id)]))}}},
+
+contratos:{t:'Contratos',form:()=>simpleForm('ct',[
+    {id:'id',l:'ID *',ph:'ex: ct_nilson_2026'},{id:'nome',l:'Nome do contrato *',span:2,ph:'Repasse 30% — Dr. Nilson (2026)'},
+    {id:'medico_id',l:'Médico',ref:'medicos'},
+    {id:'tipo_remuneracao',l:'Tipo de remuneração',sel:[['repasse_percentual','Repasse (%)'],['valor_fixo_periodo','Valor fixo por período'],
+      ['valor_por_atendimento','Valor por atendimento'],['aluguel_sala','Aluguel de sala'],['preceptoria','Preceptoria (repasse ao preceptor)'],['sem_pagamento','Sem pagamento']]},
+    {id:'percentual',l:'Percentual (%)',num:true},{id:'valor',l:'Valor (R$)',num:true},
+    {id:'base_calculo',l:'Base de cálculo',ph:'faturamento recebido'},
+    {id:'periodicidade',l:'Periodicidade',sel:[['por_periodo','Por período'],['por_atendimento','Por atendimento'],['mensal','Mensal']]},
+    {id:'vigencia_ini',l:'Vigência — início',ph:'2026-01-01'},{id:'vigencia_fim',l:'Vigência — fim',ph:'opcional'},
+    {id:'documento_url',l:'Link do contrato assinado',span:2},
+    {id:'observacao',l:'Observação',span:2}],'contratos','Contratos',
+    'O contrato é vinculado ao <b>padrão de atendimento</b> do médico. Na abertura da agenda, escolher pagamento "Conforme contrato" puxa estas condições automaticamente.'),
+  list:async()=>{const r=await api.get('contratos?select=*,medicos(nome)&order=nome').catch(()=>[]);
+    const RT={repasse_percentual:'repasse %',valor_fixo_periodo:'fixo/período',valor_por_atendimento:'por atendimento',
+      aluguel_sala:'aluguel de sala',preceptoria:'preceptoria',sem_pagamento:'sem pagamento'};
+    const ag=await api.get('agendas_logicas?select=id,nome,contrato_id').catch(()=>[]);
+    return {n:r.length,html:(r.length?'':'<div class="hint">Nenhum contrato. Rode <b>hog-contratos.sql</b> para criar a tabela e os exemplos.</div>')+
+      tbl(['ID','Contrato','Médico','Tipo','Condição','Vigência','Padrões vinculados',''],r.map(c=>['<code>'+E(c.id)+'</code>',E(c.nome),
+      E(c.medicos?c.medicos.nome:'—'),'<span class="tag t-b">'+E(RT[c.tipo_remuneracao]||c.tipo_remuneracao||'—')+'</span>',
+      (c.percentual?c.percentual+'%':'')+(c.valor?' R$ '+Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):'')||'—',
+      (c.vigencia_ini?c.vigencia_ini.split('-').reverse().join('/'):'—')+(c.vigencia_fim?' a '+c.vigencia_fim.split('-').reverse().join('/'):''),
+      ag.filter(a=>a.contrato_id===c.id).map(a=>E(a.nome)).join(', ')||'<span class="tag t-a">nenhum</span>',
+      del('contratos','id=eq.'+c.id)]))}}},
 
 convenios:{t:'Convênios',form:()=>simpleForm('cnv',[
     {id:'id',l:'ID *'},{id:'nome',l:'Nome *',span:2},
@@ -442,7 +468,7 @@ async function saveAgenda(){try{
   if(!V('ag_id')||!V('ag_nome'))return say('ag_msg','e','ID e Nome são obrigatórios.');
   await api.post('agendas_logicas',{id:V('ag_id'),nome:V('ag_nome'),medico_id:sn(V('ag_med')),especialidade_id:sn(V('ag_esp')),
     tipo:V('ag_tipo'),sala_padrao_id:sn(V('ag_sala')),local:V('ag_local'),turno:sn(V('ag_turno')),modo_contagem:V('ag_modo'),
-    tempo_atendimento_min:nn(V('ag_tempo')),qtd_periodo:nn(V('ag_qtd')),idade_min:nn(V('ag_idade')),
+    tempo_atendimento_min:nn(V('ag_tempo')),qtd_periodo:nn(V('ag_qtd')),idade_min:nn(V('ag_idade')),contrato_id:sn(V('ag_contrato')),
     cota_nao_sobe_escada:nn(V('ag_cota')),observacao_agendamento:sn(V('ag_obs')),alerta_ativo:V('ag_alerta')==='true'});
   say('ag_msg','s','✅ Padrão cadastrado!');render()}catch(e){say('ag_msg','e','Erro: '+E(e.message))}}
 async function saveCombo(){try{

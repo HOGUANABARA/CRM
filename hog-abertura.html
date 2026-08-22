@@ -143,7 +143,7 @@ const H0=6, H1=20, PXH=44;                       /* grade das 6h às 20h */
 const m2h=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const hm2m=s=>{if(!s)return null;const p=String(s).split(':');return (+p[0])*60+(+p[1])};
 
-let REF={salas:[],medicos:[],agendas:[],pgto:[]}, RES=[], INI=null, SEL=null, FALTA_SQL=false;
+let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[]}, RES=[], INI=null, SEL=null, FALTA_SQL=false;
 
 /* ---------------- semana ---------------- */
 function domingo(d){const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
@@ -153,13 +153,15 @@ const semana=n=>{INI.setDate(INI.getDate()+n*7);load()};
 
 /* ---------------- carga ---------------- */
 async function loadRef(){
-  const [s,m,a,p]=await Promise.all([
+  const [s,m,a,p,c]=await Promise.all([
     g('salas?select=id,nome&order=nome'), g('medicos?select=id,nome,tipo&order=nome'),
     g('agendas_logicas?select=*&order=nome'),
-    g('formas_pagamento_agenda?select=*&order=nome').catch(()=>[])]);
-  if(!p.length)p.push({id:'repasse',nome:'Repasse ao médico'},{id:'aluguel_sala',nome:'Aluguel de sala'},
-    {id:'producao',nome:'Produção'},{id:'preceptor',nome:'Residente — repasse ao preceptor'},{id:'sem_pagamento',nome:'Sem pagamento'});
-  REF={salas:s,medicos:m,agendas:a,pgto:p};
+    g('formas_pagamento_agenda?select=*&order=nome').catch(()=>[]),
+    g('contratos?select=*&ativo=is.true&order=nome').catch(()=>[])]);
+  if(!p.length)p.push({id:'contrato',nome:'Conforme contrato'},{id:'repasse',nome:'Repasse ao médico'},
+    {id:'aluguel_sala',nome:'Aluguel de sala'},{id:'producao',nome:'Produção'},
+    {id:'preceptor',nome:'Residente — repasse ao preceptor'},{id:'sem_pagamento',nome:'Sem pagamento'});
+  REF={salas:s,medicos:m,agendas:a,pgto:p,contratos:c};
   document.getElementById('f_sala').innerHTML='<option value="">Todas as salas</option>'+s.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
   document.getElementById('f_med').innerHTML='<option value="">Todos os médicos</option>'+m.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
 }
@@ -317,8 +319,13 @@ function painel(){
 
   <div class="et"><h3><span class="num">3</span> Pagamento</h3>
     <div class="g2">
-      <div><label>Forma</label><select id="pagamento_tipo">${optS(REF.pgto)}</select></div>
-      <div><label>Valor combinado (R$)</label><input id="pagamento_valor" placeholder="ex.: 350,00"></div>
+      <div><label>Forma</label><select id="pagamento_tipo" onchange="mostraContrato()">${optS(REF.pgto)}</select></div>
+      <div id="bx_valor"><label>Valor combinado (R$)</label><input id="pagamento_valor" placeholder="ex.: 350,00"></div>
+    </div>
+    <div id="bx_contrato" style="margin-top:8px;display:none">
+      <label>Contrato do médico</label>
+      <select id="contrato_id" onchange="resumoContrato()"><option value="">— selecione o contrato —</option></select>
+      <div class="hint" id="hint_contrato"></div>
     </div>
     <div style="margin-top:8px"><label>Observação do pagamento</label><input id="pagamento_obs" placeholder="ex.: taxa de sala paga na véspera / 30% de repasse"></div>
     <div class="hint">Residente: use <b>Repasse ao preceptor</b> — essa informação não aparece nas telas de agendamento.</div>
@@ -350,6 +357,7 @@ function painel(){
   marca('ch_rec', r.recorrencia||'recorrente');
   mostraRepete();
   if(r.agenda_logica_id)aplicaPadrao();
+  mostraContrato(r.contrato_id);
   const est=r.estado||'pre_programado';
   document.getElementById('est_now').innerHTML= est==='liberado'
     ? `<span class="tag t-g">✓ liberado para o call center</span>`
@@ -368,12 +376,54 @@ function marca(box,v){const el=document.querySelector('#'+box+' .chip[data-v="'+
 function val(box){const el=document.querySelector('#'+box+' .chip.on');return el?el.dataset.v:''}
 function mostraRepete(){document.getElementById('bx_repete').style.display=val('ch_rec')==='recorrente'?'block':'none'}
 function sugerePadrao(){
-  const m=V('medico_id'); if(!m)return;
+  const m=V('medico_id'); if(!m){mostraContrato();return}
   const as=REF.agendas.filter(a=>a.medico_id===m);
   if(as.length===1){document.getElementById('agenda_logica_id').value=as[0].id;aplicaPadrao()}
+  mostraContrato();
 }
+/* ---- contrato: mora no padrão de atendimento do médico ---- */
+const RTIPO={repasse_percentual:'repasse',valor_fixo_periodo:'valor fixo por período',
+  valor_por_atendimento:'valor por atendimento',aluguel_sala:'aluguel de sala',
+  preceptoria:'preceptoria (repasse ao preceptor)',sem_pagamento:'sem pagamento'};
+const moeda=v=>v==null?'':('R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}));
+function contratoDoPadrao(){
+  const a=REF.agendas.find(x=>x.id===V('agenda_logica_id'));
+  return a&&a.contrato_id?a.contrato_id:'';
+}
+function mostraContrato(preferido){
+  const ehContrato=V('pagamento_tipo')==='contrato';
+  document.getElementById('bx_contrato').style.display=ehContrato?'block':'none';
+  document.getElementById('bx_valor').style.display=ehContrato?'none':'block';
+  if(!ehContrato)return;
+  const med=V('medico_id');
+  const lista=REF.contratos.filter(c=>!med||!c.medico_id||c.medico_id===med);
+  const sel=document.getElementById('contrato_id');
+  const atual=preferido||V('contrato_id')||contratoDoPadrao();
+  sel.innerHTML='<option value="">— selecione o contrato —</option>'+
+    lista.map(c=>`<option value="${c.id}"${c.id===atual?' selected':''}>${E(c.nome)}</option>`).join('');
+  if(!lista.length)sel.innerHTML='<option value="">— nenhum contrato cadastrado para este médico —</option>';
+  resumoContrato();
+}
+function resumoContrato(){
+  const c=REF.contratos.find(x=>x.id===V('contrato_id'));
+  const h=document.getElementById('hint_contrato');
+  if(!c){ h.innerHTML=REF.contratos.length
+      ? 'Cadastre ou escolha o contrato — ele fica <b>vinculado ao padrão de atendimento</b>, valendo para todos os blocos dessa agenda.'
+      : '⚠ Nenhum contrato cadastrado. Rode <b>hog-contratos.sql</b> e cadastre em Administrativo › Contratos.';
+    return }
+  const vig=(c.vigencia_ini?('vigência desde '+c.vigencia_ini.split('-').reverse().join('/')):'')+
+            (c.vigencia_fim?(' até '+c.vigencia_fim.split('-').reverse().join('/')):'');
+  h.innerHTML=`<b>${E(c.nome)}</b> · ${RTIPO[c.tipo_remuneracao]||E(c.tipo_remuneracao||'—')}`+
+    (c.percentual?` <b>${c.percentual}%</b>`:'')+(c.valor?` <b>${moeda(c.valor)}</b>`:'')+
+    (c.base_calculo?` · base: ${E(c.base_calculo)}`:'')+(c.periodicidade?` · ${E(c.periodicidade).replace('_',' ')}`:'')+
+    (vig?` · ${vig}`:'')+
+    (contratoDoPadrao()===c.id?' <span class="tag t-g">já vinculado ao padrão</span>'
+      :' <span class="tag t-a">será vinculado ao padrão ao salvar</span>');
+}
+
 function aplicaPadrao(){
   const a=REF.agendas.find(x=>x.id===V('agenda_logica_id')); if(!a)return;
+  if(a.contrato_id){ document.getElementById('pagamento_tipo').value='contrato'; mostraContrato(a.contrato_id) }
   if(a.medico_id)document.getElementById('medico_id').value=a.medico_id;
   if(a.sala_padrao_id&&!V('sala_id'))document.getElementById('sala_id').value=a.sala_padrao_id;
   if(!V('titulo'))document.getElementById('titulo').value=a.nome;
@@ -396,6 +446,7 @@ function corpo(){
     titulo:V('titulo')||null, cor:cor, pagamento_tipo:V('pagamento_tipo')||null,
     pagamento_valor:parseFloat((V('pagamento_valor')||'').replace(/[^0-9,.-]/g,'').replace(',','.'))||null,
     pagamento_obs:V('pagamento_obs')||null });
+  if(V('pagamento_tipo')==='contrato'&&REF.contratos.length)o.contrato_id=V('contrato_id')||null;
   return o;
 }
 async function salvar(liberar){
@@ -408,6 +459,15 @@ async function salvar(liberar){
     if(liberar&&val('ch_turno')!=='vaga'&&!V('agenda_logica_id'))
       return say('e','Para liberar é preciso associar o padrão de atendimento (etapa 1).');
     if(liberar&&!V('pagamento_tipo'))return say('e','Para liberar é preciso informar o pagamento (etapa 3).');
+    if(V('pagamento_tipo')==='contrato'&&REF.contratos.length&&!V('contrato_id'))
+      return say('e','Escolha o contrato do médico — ele fica vinculado ao padrão de atendimento.');
+
+    /* contrato mora no padrão: vincula lá se ainda não estiver */
+    if(V('pagamento_tipo')==='contrato'&&V('contrato_id')&&V('agenda_logica_id')&&contratoDoPadrao()!==V('contrato_id')){
+      try{ await pa('agendas_logicas','id=eq.'+V('agenda_logica_id'),{contrato_id:V('contrato_id')});
+           const a=REF.agendas.find(x=>x.id===V('agenda_logica_id')); if(a)a.contrato_id=V('contrato_id'); }
+      catch(e){ return say('e','Não consegui vincular o contrato ao padrão: '+E(e.message)+' — rode hog-contratos.sql.') }
+    }
 
     const o=corpo();
     o.estado = liberar?'liberado':(SEL.estado==='liberado'?'liberado':'pre_programado');
