@@ -90,6 +90,7 @@
   <button class="bl g" onclick="novo()">+ Abrir agenda</button>
   <button class="bl n" onclick="copiarSemana()" title="Repete a grade recorrente da semana anterior nesta semana">&#9109; Copiar semana anterior</button>
   <button class="bl" onclick="liberarSemana()">&#10003; Liberar semana p/ call center</button>
+  <button class="bl" style="background:#fd7e14" onclick="definirSalas()" title="O número do consultório é definido na véspera">&#127968; Consultórios de amanhã</button>
   <span class="leg">
     <span><i style="background:#EF6C00"></i>Manhã</span>
     <span><i style="background:#009688"></i>Tarde</span>
@@ -251,17 +252,23 @@ function bloco(e,n){
   return `<div class="ev ${cls}${pre}" style="top:${top}px;height:${h}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)"
     onclick="event.stopPropagation();editar('${r.id}')" title="${E(tituloDe(r))} — ${E(nomeSala(r.sala_id))}">
     <span class="pin">${pin}</span><b>${E(tituloDe(r))}${extra}</b>
-    <span class="h">${m2h(e.i)}–${m2h(e.f)}${r.sala_id?' · '+E(nomeSala(r.sala_id)):''}</span></div>`;
+    <span class="h">${m2h(e.i)}–${m2h(e.f)} · ${r.sala_id?E(nomeSala(r.sala_id)):'🏠 sala a definir'}</span></div>`;
 }
 function kpis(L){
   const lib=L.filter(r=>r.estado==='liberado').length, pre=L.filter(r=>r.estado==='pre_programado').length;
   const vaga=L.filter(r=>!r.medico_id).length, ext=L.filter(r=>r.recorrencia==='extra'||r.hora_extra).length;
+  const amanha=iso(new Date(Date.now()+864e5));
+  const semSala=L.filter(r=>!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
+  const semSalaAmanha=L.filter(r=>r.data===amanha&&!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
   document.getElementById('kpis').innerHTML=
     `<div class="k"><div class="n">${L.length}</div><div class="l">Blocos na semana</div></div>`+
     `<div class="k"><div class="n">${lib}</div><div class="l">Liberados</div></div>`+
     `<div class="k ${pre?'al':''}"><div class="n">${pre}</div><div class="l">Aguardando liberar</div></div>`+
+    `<div class="k ${semSalaAmanha?'al':''}" onclick="definirSalas()" style="cursor:pointer" title="O consultório é definido na véspera">`+
+      `<div class="n">${semSala}</div><div class="l">Sem consultório${semSalaAmanha?' · '+semSalaAmanha+' é amanhã':''}</div></div>`+
     `<div class="k"><div class="n">${vaga}</div><div class="l">Salas vagas</div></div>`+
     `<div class="k"><div class="n">${ext}</div><div class="l">Extra / hora extra</div></div>`+
+    (semSalaAmanha?`<div class="k al" style="min-width:auto;cursor:pointer" onclick="definirSalas()"><div class="l">🏠 defina os consultórios de amanhã</div></div>`:'')+
     (FALTA_SQL?`<div class="k al" style="min-width:auto"><div class="l">⚠ rode hog-abertura-agenda.sql no Supabase</div></div>`:'');
 }
 
@@ -293,8 +300,11 @@ function painel(){
   <div class="et"><h3><span class="num">1</span> Médico, sala e padrão de atendimento</h3>
     <div class="g2">
       <div><label>Médico</label><select id="medico_id" onchange="sugerePadrao()">${optS(REF.medicos)}</select></div>
-      <div><label>Sala / recurso</label><select id="sala_id">${optS(REF.salas)}</select></div>
+      <div><label>Sala / recurso <span style="font-weight:400;color:#6c757d">— definida na véspera</span></label>
+        <select id="sala_id">${optS(REF.salas)}</select></div>
     </div>
+    <div class="hint">Pode deixar a sala em branco: o número do consultório é definido no dia anterior,
+      pelo botão <b>🏠 Consultórios de amanhã</b>.</div>
     <div style="margin-top:8px"><label>Padrão de atendimento (agenda lógica)</label>
       <select id="agenda_logica_id" onchange="aplicaPadrao()">${optS(REF.agendas)}</select>
       <div class="hint" id="hint_padrao">O padrão traz o tipo, o tempo de atendimento e a quantidade do período.</div></div>
@@ -455,7 +465,7 @@ async function salvar(liberar){
     if(!V('hora_ini')||!V('hora_fim'))return say('e','Informe o horário de início e fim.');
     if(hm2m(V('hora_fim'))<=hm2m(V('hora_ini')))return say('e','O fim precisa ser depois do início.');
     if(val('ch_turno')!=='vaga'&&!V('medico_id'))return say('e','Escolha o médico (ou marque a cor "Sala vaga").');
-    if(!V('sala_id'))return say('e','Escolha a sala ou recurso.');
+    /* o número do consultório é definido na véspera — sala não trava a abertura */
     if(liberar&&val('ch_turno')!=='vaga'&&!V('agenda_logica_id'))
       return say('e','Para liberar é preciso associar o padrão de atendimento (etapa 1).');
     if(liberar&&!V('pagamento_tipo'))return say('e','Para liberar é preciso informar o pagamento (etapa 3).');
@@ -507,6 +517,56 @@ async function liberarSemana(){
   try{ for(const r of prontos) await pa('reservas','id=eq.'+r.id,{estado:'liberado'}); load() }
   catch(e){ alert('Erro: '+e.message) }
 }
+/* ---------------- definição dos consultórios na véspera (D-1) ---------------- */
+function definirSalas(dstr){
+  const d=dstr||iso(new Date(Date.now()+864e5));         /* amanhã */
+  SEL=null;
+  const lista=RES.filter(r=>r.data===d&&r.estado!=='bloqueado')
+                 .sort((a,b)=>String(a.hora_ini||'').localeCompare(String(b.hora_ini||'')));
+  const dd=new Date(d+'T12:00:00');
+  const opts=s=>'<option value="">— a definir —</option>'+REF.salas.map(x=>
+    `<option value="${x.id}"${x.id===s?' selected':''}>${E(x.nome)}</option>`).join('');
+  document.getElementById('pt').textContent='Consultórios de '+dd.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
+  document.getElementById('pb').innerHTML=`
+    <div class="msg" id="msg"></div>
+    <div class="et"><h3><span class="num">🏠</span> Definição da véspera</h3>
+      <div class="hint">O número do consultório é definido no dia anterior. Escolha a sala de cada bloco e salve —
+      a recepção, o call center e o painel de senhas passam a mostrar o local certo.</div>
+      <div style="margin-top:8px"><label>Dia</label><input type="date" id="dia_salas" value="${d}" onchange="definirSalas(this.value)"></div>
+    </div>
+    ${lista.length?lista.map((r,i)=>`
+      <div class="et" style="padding:8px 10px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="tag ${r.sala_id?'t-g':'t-a'}">${r.hora_ini?String(r.hora_ini).slice(0,5):'—'}</span>
+          <b style="flex:1;font-size:13.5px">${E(tituloDe(r))}</b>
+          <span class="tag t-n">${r.estado==='liberado'?'liberado':'aguardando'}</span>
+        </div>
+        <select id="sl_${i}" data-id="${r.id}" style="margin-top:6px">${opts(r.sala_id)}</select>
+      </div>`).join('')
+      :'<div class="hint">Nenhum bloco na grade neste dia.</div>'}`;
+  document.getElementById('pf').innerHTML=lista.length
+    ? `<button class="bl g" onclick="salvarSalas(${lista.length})">Salvar consultórios</button>
+       <button class="bl n" onclick="fecha()">Fechar</button>` : `<button class="bl n" onclick="fecha()">Fechar</button>`;
+  document.getElementById('pn').classList.add('on');document.getElementById('ov').classList.add('on');
+}
+async function salvarSalas(n){
+  try{
+    let mudou=0;
+    for(let i=0;i<n;i++){
+      const el=document.getElementById('sl_'+i); if(!el)continue;
+      const r=RES.find(x=>x.id===el.dataset.id); if(!r)continue;
+      const novo=el.value||null; if((r.sala_id||null)===novo)continue;
+      const o={sala_id:novo};
+      if(!FALTA_SQL)Object.assign(o,{sala_definida_por:'coordenação',sala_definida_em:new Date().toISOString()});
+      try{ await pa('reservas','id=eq.'+r.id,o) }
+      catch(e){ await pa('reservas','id=eq.'+r.id,{sala_id:novo}) }
+      mudou++;
+    }
+    fecha(); load();
+    if(!mudou)alert('Nenhuma alteração para salvar.');
+  }catch(e){ say('e','Erro ao salvar: '+E(e.message)) }
+}
+
 async function copiarSemana(){
   const ds=diasSemana(); const a0=new Date(ds[0]); a0.setDate(a0.getDate()-7);
   const a6=new Date(ds[6]); a6.setDate(a6.getDate()-7);

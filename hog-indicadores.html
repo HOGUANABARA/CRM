@@ -238,6 +238,12 @@ function render(){
     h+=`<div class="alerta">⚠️ <b>${semLiberacao.length} agenda(s) sem nenhuma data liberada</b> daqui para a frente — o call center não consegue agendar e o paciente cai na lista de espera: ${semLiberacao.slice(0,8).map(a=>E(a.nome)).join(' · ')}${semLiberacao.length>8?' …':''}</div>`;
   if(aguardando.length)
     h+=`<div class="alerta">⏳ <b>${aguardando.length} bloco(s) na grade aguardando liberação</b> neste período — abra o painel de Abertura de Agendas para liberar.</div>`;
+  const amanha=iso(new Date(Date.now()+864e5));
+  const semSalaAmanha=ativos.filter(r=>r.data===amanha&&!r.sala_id&&r.medico_id);
+  if(semSalaAmanha.length)
+    h+=`<div class="alerta r">🏠 <b>${semSalaAmanha.length} agenda(s) de amanhã sem consultório definido</b> — o número da sala é definido na véspera:
+        ${semSalaAmanha.slice(0,8).map(r=>E(nomeAg(r.agenda_logica_id)||'—')).join(' · ')}.
+        Use <b>🏠 Consultórios de amanhã</b> na Abertura de Agendas.</div>`;
 
   /* ---- capacidade ---- */
   h+='<h2>📊 Capacidade do período <span class="sub">'+du+' dia(s) útil(eis) · '+salas.length+' salas · 2 turnos por dia</span></h2>';
