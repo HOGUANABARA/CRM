@@ -293,7 +293,9 @@ function novo(){
       <div class="hint" id="modo_hint" style="font-size:12px;color:#6c757d;margin-top:4px">
         Usa uma vaga que já existe na agenda.</div>
     </div>
-    <div class="msg" id="n_msg"></div><div id="n_alertas"></div>
+    <div class="msg" id="n_msg"></div>
+    <div id="n_pend"></div>
+    <div id="n_alertas"></div>
     <div id="bx_motivo" style="display:none;margin-bottom:9px">
       <label style="font-size:11.5px;font-weight:600;color:#495057">Motivo de criar o horário *</label>
       <input id="n_motivo" placeholder="ex.: paciente de fora, retorno de cirurgia, urgência do médico">
@@ -318,12 +320,88 @@ function novo(){
   document.getElementById('n_perfil').value=PERFIL;
   document.getElementById('n_data').onchange=checar;
   MODO_AG='padrao'; modo('padrao');
-  document.getElementById('n_pac').onchange=checar;
+  document.getElementById('n_pac').onchange=()=>{pendencias();checar()};
   document.getElementById('n_ag').onchange=()=>{const a=REF.agendas.find(x=>x.id===V('n_ag'));
     if(a&&a.sala_padrao_id)document.getElementById('n_sala').value=a.sala_padrao_id;checar()};
   if(AGENDA)document.getElementById('n_ag').value=AGENDA;
 }
-let TRAVA=null, SEM_VAGA=false, MODO_AG='padrao';
+let TRAVA=null, SEM_VAGA=false, MODO_AG='padrao', PEND=[];
+/* O que este paciente está esperando — aparece antes de qualquer coisa,
+   para o call center não precisar abrir cadastro nem prontuário. */
+async function pendencias(){
+  const box=document.getElementById('n_pend'); if(!box)return;
+  const pid=V('n_pac'); box.innerHTML=''; PEND=[];
+  if(!pid)return;
+  const p=REF.pacientes.find(x=>x.id===pid);
+  try{ PEND=await g(`vw_pendencias_paciente?paciente_id=eq.${pid}`) }
+  catch(e){
+    try{ const s=await g(`solicitacoes?paciente_id=eq.${pid}&status=in.(pendente,entregue)&select=*,exames(nome),procedimentos(nome),medicos(nome),convenios(nome)`);
+      PEND=s.map(x=>({solicitacao_id:x.id,item:(x.exames&&x.exames.nome)||(x.procedimentos&&x.procedimentos.nome)||x.nome_item,
+        natureza:x.exame_id?'exame':(x.procedimento_id?'procedimento':'retorno'),lateralidade:x.lateralidade,
+        medico_solicitante:x.medicos?x.medicos.nome:'',convenio:x.convenios?x.convenios.nome:'',
+        numero_requisicao:x.numero_requisicao,requisicao_validade:x.requisicao_validade,
+        exige_autorizacao:x.exige_autorizacao,autorizacao_status:x.autorizacao_status,
+        observacao_proximo_agendamento:x.observacao_proximo_agendamento,
+        pode_agendar:!!x.numero_requisicao||!x.exame_id,
+        impedimento:x.numero_requisicao?'liberada para agendar':'falta o número da requisição'})) }catch(_){ PEND=[] }
+  }
+  let h='';
+  if(PEND.length){
+    h+=`<div style="background:#e7f1ff;border:1px solid #b6d4fe;border-radius:6px;padding:8px 10px;margin-bottom:9px">
+      <div style="font-weight:700;font-size:13px;color:#052c65;margin-bottom:5px">
+        📋 ${PEND.length} pendência(s) deste paciente — pedido pelo médico, ainda sem agendar</div>`;
+    h+=PEND.map(x=>{
+      const ok=x.pode_agendar, venc=x.requisicao_validade;
+      const dias=venc?Math.round((new Date(venc+'T12:00:00')-new Date())/864e5):null;
+      const cor=ok?(dias!=null&&dias<=7?'#fff3cd':'#d1e7dd'):'#f8d7da';
+      const txt=ok?(dias!=null&&dias<=7?'#664d03':'#0a3622'):'#58151c';
+      return `<div style="background:${cor};color:${txt};border-radius:4px;padding:6px 8px;margin-top:5px;font-size:13px">
+        <b>${E(x.item||'—')}</b>${x.lateralidade?' ('+E(x.lateralidade)+')':''}
+        <span style="opacity:.8">· ${E(x.natureza||'')}</span>
+        ${x.medico_solicitante?'<span style="opacity:.8">· pedido por '+E(x.medico_solicitante)+'</span>':''}
+        <br>${x.numero_requisicao?'Requisição <b>'+E(x.numero_requisicao)+'</b>':'<b>sem número de requisição</b>'}
+        ${venc?' · validade '+E(brData(venc))+(dias!=null?` (${dias<0?'VENCIDA':dias+' dia(s)'})`:''):''}
+        ${x.exige_autorizacao?' · autorização: <b>'+E(x.autorizacao_status||'pendente')+'</b>':''}
+        ${x.convenio?' · '+E(x.convenio):''}
+        ${x.observacao_proximo_agendamento?'<br><i>💬 '+E(x.observacao_proximo_agendamento)+'</i>':''}
+        <br><b>${ok?'✓ liberada para agendar':'⛔ '+E(x.impedimento||'')}</b>
+        ${ok?`<button class="b1" style="padding:.1rem .5rem;font-size:12px;margin-left:6px" onclick="usarPendencia('${x.solicitacao_id}')">usar esta</button>`
+            :`<button class="b1" style="padding:.1rem .5rem;font-size:12px;margin-left:6px;background:#fd7e14" onclick="resolverPendencia('${x.solicitacao_id}')">resolver</button>`}
+      </div>`}).join('');
+    h+='</div>';
+  }else{
+    h+=`<div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:7px 10px;margin-bottom:9px;font-size:13px;color:#6c757d">
+      Nenhum exame ou procedimento pedido pelo médico aguardando agendamento.</div>`;
+  }
+  box.innerHTML=h;
+}
+function usarPendencia(id){
+  const x=PEND.find(p=>String(p.solicitacao_id)===String(id)); if(!x)return;
+  SOL_ATUAL=x;
+  document.getElementById('n_obs').value=(x.item||'')+(x.numero_requisicao?' · req '+x.numero_requisicao:'');
+  const m=document.getElementById('n_msg'); m.className='msg s';
+  m.innerHTML=`Agendando <b>${E(x.item)}</b> com a requisição <b>${E(x.numero_requisicao||'—')}</b>.`;
+}
+async function resolverPendencia(id){
+  const x=PEND.find(p=>String(p.solicitacao_id)===String(id)); if(!x)return;
+  const falta=(x.impedimento||'');
+  let o={};
+  if(falta.includes('requisição vencida')){ alert('Requisição vencida — o médico precisa emitir outra.'); return }
+  if(falta.includes('número')){
+    const n=prompt('Número da requisição (guia):'); if(!n)return;
+    const v=prompt('Validade da requisição (aaaa-mm-dd):','');
+    o.numero_requisicao=n; if(v)o.requisicao_validade=v;
+  }
+  if(falta.includes('autorização')){
+    const s=prompt('Senha / número da autorização do convênio:'); if(!s)return;
+    const v=prompt('Validade da autorização (aaaa-mm-dd):','');
+    o.autorizacao_senha=s; o.autorizacao_status='autorizada'; o.autorizacao_em=new Date().toISOString();
+    o.autorizacao_por=V('n_quem')||PERFIL; if(v)o.autorizacao_validade=v;
+  }
+  try{ await pa('solicitacoes','id=eq.'+id,o); await pendencias() }
+  catch(e){ alert('Erro: '+e.message+'\n(precisa do hog-requisicoes.sql)') }
+}
+let SOL_ATUAL=null;
 /* o botão define o CRITÉRIO: horário padrão da agenda x horário criado por um motivo */
 function modo(v){
   if(v==='criado'&&!PODE_ENCAIXAR()){
@@ -424,12 +502,19 @@ async function salvar(comAprov){
     const base={paciente_id:V('n_pac'),agenda_logica_id:V('n_ag'),medico_id:ag?ag.medico_id:null,
       sala_id:V('n_sala')||null,tipo:V('n_tipo'),data:V('n_data'),hora:V('n_hora'),status:'agendado',
       observacao:V('n_obs')||null,criado_por:V('n_quem')||null,...ap};
+    if(SOL_ATUAL){ base.solicitacao_id=SOL_ATUAL.solicitacao_id;
+      base.numero_requisicao=SOL_ATUAL.numero_requisicao||null;
+      base.autorizacao_senha=SOL_ATUAL.autorizacao_senha||null;
+      base.exame_id=SOL_ATUAL.exame_id||null; }
     try{ await po('agendamentos',base) }
     catch(err){ /* banco ainda sem as colunas de encaixe */
       const {encaixe,encaixe_motivo,encaixe_por,encaixe_autorizado_por,...limpo}=base;
       limpo.observacao=(limpo.observacao?limpo.observacao+' · ':'')+(encaixe?('ENCAIXE: '+(encaixe_motivo||'')+' — autorizado por '+(encaixe_autorizado_por||'')):'');
       await po('agendamentos',limpo);
     }
+    if(SOL_ATUAL){ try{ await pa('solicitacoes','id=eq.'+SOL_ATUAL.solicitacao_id,
+      {status:'agendado',agendado_por:V('n_quem')||PERFIL,agendado_em:new Date().toISOString()}) }catch(_){} }
+    SOL_ATUAL=null;
     fecha();load()}catch(e){m.className='msg e';m.innerHTML='Erro: '+E(e.message)}
 }
 async function reagendar(id){
