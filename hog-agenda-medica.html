@@ -322,21 +322,21 @@ async function paraEspera(){
 async function checar(){
   const box=document.getElementById('n_alertas');box.innerHTML='';TRAVA=null;SEM_VAGA=false;
   const pid=V('n_pac'),agid=V('n_ag'),data=V('n_data'); if(!pid)return;
+  const p=REF.pacientes.find(x=>x.id===pid), ag=REF.agendas.find(x=>x.id===agid); let al=[];
   /* ---- vaga na agenda: é o que separa agendar de encaixar ---- */
   if(agid&&data){
     const v=await vagaDoDia(agid,data);
     if(v&&!v.semCapacidade){
       if(v.livre>0){
-        box.innerHTML+=`<div class="msg s" style="display:block">🟢 <b>${v.livre} vaga(s) livre(s)</b> — ${v.agendados} de ${v.vagas}${v.extras?` (inclui +${v.extras} extras negociadas)`:''}.</div>`;
+        al.push(`<div class="msg s" style="display:block">🟢 <b>${v.livre} vaga(s) livre(s)</b> — ${v.agendados} de ${v.vagas}${v.extras?` (inclui +${v.extras} extras negociadas)`:''}.</div>`);
       }else{
         SEM_VAGA=true;
-        box.innerHTML+= PODE_ENCAIXAR()
+        al.push(PODE_ENCAIXAR()
           ? `<div class="msg w" style="display:block">🟠 <b>Agenda lotada</b> (${v.agendados}/${v.vagas}). Seu perfil pode <b>encaixar</b> — será registrado como encaixe, com motivo e autorização.</div>`
-          : `<div class="msg e" style="display:block">🔴 <b>Agenda lotada</b> (${v.agendados}/${v.vagas}). Seu perfil não pode encaixar — coloque o paciente na <b>lista de espera</b>; quando a coordenação liberar mais vagas, o call center é avisado.</div>`;
+          : `<div class="msg e" style="display:block">🔴 <b>Agenda lotada</b> (${v.agendados}/${v.vagas}). Seu perfil não pode encaixar — coloque o paciente na <b>lista de espera</b>; quando a coordenação liberar mais vagas, o call center é avisado.</div>`);
       }
     }
   }
-  const p=REF.pacientes.find(x=>x.id===pid), ag=REF.agendas.find(x=>x.id===agid); let al=[];
   try{
     const d=new Date(data+'T12:00:00'),a1=new Date(d),a2=new Date(d);a1.setDate(a1.getDate()-30);a2.setDate(a2.getDate()+30);
     const perto=await g(`agendamentos?paciente_id=eq.${pid}&tipo=in.(consulta,retorno)&status=in.(agendado,aguardando,em_atendimento,compareceu)&data=gte.${iso(a1)}&data=lte.${iso(a2)}&select=data`);
