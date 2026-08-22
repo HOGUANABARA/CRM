@@ -176,3 +176,19 @@ Observações:
 - **FACO CONVÊNIO / FACO IMP / FACO Parceiro** já separam a origem comercial da
   cirurgia de catarata — casa com o modelo de LIO (convênio, importada, particular).
 - **Cirurgia TREC** = transplante de córnea, que tem o fluxo próprio de fila estadual.
+
+### Os quatro botões = 2 tipos de agenda × 2 níveis de permissão
+
+| Botão | URL | O que é |
+|---|---|---|
+| **Médicos** (verde) | `get=agendar` | Agenda **médica** — escolhe **Médico** + Data + Atendimento. Só marca em **horário disponível**; perfil **sem** autorização de encaixe. |
+| **Interno** (verde) | `get=agendar_interno` | Agenda **interna**, sem médico associado (exames, CC, lentes) — escolhe a **Agenda** + Data + Atendimento. Só em **horários pré-existentes**. |
+| **Médicos** (vermelho) | idem | Mesma tela para quem **pode encaixar** — força além da vaga. |
+| **Interno** (vermelho) | idem | Idem, na agenda interna. |
+
+**No HOG Gestão:**
+- agenda médica = `agendas_logicas.medico_id` preenchido; agenda interna = sem médico
+  (nova coluna `categoria_agenda`: `medica` | `interna`);
+- não existem dois botões por causa da permissão: **é o mesmo botão**, e o sistema decide.
+  Sem vaga e sem permissão → bloqueia e oferece **lista de espera**.
+  Sem vaga e com permissão → oferece **encaixe**, gravando quem autorizou.

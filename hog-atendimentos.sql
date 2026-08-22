@@ -110,3 +110,7 @@ grant execute on function fn_tem_vaga(text,date) to anon, authenticated;
 --   3. se não houver vaga, só um perfil com pode_encaixar=true segue adiante,
 --      e o sistema grava encaixe=true + encaixe_autorizado_por
 -- =====================================================================
+
+-- 5) agenda médica x agenda interna (o "Médicos" e o "Interno" do VoxComm) ----
+alter table agendas_logicas add column if not exists categoria_agenda text default 'medica';
+update agendas_logicas set categoria_agenda = case when medico_id is null then 'interna' else 'medica' end;
