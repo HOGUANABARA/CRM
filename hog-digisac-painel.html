@@ -284,12 +284,116 @@ async function painelPaciente(rel){
       :'<div class="hint">Sem histórico.</div>'}</div>
   </div>
 
+  <div class="card" id="cd_agendar">
+    <h3>📆 Resolver aqui mesmo</h3>
+    <label>Agenda</label>
+    <select id="ag_sel" onchange="verVagas()"><option value="">— escolha —</option>
+      ${(REF_AG||[]).map(a=>`<option value="${a.id}">${E(a.nome)}</option>`).join('')}</select>
+    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px">
+      <div><label>Data</label><input type="date" id="ag_data" onchange="verVagas()"></div>
+      <div><label>Hora</label><input type="time" id="ag_hora" value="08:00"></div>
+    </div>
+    <div class="hint" id="ag_vaga" style="margin-top:6px"></div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="b b-g" onclick="agendarAqui()">Agendar</button>
+      <button class="b b-w" onclick="esperaAqui()">📋 Lista de espera</button>
+      <button class="b b-n" onclick="novaGuia()">+ Registrar guia</button>
+    </div>
+  </div>
+
   <div class="card">
-    <h3>⚡ Ações</h3>
-    <button class="b b-p" onclick="window.open('hog-agenda-medica.html','_blank')">Agendar consulta</button>
-    <button class="b b-p" style="margin-left:6px" onclick="window.open('demo-agenda-exames.html#agendar','_blank')">Agendar exame</button>
-    <button class="b b-n" style="margin-left:6px" onclick="novaGuia()">+ Registrar guia recebida</button>
+    <h3>✅ Fechar o atendimento</h3>
+    <div class="hint">Registra o que saiu desta conversa e manda a confirmação para o paciente.</div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="b b-g" onclick="confirmarPorWhats()">💬 Enviar confirmação</button>
+      <button class="b b-n" onclick="resolverConversa()">Marcar como resolvida</button>
+    </div>
+    <div class="hint" id="res_msg" style="margin-top:6px"></div>
   </div>`;
+}
+
+/* ---------- resolver a solicitação sem sair da conversa ---------- */
+let REF_AG=[], ULTIMO_AG=null;
+(async()=>{ try{ REF_AG=await g('agendas_logicas?select=id,nome,medico_id,tipo,qtd_periodo&ativo=is.true&order=nome') }catch(e){} })();
+
+async function verVagas(){
+  const box=document.getElementById('ag_vaga'); if(!box)return;
+  const ag=V('ag_sel'), d=V('ag_data'); if(!ag||!d){box.innerHTML='';return}
+  try{
+    const r=await rpc('fn_tem_vaga',{p_agenda:ag,p_data:d});
+    const v=Array.isArray(r)?r[0]:r;
+    if(!v){box.innerHTML='';return}
+    box.innerHTML = v.livre>0
+      ? `<span class="tag t-g">${v.livre} vaga(s) livre(s)</span> ${v.agendados} de ${v.vagas}${v.extras?` (+${v.extras} extras)`:''}`
+      : `<span class="tag t-r">agenda lotada</span> ${v.agendados} de ${v.vagas} — use a <b>lista de espera</b>`;
+  }catch(e){ box.innerHTML='<span class="tag t-n">sem controle de vaga nesta agenda</span>' }
+}
+async function agendarAqui(){
+  const ag=V('ag_sel'), d=V('ag_data'), h=V('ag_hora');
+  if(!ag||!d||!h)return say('e','Escolha agenda, data e hora.');
+  const a=REF_AG.find(x=>x.id===ag);
+  try{
+    const r=await rpc('fn_tem_vaga',{p_agenda:ag,p_data:d}); const v=Array.isArray(r)?r[0]:r;
+    if(v && v.vagas>0 && v.livre<=0) return say('e','Agenda lotada. Use a lista de espera — o encaixe só pela coordenação.');
+  }catch(e){}
+  try{
+    const novo=await po('agendamentos',[{paciente_id:PACIENTE.id,agenda_logica_id:ag,medico_id:a?a.medico_id:null,
+      tipo:(a&&a.tipo==='exame_medico')?'exame':(a?a.tipo:'consulta'),data:d,hora:h,status:'agendado',
+      criado_por:'call center (DIGISAC)',observacao:'agendado pela conversa do WhatsApp'}]);
+    ULTIMO_AG=novo[0];
+    if(SOL_ATUAL) await pa('solicitacoes','id=eq.'+SOL_ATUAL.solicitacao_id,{status:'agendado',
+      agendado_por:'call center (DIGISAC)',agendado_em:new Date().toISOString(),agendamento_id:novo[0].id}).catch(()=>{});
+    if(TICKET) await pa('conversas','digisac_ticket_id=eq.'+TICKET,{paciente_id:PACIENTE.id,agendamento_id:novo[0].id,
+      assunto:'agendamento',status:'identificada'}).catch(()=>{});
+    say('s','✅ Agendado para '+brd(d)+' às '+h+'. Agora envie a confirmação ao paciente.');
+    await painelPaciente();
+  }catch(e){ say('e','Erro ao agendar: '+E(e.message)) }
+}
+async function esperaAqui(){
+  const ag=V('ag_sel'); if(!ag)return say('e','Escolha a agenda para entrar na espera.');
+  const a=REF_AG.find(x=>x.id===ag);
+  const urg=confirm('Marcar como URGENTE?\n\nOK = urgente · Cancelar = normal');
+  try{
+    await po('lista_espera',[{paciente_id:PACIENTE.id,agenda_logica_id:ag,medico_id:a?a.medico_id:null,
+      tipo:'consulta',prioridade:urg?'urgente':'normal',status:'aguardando',
+      telefone:TEL||null,observacao:'pediu pelo WhatsApp; agenda sem vaga'}]);
+    say('s','✅ Na lista de espera. Quando a coordenação liberar data, o call center é avisado.');
+  }catch(e){ say('e','Erro: '+E(e.message)) }
+}
+/* manda a confirmação pela própria conversa do DIGISAC */
+async function confirmarPorWhats(){
+  const box=document.getElementById('res_msg');
+  try{
+    const ags=ULTIMO_AG?[ULTIMO_AG]:await g(`agendamentos?paciente_id=eq.${PACIENTE.id}&status=eq.agendado&select=data,hora,medicos(nome),agendas_logicas(nome)&order=data&limit=1`);
+    if(!ags.length){box.innerHTML='Nenhum agendamento futuro para confirmar.';return}
+    const a=ags[0];
+    const mod=await g('modelos_mensagem?id=eq.conf_consulta&select=texto').catch(()=>[]);
+    const par={}; (await g('parametros_sistema?select=chave,valor').catch(()=>[])).forEach(p=>par[p.chave]=p.valor);
+    const dd=new Date(a.data+'T12:00:00');
+    const DS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+    let txt=(mod[0]&&mod[0].texto)||'Olá, {{paciente}}! Sua consulta está agendada para {{data}} às {{hora}}.';
+    txt=txt.replace(/{{paciente}}/g,(PACIENTE.nome||'').split(' ')[0])
+           .replace(/{{paciente_completo}}/g,PACIENTE.nome||'')
+           .replace(/{{data}}/g,brd(a.data)).replace(/{{dia_semana}}/g,DS[dd.getDay()])
+           .replace(/{{hora}}/g,String(a.hora||'').slice(0,5))
+           .replace(/{{medico}}/g,(a.medicos&&a.medicos.nome)||'')
+           .replace(/{{agenda}}/g,(a.agendas_logicas&&a.agendas_logicas.nome)||'')
+           .replace(/{{clinica}}/g,par.clinica_nome||'Hospital dos Olhos Guanabara')
+           .replace(/{{endereco}}/g,par.clinica_endereco||'');
+    box.innerHTML='enviando…';
+    const r=await fetch('https://prztrrtwrunljapnyaci.supabase.co/functions/v1/digisac-send',
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({contactId:DIGISAC_ID||undefined,number:DIGISAC_ID?undefined:TEL,
+         text:txt,paciente_id:PACIENTE.id,modelo_id:'conf_consulta',dontOpenTicket:false})});
+    const j=await r.json();
+    box.innerHTML=j.ok?'✅ Confirmação enviada pela conversa.':'⚠ Não enviou: '+E(JSON.stringify(j.resposta||j).slice(0,160));
+  }catch(e){ box.innerHTML='Erro: '+E(e.message) }
+}
+async function resolverConversa(){
+  try{
+    if(TICKET) await pa('conversas','digisac_ticket_id=eq.'+TICKET,{status:'resolvida',fechada_em:new Date().toISOString()});
+    document.getElementById('res_msg').innerHTML='✅ Conversa marcada como resolvida no HOG Gestão.';
+  }catch(e){ document.getElementById('res_msg').innerHTML='Erro: '+E(e.message) }
 }
 
 /* ---------- 3) registrar a guia que chegou em foto ---------- */
