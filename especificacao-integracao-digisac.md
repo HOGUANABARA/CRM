@@ -164,3 +164,64 @@ Com `GET /contacts/{id}` o painel deixa de precisar do telefone digitado: o
 O token **não** pode ficar na página (o HTML é público no GitHub Pages).
 Ele vai para os *secrets* das Edge Functions do Supabase, e o navegador chama
 a Edge Function, nunca o DIGISAC direto.
+
+---
+
+## Endpoints REAIS (lidos na documentação em 22/08/2026)
+
+Base: `https://hoguanabara.digisac.biz/api/v1` · Auth: `Authorization: Bearer {token}`
+
+### Enviar mensagem — contato já cadastrado
+```http
+POST {base}/messages
+{
+  "text": "…",
+  "type": "chat",
+  "contactId": "{{contactId}}",
+  "userId": "{{userId}}",
+  "origin": "bot"        // bot | user
+}
+```
+**É o encaixe perfeito:** o `contactId` é exatamente o que o painel lateral já
+guarda em `contatos.digisac_contact_id`. Para disparar confirmação, lembrete ou
+aviso de agenda liberada, o HOG Gestão não precisa nem saber o telefone.
+
+### Variações úteis
+| Necessidade | Como |
+|---|---|
+| Não abrir chamado (aviso automático) | acrescentar `"dontOpenTicket": "true"` |
+| Contato ainda não cadastrado | usar `number` + `serviceId` (ID da conexão) |
+| Mandar imagem / PDF / áudio | endpoints próprios `Enviar imagem`, `Enviar PDF`, `Enviar áudio` |
+| Comentário interno | `Enviar comentário` |
+
+### Contatos
+```
+GET  {base}/contacts/{id}          → Buscar contato
+GET  {base}/contacts?number=…      → Buscar contato por número de uma conexão
+POST {base}/contacts               → Cadastrar contato
+PUT  {base}/contacts/{id}          → Editar contato
+```
+Com `Buscar contato` o painel resolve o telefone sozinho a partir do `contactId`
+do iframe — some a digitação manual na primeira conversa.
+
+### Webhooks — dá para criar pela própria API
+```
+GET  {base}/webhooks        → listar
+POST {base}/webhooks        → criar
+POST {base}/webhooks/test   → testar
+PUT  {base}/webhooks/{id}   → editar
+```
+
+### O que ainda falta levantar
+- **`serviceId`** (ID da conexão de WhatsApp da clínica) — sai de `GET /connections`.
+- **`userId`** que assinará as mensagens automáticas — sugiro criar um usuário
+  "HOG Gestão (automático)" no DIGISAC, para as mensagens do sistema não
+  aparecerem no nome de uma pessoa.
+- Lista de **eventos** aceitos no webhook (ver o corpo do `POST /webhooks`).
+
+### Ordem de implementação agora que a API está confirmada
+1. Token → *secrets* do Supabase (nunca no HTML).
+2. Edge Function `digisac-send` → confirmação de agendamento e lembrete D-1.
+3. `GET /contacts/{id}` no painel → identificação automática do paciente.
+4. Edge Function `digisac-webhook` + `POST /webhooks` → foto da requisição
+   entrando sozinha no cadastro.
