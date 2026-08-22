@@ -14,7 +14,21 @@ update agendas_logicas set sala_padrao_id='cons1' where sala_padrao_id='terreo';
 update reservas          set sala_id='cons1'      where sala_id='terreo';
 update agendamentos      set sala_id='cons1'      where sala_id='terreo';
 update exame_agendamentos set sala='cons1'        where sala='terreo';
+update equipamentos      set sala_id='cons1'      where sala_id='terreo';
 delete from salas where id = 'terreo';
+
+-- 0.1) onde cada aparelho pode ficar ----------------------------------------
+--      Retinógrafo e angiógrafo são fixos no Consultório 1 (térreo);
+--      laser de fotocoagulação no 4; YAG no 2 ou no 3;
+--      os aparelhos móveis da sala de exames podem ir para um consultório livre
+--      (é o caso de rodar dois técnicos ao mesmo tempo).
+alter table equipamentos add column if not exists salas_possiveis text[];
+
+update equipamentos set sala_id='cons1', movel=false, salas_possiveis='{cons1}'                 where id in ('retinografo','angiografo');
+update equipamentos set sala_id='cons4', movel=false, salas_possiveis='{cons4}'                 where id='laser_foto';
+update equipamentos set sala_id='cons2', movel=true,  salas_possiveis='{cons2,cons3}'           where id='yag';
+update equipamentos set salas_possiveis='{exames,cons1,cons2,cons3,cons4}'                      where movel=true and id<>'yag';
+update equipamentos set salas_possiveis=array[sala_id]                                          where salas_possiveis is null and sala_id is not null;
 
 -- 1) horário de funcionamento e ordem de exibição de cada local ---------------
 alter table salas

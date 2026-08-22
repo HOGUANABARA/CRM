@@ -54,7 +54,15 @@
   .ev b{font-weight:600;display:block;} .ev .h{opacity:.92;font-size:11px;}
   .ev.manha{background:#EF6C00;} .ev.tarde{background:#009688;} .ev.cirurgico{background:#7CB342;}
   .ev.vaga{background:#8E24AA;} .ev.atencao{background:#D50000;}
-  .ev.pre{box-shadow:inset 4px 0 0 #FFC107,0 1px 2px rgba(0,0,0,.18);}
+  /* programada (reservada, ainda não liberada) = sempre amarela.
+     As cores por turno valem só para agenda ABERTA (liberada). */
+  .ev.prog{background:#FFC107;color:#3d3000;border-color:#e6ad06;}
+  .ev.prog .h{opacity:.85;}
+  .ev .oc{display:block;margin-top:2px;font-size:10.5px;background:rgba(255,255,255,.28);border-radius:3px;padding:0 4px;}
+  .ev.prog .oc{background:rgba(0,0,0,.10);}
+  .ev .lot{display:inline-block;background:#dc3545;color:#fff;border-radius:3px;font-size:9.5px;font-weight:700;
+    padding:0 4px;letter-spacing:.4px;margin-right:4px;}
+  .ev .ob{display:block;margin-top:2px;font-size:10.5px;opacity:.92;font-style:italic;}
   .ev .pin{position:absolute;right:3px;top:2px;font-size:10px;}
   .agora{position:absolute;left:0;right:0;height:2px;background:#EA4335;z-index:15;}
   .agora::before{content:'';position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#EA4335;}
@@ -113,7 +121,8 @@
     <span><i style="background:#009688"></i>Tarde</span>
     <span><i style="background:#7CB342"></i>Centro Cirúrgico</span>
     <span><i style="background:#8E24AA"></i>Externo</span>
-    <span><i style="background:#FFC107"></i>Reservado, não liberado</span>
+    <span><i style="background:#FFC107"></i>Programada (não liberada)</span>
+    <span><i style="background:#dc3545"></i>LOTADA</span>
   </span>
 </div>
 
@@ -161,8 +170,8 @@ const H0=6, H1=20, PXH=44;
 const m2h=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const hm2m=s=>{if(!s)return null;const p=String(s).split(':');return (+p[0])*60+(+p[1])};
 
-let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[],perfis:[]},
-    RES=[], ALERTAS=[], ESPERA=[], MODO='dia', DIA=new Date(), INI=null, SEL=null,
+let REF={salas:[],medicos:[],agendas:[],pgto:[],contratos:[],perfis:[],equip:[]},
+    RES=[], AGEND=[], ALERTAS=[], ESPERA=[], MODO='dia', DIA=new Date(), INI=null, SEL=null,
     FALTA_SQL=false, FALTA_GRADE=false;
 
 /* ---------------- datas ---------------- */
@@ -176,12 +185,13 @@ function setModo(m){MODO=m;document.querySelectorAll('.seg button').forEach(b=>b
 
 /* ---------------- carga ---------------- */
 async function loadRef(){
-  const [s,m,a,p,c,pf]=await Promise.all([
+  const [s,m,a,p,c,pf,eq]=await Promise.all([
     g('salas?select=*&order=nome'), g('medicos?select=id,nome,tipo&order=nome'),
     g('agendas_logicas?select=*&order=nome'),
     g('formas_pagamento_agenda?select=*&order=nome').catch(()=>[]),
     g('contratos?select=*&ativo=is.true&order=nome').catch(()=>[]),
-    g('perfis?select=id,nome&order=nome').catch(()=>[])]);
+    g('perfis?select=id,nome&order=nome').catch(()=>[]),
+    g('equipamentos?select=*&order=nome').catch(()=>[])]);
   if(!p.length)p.push({id:'contrato',nome:'Conforme contrato'},{id:'repasse',nome:'Repasse ao médico'},
     {id:'aluguel_sala',nome:'Aluguel de sala'},{id:'producao',nome:'Produção'},
     {id:'preceptor',nome:'Residente — repasse ao preceptor'},{id:'sem_pagamento',nome:'Sem pagamento'});
@@ -189,7 +199,7 @@ async function loadRef(){
   const ativos=s.filter(x=>x.ativo!==false);
   ativos.forEach(x=>{ if(!x.hora_abre)x.hora_abre='07:00'; if(!x.hora_fecha)x.hora_fecha='19:00'; if(x.ordem==null)x.ordem=50 });
   ativos.sort((a,b)=>(a.ordem-b.ordem)||a.nome.localeCompare(b.nome));
-  REF={salas:ativos,medicos:m,agendas:a,pgto:p,contratos:c,perfis:pf};
+  REF={salas:ativos,medicos:m,agendas:a,pgto:p,contratos:c,perfis:pf,equip:eq};
   document.getElementById('f_sala').innerHTML='<option value="">Todos os locais</option>'+ativos.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
   document.getElementById('f_med').innerHTML='<option value="">Todos os médicos</option>'+m.map(x=>`<option value="${x.id}">${E(x.nome)}</option>`).join('');
 }
@@ -197,12 +207,13 @@ async function load(){try{
   stat('ld','carregando…');
   let d0,d1;
   if(MODO==='dia'){ d0=d1=iso(DIA) } else { const ds=diasSemana(); d0=iso(ds[0]); d1=iso(ds[6]) }
-  const [res,amostra,al,esp]=await Promise.all([
+  const [res,amostra,al,esp,ags]=await Promise.all([
     g(`reservas?select=*&data=gte.${d0}&data=lte.${d1}&order=data`),
     g('reservas?select=*&limit=1'),
     g('alertas_call_center?select=*&status=eq.pendente&order=criado_em.desc').catch(()=>[]),
-    g('lista_espera?select=*,pacientes(nome,telefone)&order=entrou_em').catch(()=>[])]);
-  RES=res; ALERTAS=al; ESPERA=esp;
+    g('lista_espera?select=*,pacientes(nome,telefone)&order=entrou_em').catch(()=>[]),
+    g(`agendamentos?select=id,data,status,agenda_logica_id,sala_id&data=gte.${d0}&data=lte.${d1}`).catch(()=>[])]);
+  RES=res; ALERTAS=al; ESPERA=esp; AGEND=ags;
   FALTA_SQL = amostra.length>0 && !('hora_ini' in amostra[0]);
   const b=document.getElementById('badge');
   b.style.display=ALERTAS.length?'inline':'none'; b.textContent=ALERTAS.length;
@@ -300,21 +311,44 @@ function posiciona(lista){
   evs.forEach(e=>{ if(grupo.length&&e.i>=fimG)solta(); grupo.push(e); fimG=Math.max(fimG,e.f) });
   solta(); return out;
 }
+/* vagas do bloco: vem do padrão de atendimento; senão, do tempo médio */
+function vagasDaReserva(r){
+  const j=janela(r), dur=j.f-j.i;
+  const a=REF.agendas.find(x=>x.id===r.agenda_logica_id);
+  if(a&&a.qtd_periodo)return Math.max(1,Math.round(a.qtd_periodo*dur/240));
+  if(a&&a.tempo_atendimento_min)return Math.max(1,Math.floor(dur/a.tempo_atendimento_min));
+  const s=REF.salas.find(x=>x.id===r.sala_id)||{};
+  if(s.tipo==='cc')return Math.max(1,Math.round(6*dur/240));
+  return Math.max(1,Math.floor(dur/15));
+}
+function ocupacao(r){
+  if(!r.agenda_logica_id)return null;
+  const usados=AGEND.filter(x=>x.agenda_logica_id===r.agenda_logica_id&&x.data===r.data&&x.status!=='cancelado').length;
+  const vagas=vagasDaReserva(r);
+  return {usados,vagas,pct:vagas?Math.round(usados/vagas*100):0,lotada:usados>=vagas};
+}
 function bloco(e,n){
   const r=e.r, top=(e.i-H0*60)/60*PXH, h=Math.max((e.f-e.i)/60*PXH-2,17), w=100/n, left=e.lane*w;
-  const bloq=r.estado==='bloqueado', cls=bloq?'atencao':corDe(r);
-  const pre=r.estado==='pre_programado'?' pre':'';
-  const pin=r.estado==='liberado'?'✓':(bloq?'⛔':'⏳');
+  const bloq=r.estado==='bloqueado', liberada=r.estado==='liberado';
+  /* PROGRAMADA = amarela. As cores por turno são só da agenda aberta. */
+  const cls=bloq?'atencao':(liberada?corDe(r):'prog');
+  const pin=liberada?'✓':(bloq?'⛔':'⏳');
   const extra=r.recorrencia==='extra'?' ⚡':(r.recorrencia==='recorrente'?' ⟳':'');
   const loc=MODO==='dia'?'':(r.sala_id?E(nomeSala(r.sala_id)):'🏠 sala a definir');
-  return `<div class="ev ${cls}${pre}" style="top:${top}px;height:${h}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)"
-    onclick="event.stopPropagation();editar('${r.id}')" title="${E(tituloDe(r))}">
+  const o=liberada?ocupacao(r):null;
+  const oc=o?`<span class="oc">${o.lotada?'<span class="lot">LOTADA</span>':''}${o.usados}/${o.vagas} · ${o.pct}%</span>`:'';
+  const ob=(r.observacao&&h>52)?`<span class="ob">💬 ${E(r.observacao)}</span>`:'';
+  const tt=`${tituloDe(r)} — ${m2h(e.i)}–${m2h(e.f)}${r.sala_id?' · '+nomeSala(r.sala_id):''}`+
+    (o?` — ${o.usados}/${o.vagas} agendados${o.lotada?' (LOTADA)':''}`:'')+(r.observacao?` — ${r.observacao}`:'');
+  return `<div class="ev ${cls}" style="top:${top}px;height:${h}px;left:calc(${left}% + 1px);width:calc(${w}% - 3px)"
+    onclick="event.stopPropagation();editar('${r.id}')" title="${E(tt)}">
     <span class="pin">${pin}</span><b>${E(tituloDe(r))}${extra}</b>
-    <span class="h">${m2h(e.i)}–${m2h(e.f)}${loc?' · '+loc:''}</span></div>`;
+    <span class="h">${m2h(e.i)}–${m2h(e.f)}${loc?' · '+loc:''}</span>${oc}${ob}</div>`;
 }
 function kpis(L){
   const salas=REF.salas.length, dias=MODO==='dia'?1:7;
   const lib=L.filter(r=>r.estado==='liberado').length, pre=L.filter(r=>r.estado==='pre_programado').length;
+  const lotadas=L.filter(r=>{if(r.estado!=='liberado')return false;const o=ocupacao(r);return o&&o.lotada}).length;
   const amanha=iso(new Date(Date.now()+864e5));
   const semSala=L.filter(r=>!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
   const semSalaAmanha=L.filter(r=>r.data===amanha&&!r.sala_id&&r.medico_id&&r.estado!=='bloqueado').length;
@@ -327,7 +361,8 @@ function kpis(L){
     `<div class="k"><div class="n">${Math.round(livre/60)}h</div><div class="l">Horas disponíveis</div></div>`+
     `<div class="k"><div class="n">${L.length}</div><div class="l">Reservas</div></div>`+
     `<div class="k"><div class="n">${lib}</div><div class="l">Liberadas p/ agendar</div></div>`+
-    `<div class="k ${pre?'al':''}"><div class="n">${pre}</div><div class="l">Reservadas, não liberadas</div></div>`+
+    `<div class="k ${pre?'al':''}"><div class="n">${pre}</div><div class="l">Programadas (amarelas)</div></div>`+
+    `<div class="k ${lotadas?'al':''}"><div class="n">${lotadas}</div><div class="l">Lotadas</div></div>`+
     `<div class="k ${semSalaAmanha?'al':''}" style="cursor:pointer" onclick="definirSalas()"><div class="n">${semSala}</div>`+
       `<div class="l">Sem consultório${semSalaAmanha?' · '+semSalaAmanha+' é amanhã':''}</div></div>`+
     (FALTA_GRADE?`<div class="k al" style="min-width:auto"><div class="l">⚠ rode hog-grade.sql</div></div>`:'')+
@@ -356,7 +391,8 @@ function painelReserva(){
   <div class="msg" id="msg"></div>
   <div class="et"><h3><span class="num">1</span> Reserva do local</h3>
     <div class="g2">
-      <div><label>Local</label><select id="sala_id">${optS(REF.salas,r.sala_id)}</select></div>
+      <div><label>Local</label><select id="sala_id" onchange="equipDaSala()">${optS(REF.salas,r.sala_id)}</select>
+        <div class="hint" id="hint_equip"></div></div>
       <div><label>Médico / responsável</label><select id="medico_id">${optS(REF.medicos,r.medico_id)}</select></div>
     </div>
     <div class="g3" style="margin-top:8px">
@@ -409,11 +445,13 @@ function painelReserva(){
   document.getElementById('pagamento_tipo').value=r.pagamento_tipo||'';
   if(r.agenda_logica_id)aplicaPadrao();
   mostraContrato(r.contrato_id);
-  marcaPerfis(r);
+  marcaPerfis(r); equipDaSala();
+  const oc=liberada&&r.id?ocupacao(r):null;
   document.getElementById('est_now').innerHTML = liberada
-    ? '<span class="tag t-g">✓ liberada — o call center já agenda</span>'
+    ? '<span class="tag t-g">✓ liberada — o call center já agenda</span>'+
+      (oc?` <span class="tag ${oc.lotada?'t-r':oc.pct>=80?'t-a':'t-b'}">${oc.lotada?'LOTADA · ':''}${oc.usados}/${oc.vagas} agendados · ${oc.pct}%</span>`:'')
     : r.estado==='bloqueado' ? `<span class="tag t-r">⛔ bloqueada${r.motivo_bloqueio?' — '+E(r.motivo_bloqueio):''}</span>`
-    : '<span class="tag t-a">⏳ reservada — ainda não liberada para agendamento</span>';
+    : '<span class="tag t-a">⏳ programada — ainda não liberada para agendamento</span>';
   mostraEspera();
 
   document.getElementById('pf').innerHTML=
@@ -435,6 +473,20 @@ function marcaPerfis(r){
   document.querySelectorAll('#ch_perfis .chip').forEach(c=>c.classList.toggle('on',lista.includes(c.dataset.v)));
 }
 const perfisSel=()=>[...document.querySelectorAll('#ch_perfis .chip.on')].map(c=>c.dataset.v);
+
+/* ---- que aparelhos existem no local escolhido ---- */
+function equipDaSala(){
+  const box=document.getElementById('hint_equip'); if(!box)return;
+  const s=V('sala_id'); if(!s){box.innerHTML='';return}
+  const fixos=REF.equip.filter(e=>e.sala_id===s&&e.movel===false);
+  const podem=REF.equip.filter(e=>e.sala_id!==s&&(e.salas_possiveis||[]).includes(s));
+  const moveis=REF.equip.filter(e=>e.sala_id===s&&e.movel!==false);
+  let h='';
+  if(fixos.length)h+='🔧 fixo aqui: <b>'+fixos.map(e=>E(e.nome)).join(', ')+'</b>. ';
+  if(moveis.length)h+='móvel neste local: '+moveis.map(e=>E(e.nome)).join(', ')+'. ';
+  if(podem.length)h+='pode vir para cá: '+podem.map(e=>E(e.nome)).join(', ')+'.';
+  box.innerHTML=h||'Sem aparelho vinculado a este local.';
+}
 
 /* ---- padrão e contrato ---- */
 function aplicaPadrao(){
