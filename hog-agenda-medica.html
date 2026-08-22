@@ -348,9 +348,16 @@ async function pendencias(){
   let h='';
   /* falar com o paciente no WhatsApp direto do agendamento */
   const tel=digits(p&&(p.whatsapp||p.telefone||p.telefone_responsavel)||'');
-  if(tel) h+=`<div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <button class="b1" style="background:#25D366;color:#fff" onclick="zap('${tel}','${E((p.nome||'').split(' ')[0])}')">💬 WhatsApp</button>
-      <span class="hint" style="font-size:12px;color:#6c757d">${fmtTelBr(tel)}</span></div>`;
+  let btnDg='';
+  try{
+    const lig=await g(`contato_paciente?select=contatos(digisac_contact_id)&paciente_id=eq.${pid}`);
+    const cid=lig.map(x=>x.contatos&&x.contatos.digisac_contact_id).filter(Boolean)[0];
+    if(cid) btnDg=`<button class="b1" style="background:#2c4a80;color:#fff" onclick="abreDigisac('${cid}')">🗨 Abrir no DIGISAC</button>`;
+  }catch(e){}
+  if(tel||btnDg) h+=`<div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      ${tel?`<button class="b1" style="background:#25D366;color:#fff" onclick="zap('${tel}','${E((p.nome||'').split(' ')[0])}')">💬 WhatsApp</button>`:''}
+      ${btnDg}
+      ${tel?`<span class="hint" style="font-size:12px;color:#6c757d">${fmtTelBr(tel)}</span>`:''}</div>`;
   if(PEND.length){
     h+=`<div style="background:#e7f1ff;border:1px solid #b6d4fe;border-radius:6px;padding:8px 10px;margin-bottom:9px">
       <div style="font-weight:700;font-size:13px;color:#052c65;margin-bottom:5px">
@@ -412,6 +419,15 @@ const fmtTelBr=t=>t.length>=10?`(${t.slice(-11,-9)||t.slice(0,2)}) ${t.slice(-9,
 /* Abre a conversa no WhatsApp já com a mensagem escrita.
    Quando a API do DIGISAC estiver ligada, este botão passa a abrir o
    atendimento DENTRO do DIGISAC, preservando histórico e fila. */
+/* abre a conversa dentro do DIGISAC (mantém fila e histórico) */
+let CFG={};
+(async()=>{ try{ const r=await g('parametros_sistema?select=chave,valor');
+  r.forEach(x=>CFG[x.chave]=x.valor) }catch(e){} })();
+function abreDigisac(contatoId){
+  const base=(CFG.digisac_base||'https://hoguanabara.digisac.biz').replace(/\/$/,'');
+  const tpl=CFG.digisac_url_conversa||'{base}/atendimentos?contactId={contato}';
+  window.open(tpl.replace('{base}',base).replace('{contato}',encodeURIComponent(contatoId)),'_blank');
+}
 function zap(tel,nome){
   const t=digits(tel); const num=t.length<=11?('55'+t):t;
   const ag=REF.agendas.find(x=>x.id===V('n_ag'));
