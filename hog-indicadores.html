@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Indicadores de Capacidade</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#fff;color:#212529;font-size:16px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .status{position:absolute;right:12px;top:9px;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;z-index:60;}
+  .ok{background:#d1e7dd;color:#0a3622;} .er{background:#f8d7da;color:#58151c;} .ld{background:#fff3cd;color:#664d03;}
+  .daybar{background:#dce9f7;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid #c5d9ee;}
+  .bl{background:#0d6efd;color:#fff;border:none;padding:.375rem .75rem;border-radius:.375rem;font-size:15px;cursor:pointer;}
+  .bl.n{background:#6c757d;} .bl.o{background:#fff;color:#0d6efd;border:1px solid #0d6efd;}
+  .seg{display:flex;border:1px solid #0d6efd;border-radius:.375rem;overflow:hidden;}
+  .seg button{background:#fff;color:#0d6efd;border:none;padding:.35rem .8rem;font-size:14px;cursor:pointer;}
+  .seg button.on{background:#0d6efd;color:#fff;font-weight:600;}
+  .per{font-size:17px;font-weight:600;margin-left:4px;}
+  input,select{font-family:inherit;font-size:14px;padding:.3rem .5rem;border:1px solid #ced4da;border-radius:.375rem;}
+  .wrap{flex:1;overflow-y:auto;padding:12px 14px 30px;}
+  h2{font-size:14px;margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+  h2 .sub{font-size:12px;font-weight:400;color:#6c757d;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;}
+  .c{background:#f8f9fa;border:1px solid #dee2e6;border-radius:.375rem;padding:11px 13px;}
+  .c .n{font-size:27px;font-weight:700;line-height:1.1;}
+  .c .l{font-size:11px;color:#6c757d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+  .c .d{font-size:12px;color:#495057;margin-top:3px;}
+  .c.b{background:#cfe2ff;border-color:#b6d4fe;} .c.b .n{color:#052c65;}
+  .c.g{background:#d1e7dd;border-color:#a3cfbb;} .c.g .n{color:#0a3622;}
+  .c.a{background:#fff3cd;border-color:#ffe69c;} .c.a .n{color:#664d03;}
+  .c.r{background:#f8d7da;border-color:#f1aeb5;} .c.r .n{color:#58151c;}
+  .bar{height:7px;background:#e9ecef;border-radius:4px;overflow:hidden;margin-top:7px;}
+  .bar i{display:block;height:100%;background:#0d6efd;}
+  .bar i.ok{background:#198754;} .bar i.al{background:#ffc107;} .bar i.cheio{background:#dc3545;}
+  table{width:100%;border-collapse:collapse;background:#fff;}
+  th{text-align:left;font-size:13px;padding:.45rem .5rem;border-bottom:2px solid #dee2e6;white-space:nowrap;}
+  td{font-size:13.5px;padding:.45rem .5rem;border-bottom:1px solid #dee2e6;vertical-align:middle;}
+  tbody tr:nth-of-type(odd){background:rgba(0,0,0,.02);}
+  td.num,th.num{text-align:right;}
+  .tag{display:inline-block;padding:.15rem .5rem;border-radius:.375rem;font-size:11.5px;font-weight:600;}
+  .t-b{background:#cfe2ff;color:#052c65;} .t-g{background:#d1e7dd;color:#0a3622;}
+  .t-a{background:#fff3cd;color:#664d03;} .t-r{background:#f8d7da;color:#58151c;} .t-n{background:#e9ecef;color:#495057;}
+  .alerta{background:#fff3cd;border:1px solid #ffe69c;color:#664d03;border-radius:.375rem;padding:9px 12px;margin-bottom:8px;font-size:14px;}
+  .alerta.r{background:#f8d7da;border-color:#f1aeb5;color:#58151c;}
+  .alerta.v{background:#d1e7dd;border-color:#a3cfbb;color:#0a3622;}
+  .vazio{color:#adb5bd;font-style:italic;font-size:14px;padding:8px 2px;}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:70;align-items:center;justify-content:center;}
+  .ov.on{display:flex;}
+  .mdl{background:#fff;border-radius:.5rem;width:520px;max-width:95vw;max-height:90vh;overflow:auto;}
+  .mh{padding:11px 14px;border-bottom:1px solid #dee2e6;display:flex;align-items:center;}
+  .mh b{flex:1;font-size:17px;} .mh button{background:none;border:none;font-size:19px;cursor:pointer;color:#6c757d;}
+  .mb{padding:12px 14px;} .mf{padding:10px 14px;border-top:1px solid #dee2e6;display:flex;gap:8px;justify-content:flex-end;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  label{display:block;font-size:11.5px;font-weight:600;color:#495057;margin-bottom:2px;}
+  .mb input{width:100%;}
+  .hint{font-size:12px;color:#6c757d;margin-top:4px;}
+  @media print{.daybar,.status{display:none!important} .wrap{overflow:visible}}
+</style>
+<link rel="stylesheet" href="hog-tema.css">
+</head>
+<body>
+<span id="st" class="status ld">conectando…</span>
+
+<div class="daybar">
+  <div class="seg">
+    <button data-p="dia" onclick="setPer('dia')">Dia</button>
+    <button data-p="semana" class="on" onclick="setPer('semana')">Semana</button>
+    <button data-p="mes" onclick="setPer('mes')">Mês</button>
+  </div>
+  <button class="bl o" onclick="hoje()">Hoje</button>
+  <button class="bl o" onclick="anda(-1)">&lsaquo;</button>
+  <button class="bl o" onclick="anda(1)">&rsaquo;</button>
+  <span class="per" id="per"></span>
+  <button class="bl n" onclick="params()" style="margin-left:auto">&#9881; Parâmetros de capacidade</button>
+  <button class="bl" onclick="window.print()">&#128424; Imprimir</button>
+</div>
+
+<div class="wrap" id="wrap"></div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)fecha()">
+  <div class="mdl"><div class="mh"><b>Parâmetros de capacidade instalada</b><button onclick="fecha()">&#10005;</button></div>
+  <div class="mb" id="mb"></div><div class="mf" id="mf"></div></div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const N=i=>parseInt(V(i)||'0',10)||0;
+const stat=(c,t)=>{const s=document.getElementById('st');s.className='status '+c;s.textContent=t};
+const iso=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x.toISOString().slice(0,10)};
+const br=s=>{const p=s.split('-');return p[2]+'/'+p[1]};
+const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+const MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const hm2m=s=>{if(!s)return null;const p=String(s).split(':');return (+p[0])*60+(+p[1])};
+const pct=(a,b)=>b>0?Math.round(a/b*100):0;
+
+const P0={min_turno_manha:240,min_turno_tarde:240,min_consulta:15,min_exame:15,
+          cirurgias_periodo:6,atend_periodo_gerais:8,considera_sabado:false,limiar_alerta_pct:80};
+let PAR={...P0}, PAR_NO_BANCO=false;
+let REF={salas:[],medicos:[],agendas:[]}, RES=[], AG=[], PER='semana', REF_DATA=new Date();
+
+/* ---------------- período ---------------- */
+function intervalo(){
+  const d=new Date(REF_DATA); d.setHours(12,0,0,0);
+  if(PER==='dia')return [new Date(d),new Date(d)];
+  if(PER==='semana'){const a=new Date(d);a.setDate(a.getDate()-a.getDay());const b=new Date(a);b.setDate(b.getDate()+6);return [a,b]}
+  const a=new Date(d.getFullYear(),d.getMonth(),1,12), b=new Date(d.getFullYear(),d.getMonth()+1,0,12); return [a,b];
+}
+function rotulo(){const [a,b]=intervalo();
+  if(PER==='dia')return `${DIAS[a.getDay()]}, ${a.getDate()} de ${MES[a.getMonth()]} de ${a.getFullYear()}`;
+  if(PER==='mes')return `${MES[a.getMonth()]} de ${a.getFullYear()}`;
+  return `${a.getDate()}/${a.getMonth()+1} a ${b.getDate()}/${b.getMonth()+1} de ${b.getFullYear()}`;
+}
+function diasUteis(){const [a,b]=intervalo();let n=0;const d=new Date(a);
+  while(d<=b){const w=d.getDay(); if(w>=1&&w<=5)n++; else if(w===6&&PAR.considera_sabado)n++; d.setDate(d.getDate()+1)} return n}
+function setPer(p){PER=p;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));load()}
+const hoje=()=>{REF_DATA=new Date();load()};
+function anda(n){const d=new Date(REF_DATA);
+  if(PER==='dia')d.setDate(d.getDate()+n); else if(PER==='semana')d.setDate(d.getDate()+7*n); else d.setMonth(d.getMonth()+n);
+  REF_DATA=d;load()}
+
+/* ---------------- capacidade ---------------- */
+function vagasPorTurno(sala){
+  const cap=sala.capacidade_simultanea||1;
+  if(sala.tipo==='cc')return PAR.cirurgias_periodo;
+  if(sala.tipo==='exames')return Math.floor(PAR.min_turno_manha/PAR.min_exame)*cap;
+  if(sala.tipo==='consultora'||sala.tipo==='gerais')return PAR.atend_periodo_gerais;
+  return Math.floor(PAR.min_turno_manha/PAR.min_consulta)*cap;   /* consultório */
+}
+function duracao(r){
+  const i=hm2m(r.hora_ini), f=hm2m(r.hora_fim);
+  if(i!=null&&f!=null&&f>i)return f-i;
+  return r.turno==='tarde'?PAR.min_turno_tarde:PAR.min_turno_manha;
+}
+function vagasDaReserva(r){
+  const dur=duracao(r), a=REF.agendas.find(x=>x.id===r.agenda_logica_id);
+  if(a&&a.qtd_periodo)      return Math.max(1,Math.round(a.qtd_periodo*dur/PAR.min_turno_manha));
+  if(a&&a.tempo_atendimento_min) return Math.max(1,Math.floor(dur/a.tempo_atendimento_min));
+  const s=REF.salas.find(x=>x.id===r.sala_id)||{tipo:'consultorio',capacidade_simultanea:1};
+  if(s.tipo==='cc')      return Math.max(1,Math.round(PAR.cirurgias_periodo*dur/PAR.min_turno_manha));
+  if(s.tipo==='exames')  return Math.max(1,Math.floor(dur/PAR.min_exame)*(s.capacidade_simultanea||1));
+  if(s.tipo==='consultora'||s.tipo==='gerais') return Math.max(1,Math.round(PAR.atend_periodo_gerais*dur/PAR.min_turno_manha));
+  return Math.max(1,Math.floor(dur/PAR.min_consulta));
+}
+function tipoDe(r){
+  const a=REF.agendas.find(x=>x.id===r.agenda_logica_id);
+  if(a&&a.tipo)return a.tipo;
+  if(r.turno==='cirurgico'||(REF.salas.find(s=>s.id===r.sala_id)||{}).tipo==='cc')return 'cirurgia';
+  if((REF.salas.find(s=>s.id===r.sala_id)||{}).tipo==='exames')return 'exame_medico';
+  return 'consulta';
+}
+const ROT={consulta:'Consulta',retorno:'Retorno',exame_medico:'Exame',exame:'Exame',cirurgia:'Cirurgia'};
+
+/* ---------------- carga ---------------- */
+async function loadRef(){
+  const [s,m,a,p]=await Promise.all([
+    g('salas?select=*&order=nome'), g('medicos?select=id,nome&order=nome'),
+    g('agendas_logicas?select=*&order=nome'),
+    g('parametros_capacidade?select=*&id=eq.1').catch(()=>[])]);
+  REF={salas:s.filter(x=>x.ativo!==false),medicos:m,agendas:a};
+  if(p&&p.length){PAR={...P0,...p[0]};PAR_NO_BANCO=true}
+  else{ const l=localStorage.getItem('hog_par_cap'); if(l)PAR={...P0,...JSON.parse(l)} }
+}
+async function load(){try{
+  stat('ld','carregando…');
+  const [a,b]=intervalo(), d0=iso(a), d1=iso(b);
+  document.getElementById('per').textContent=rotulo();
+  [RES,AG]=await Promise.all([
+    g(`reservas?select=*&data=gte.${d0}&data=lte.${d1}`),
+    g(`agendamentos?select=id,data,hora,status,tipo,agenda_logica_id,medico_id,sala_id,encaixe&data=gte.${d0}&data=lte.${d1}`)
+      .catch(()=>g(`agendamentos?select=id,data,hora,status,tipo,agenda_logica_id,medico_id,sala_id&data=gte.${d0}&data=lte.${d1}`))
+  ]);
+  render(); stat('ok','● conectado');
+}catch(e){document.getElementById('wrap').innerHTML='<div class="alerta r">Erro: '+E(e.message)+'</div>';stat('er','● erro')}}
+
+/* ---------------- render ---------------- */
+function render(){
+  const du=diasUteis();
+  const salas=REF.salas;
+  /* 1 — capacidade instalada: todas as salas, 2 turnos, dias úteis do período */
+  let instalada=0, porSala={};
+  salas.forEach(s=>{ const v=vagasPorTurno(s)*2*du; porSala[s.id]={sala:s,inst:v,aberta:0,liberada:0,agendado:0,turnos:0}; instalada+=v });
+
+  /* 2 — grade aberta e liberada */
+  let aberta=0, liberada=0, porTipo={};
+  const ativos=RES.filter(r=>r.estado!=='bloqueado');
+  ativos.forEach(r=>{
+    const v=vagasDaReserva(r), t=tipoDe(r);
+    porTipo[t]=porTipo[t]||{lib:0,abe:0,ag:0,falta:0,enc:0};
+    porTipo[t].abe+=v; aberta+=v;
+    if(r.estado==='liberado'){ porTipo[t].lib+=v; liberada+=v }
+    const ps=porSala[r.sala_id]; if(ps){ ps.aberta+=v; ps.turnos++; if(r.estado==='liberado')ps.liberada+=v }
+  });
+
+  /* 3 — agendamentos */
+  const vivos=AG.filter(x=>x.status!=='cancelado');
+  const realizados=AG.filter(x=>['compareceu','realizado'].includes(x.status));
+  const faltas=AG.filter(x=>x.status==='faltou');
+  const encaixes=vivos.filter(x=>x.encaixe===true);
+  vivos.forEach(x=>{
+    const r=ativos.find(z=>z.agenda_logica_id&&z.agenda_logica_id===x.agenda_logica_id&&z.data===x.data);
+    const t=r?tipoDe(r):(x.tipo==='exame'?'exame_medico':(x.tipo||'consulta'));
+    porTipo[t]=porTipo[t]||{lib:0,abe:0,ag:0,falta:0,enc:0};
+    porTipo[t].ag++; if(x.status==='faltou')porTipo[t].falta++; if(x.encaixe)porTipo[t].enc++;
+    const ps=porSala[x.sala_id]; if(ps)ps.agendado++;
+  });
+  const ocup=pct(vivos.length,liberada);
+
+  /* 4 — alerta de ocupação por agenda/dia */
+  const hj=iso(new Date());
+  const linhas=ativos.filter(r=>r.estado==='liberado'&&r.agenda_logica_id).map(r=>{
+    const v=vagasDaReserva(r);
+    const usados=vivos.filter(x=>x.agenda_logica_id===r.agenda_logica_id&&x.data===r.data).length;
+    return {r,v,usados,p:pct(usados,v)};
+  }).sort((a,b)=>b.p-a.p);
+  const criticos=linhas.filter(l=>l.p>=PAR.limiar_alerta_pct&&l.r.data>=hj);
+  const semLiberacao=REF.agendas.filter(a=>a.ativo!==false&&!ativos.some(r=>r.agenda_logica_id===a.id&&r.estado==='liberado'&&r.data>=hj));
+  const aguardando=ativos.filter(r=>r.estado==='pre_programado');
+
+  const nomeAg=id=>{const a=REF.agendas.find(x=>x.id===id);return a?a.nome:(id||'—')};
+  const barCls=p=>p>=100?'cheio':(p>=PAR.limiar_alerta_pct?'al':(p>=40?'':'ok'));
+
+  let h='';
+  /* ---- alertas primeiro ---- */
+  h+='<h2>🔔 Alerta de ocupação <span class="sub">acima de '+PAR.limiar_alerta_pct+'% a coordenação precisa liberar novos horários</span></h2>';
+  if(criticos.length){
+    h+=criticos.slice(0,12).map(l=>`<div class="alerta ${l.p>=100?'r':''}">
+      <b>${E(nomeAg(l.r.agenda_logica_id))}</b> — ${br(l.r.data)} (${DIAS[new Date(l.r.data+'T12:00:00').getDay()]}):
+      ${l.usados} de ${l.v} vagas · <b>${l.p}%</b>${l.p>=100?' — <b>lotada</b>':''}.
+      Libere novos horários ou uma data nova para o call center.</div>`).join('');
+  } else h+='<div class="alerta v">Nenhuma agenda liberada acima de '+PAR.limiar_alerta_pct+'% nos próximos dias.</div>';
+  if(semLiberacao.length)
+    h+=`<div class="alerta">⚠️ <b>${semLiberacao.length} agenda(s) sem nenhuma data liberada</b> daqui para a frente — o call center não consegue agendar e o paciente cai na lista de espera: ${semLiberacao.slice(0,8).map(a=>E(a.nome)).join(' · ')}${semLiberacao.length>8?' …':''}</div>`;
+  if(aguardando.length)
+    h+=`<div class="alerta">⏳ <b>${aguardando.length} bloco(s) na grade aguardando liberação</b> neste período — abra o painel de Abertura de Agendas para liberar.</div>`;
+
+  /* ---- capacidade ---- */
+  h+='<h2>📊 Capacidade do período <span class="sub">'+du+' dia(s) útil(eis) · '+salas.length+' salas · 2 turnos por dia</span></h2>';
+  h+='<div class="cards">'+
+    card('b',instalada,'Capacidade instalada','se todas as salas estivessem ocupadas nos 2 turnos')+
+    card('',aberta,'Aberta na grade',pct(aberta,instalada)+'% da capacidade instalada')+
+    card('g',liberada,'Liberado p/ call center',pct(liberada,aberta)+'% do que está aberto')+
+    card('',vivos.length,'Agendado',ocup+'% do liberado')+
+    card(ocup>=PAR.limiar_alerta_pct?'a':'',Math.max(liberada-vivos.length,0),'Vagas livres hoje','no que já está liberado')+
+    '</div>'+
+    `<div class="bar"><i class="${barCls(ocup)}" style="width:${Math.min(ocup,100)}%"></i></div>`+
+    `<div class="hint">Ocupação do liberado: <b>${ocup}%</b> · capacidade ociosa (instalada – aberta): <b>${Math.max(instalada-aberta,0)}</b> horários.</div>`;
+
+  /* ---- por tipo ---- */
+  h+='<h2>🗂️ Horários liberados por tipo de atendimento</h2>';
+  const tipos=Object.keys(porTipo).sort();
+  h+= tipos.length? `<table><thead><tr><th>Tipo</th><th class="num">Aberto</th><th class="num">Liberado</th>
+      <th class="num">Agendado</th><th class="num">Livre</th><th class="num">Ocupação</th>
+      <th class="num">Faltas</th><th class="num">Encaixes</th></tr></thead><tbody>`+
+    tipos.map(t=>{const o=porTipo[t],p=pct(o.ag,o.lib);
+      return `<tr><td><b>${ROT[t]||t}</b></td><td class="num">${o.abe}</td><td class="num">${o.lib}</td>
+        <td class="num">${o.ag}</td><td class="num">${Math.max(o.lib-o.ag,0)}</td>
+        <td class="num"><span class="tag ${p>=100?'t-r':p>=PAR.limiar_alerta_pct?'t-a':'t-g'}">${p}%</span></td>
+        <td class="num">${o.falta}</td><td class="num">${o.enc}</td></tr>`}).join('')+
+    '</tbody></table>' : '<div class="vazio">Sem grade aberta neste período.</div>';
+
+  /* ---- produção ---- */
+  const canc=AG.filter(x=>x.status==='cancelado').length;
+  const pFalta=pct(faltas.length,realizados.length+faltas.length);
+  h+='<h2>✅ Produção do período <span class="sub">'+(PER==='dia'?'numerário do dia':'somatório do período')+'</span></h2>';
+  h+='<div class="cards">'+
+    card('g',realizados.length,'Atendimentos realizados','pacientes que compareceram')+
+    card(pFalta>=15?'r':'',faltas.length,'Faltas',pFalta+'% dos que tinham hora marcada')+
+    card('a',encaixes.length,'Encaixes',pct(encaixes.length,vivos.length)+'% dos agendamentos')+
+    card('',canc,'Cancelados','saíram da agenda')+
+    card('',vivos.length-realizados.length-faltas.length,'Ainda em aberto','agendado / aguardando / em atendimento')+
+    '</div>';
+
+  /* ---- produção por dia ---- */
+  if(PER!=='dia'){
+    const dias=[...new Set(AG.map(x=>x.data))].sort();
+    if(dias.length){
+      h+='<h2>📅 Numerário diário</h2><table><thead><tr><th>Dia</th><th class="num">Agendado</th>'+
+         '<th class="num">Realizados</th><th class="num">Faltas</th><th class="num">% falta</th><th class="num">Encaixes</th></tr></thead><tbody>';
+      dias.forEach(d=>{
+        const D=AG.filter(x=>x.data===d), v=D.filter(x=>x.status!=='cancelado');
+        const re=D.filter(x=>['compareceu','realizado'].includes(x.status)).length;
+        const fa=D.filter(x=>x.status==='faltou').length;
+        const en=v.filter(x=>x.encaixe).length;
+        const dd=new Date(d+'T12:00:00');
+        h+=`<tr><td>${br(d)} <span class="tag t-n">${DIAS[dd.getDay()]}</span></td><td class="num">${v.length}</td>
+          <td class="num">${re}</td><td class="num">${fa}</td>
+          <td class="num"><span class="tag ${pct(fa,re+fa)>=15?'t-r':'t-n'}">${pct(fa,re+fa)}%</span></td>
+          <td class="num">${en}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+  }
+
+  /* ---- por sala ---- */
+  h+='<h2>🏥 Capacidade por sala <span class="sub">instalada × aberta × liberada</span></h2>';
+  h+='<table><thead><tr><th>Sala</th><th>Tipo</th><th class="num">Vagas/turno</th><th class="num">Turnos abertos</th>'+
+     '<th class="num">Instalada</th><th class="num">Aberta</th><th class="num">Liberada</th><th class="num">Agendado</th><th class="num">Uso</th></tr></thead><tbody>';
+  Object.values(porSala).forEach(o=>{
+    const p=pct(o.agendado,o.liberada);
+    h+=`<tr><td><b>${E(o.sala.nome)}</b></td><td>${E(o.sala.tipo||'—')}</td>
+      <td class="num">${vagasPorTurno(o.sala)}</td><td class="num">${o.turnos} de ${diasUteis()*2}</td>
+      <td class="num">${o.inst}</td><td class="num">${o.aberta}</td><td class="num">${o.liberada}</td>
+      <td class="num">${o.agendado}</td>
+      <td class="num"><span class="tag ${p>=100?'t-r':p>=PAR.limiar_alerta_pct?'t-a':o.aberta?'t-g':'t-n'}">${o.liberada?p+'%':'—'}</span></td></tr>`;
+  });
+  h+='</tbody></table>';
+
+  /* ---- ranking de ocupação ---- */
+  if(linhas.length){
+    h+='<h2>🔎 Ocupação agenda a agenda</h2><table><thead><tr><th>Agenda</th><th>Dia</th>'+
+       '<th class="num">Vagas</th><th class="num">Agendado</th><th class="num">Livre</th><th class="num">Ocupação</th></tr></thead><tbody>';
+    linhas.slice(0,40).forEach(l=>{
+      h+=`<tr><td>${E(nomeAg(l.r.agenda_logica_id))}</td><td>${br(l.r.data)}</td>
+        <td class="num">${l.v}</td><td class="num">${l.usados}</td><td class="num">${Math.max(l.v-l.usados,0)}</td>
+        <td class="num"><span class="tag ${l.p>=100?'t-r':l.p>=PAR.limiar_alerta_pct?'t-a':'t-g'}">${l.p}%</span></td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  h+=`<div class="hint" style="margin-top:14px">Capacidade instalada = salas × 2 turnos × dias úteis × vagas por turno
+      (consultório ${Math.floor(PAR.min_turno_manha/PAR.min_consulta)}, exames ${Math.floor(PAR.min_turno_manha/PAR.min_exame)} por técnico,
+      CC ${PAR.cirurgias_periodo}, salas gerais ${PAR.atend_periodo_gerais}). Ajuste em <b>Parâmetros de capacidade</b>.
+      ${PAR_NO_BANCO?'':'<b>Os parâmetros ainda não estão no banco</b> — rode hog-indicadores.sql para compartilhar com a equipe.'}</div>`;
+  document.getElementById('wrap').innerHTML=h;
+}
+function card(cls,n,l,d){return `<div class="c ${cls}"><div class="l">${l}</div><div class="n">${n}</div><div class="d">${d||''}</div></div>`}
+
+/* ---------------- parâmetros ---------------- */
+function params(){
+  document.getElementById('mb').innerHTML=`
+    <div class="g2">
+      <div><label>Minutos do turno da manhã</label><input id="p1" type="number" value="${PAR.min_turno_manha}"></div>
+      <div><label>Minutos do turno da tarde</label><input id="p2" type="number" value="${PAR.min_turno_tarde}"></div>
+      <div><label>Tempo médio da consulta (min)</label><input id="p3" type="number" value="${PAR.min_consulta}"></div>
+      <div><label>Tempo médio do exame (min)</label><input id="p4" type="number" value="${PAR.min_exame}"></div>
+      <div><label>Cirurgias por período (CC)</label><input id="p5" type="number" value="${PAR.cirurgias_periodo}"></div>
+      <div><label>Atendimentos por período (salas gerais)</label><input id="p6" type="number" value="${PAR.atend_periodo_gerais}"></div>
+      <div><label>Alerta de ocupação (%)</label><input id="p7" type="number" value="${PAR.limiar_alerta_pct}"></div>
+      <div><label>Conta sábado como dia útil?</label>
+        <select id="p8"><option value="0"${PAR.considera_sabado?'':' selected'}>Não</option><option value="1"${PAR.considera_sabado?' selected':''}>Sim</option></select></div>
+    </div>
+    <div class="hint">A capacidade instalada é o teto: todas as salas ocupadas nos dois turnos de todos os dias úteis.</div>`;
+  document.getElementById('mf').innerHTML=
+    `<button class="bl n" onclick="fecha()">Cancelar</button><button class="bl" onclick="salvarPar()">Salvar</button>`;
+  document.getElementById('ov').classList.add('on');
+}
+const fecha=()=>document.getElementById('ov').classList.remove('on');
+async function salvarPar(){
+  PAR={...PAR, min_turno_manha:N('p1'),min_turno_tarde:N('p2'),min_consulta:N('p3'),min_exame:N('p4'),
+       cirurgias_periodo:N('p5'),atend_periodo_gerais:N('p6'),limiar_alerta_pct:N('p7'),considera_sabado:V('p8')==='1'};
+  localStorage.setItem('hog_par_cap',JSON.stringify(PAR));
+  try{ await pa('parametros_capacidade','id=eq.1',{min_turno_manha:PAR.min_turno_manha,min_turno_tarde:PAR.min_turno_tarde,
+    min_consulta:PAR.min_consulta,min_exame:PAR.min_exame,cirurgias_periodo:PAR.cirurgias_periodo,
+    atend_periodo_gerais:PAR.atend_periodo_gerais,limiar_alerta_pct:PAR.limiar_alerta_pct,
+    considera_sabado:PAR.considera_sabado,atualizado_em:new Date().toISOString()}); PAR_NO_BANCO=true }catch(e){}
+  fecha(); render();
+}
+
+(async()=>{ await loadRef(); await load(); })();
+</script>
+</body>
+</html>
