@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOG Gestão — Painel do Contato (DIGISAC)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#fff;color:#212529;font-size:15px;}
+  .top{background:#0d6efd;color:#fff;padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .top b{font-size:15px;} .top .tel{margin-left:auto;font-size:13px;opacity:.9;}
+  .wrap{padding:11px 12px 40px;}
+  .card{border:1px solid #dee2e6;border-radius:.375rem;padding:10px 11px;margin-bottom:10px;}
+  .card h3{font-size:13px;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+  .pac{font-weight:700;text-transform:uppercase;font-size:16px;line-height:1.2;}
+  .sub{font-size:13px;color:#495057;margin-top:2px;}
+  .tag{display:inline-block;padding:.15rem .5rem;border-radius:.375rem;font-size:11.5px;font-weight:600;}
+  .t-b{background:#cfe2ff;color:#052c65;} .t-g{background:#d1e7dd;color:#0a3622;}
+  .t-a{background:#fff3cd;color:#664d03;} .t-r{background:#f8d7da;color:#58151c;} .t-n{background:#e9ecef;color:#495057;}
+  .b{border:none;border-radius:.375rem;font-size:14px;padding:.4rem .8rem;cursor:pointer;font-weight:500;}
+  .b-p{background:#0d6efd;color:#fff;} .b-g{background:#198754;color:#fff;} .b-n{background:#e9ecef;color:#495057;}
+  .b-w{background:#fd7e14;color:#fff;} .b-s{padding:.2rem .55rem;font-size:12.5px;}
+  input,select{width:100%;font-family:inherit;font-size:14px;padding:.35rem .55rem;border:1px solid #ced4da;border-radius:.375rem;}
+  label{display:block;font-size:11.5px;font-weight:600;color:#495057;margin:6px 0 2px;}
+  .it{border:1px solid #dee2e6;border-radius:.375rem;padding:8px 9px;margin-top:7px;font-size:13.5px;}
+  .it.ok{background:#f6fbf8;border-color:#a3cfbb;} .it.no{background:#fff7f7;border-color:#f1aeb5;}
+  .it.al{background:#fffdf5;border-color:#ffe69c;}
+  .msg{display:none;padding:8px 10px;border-radius:.375rem;font-size:13px;margin-bottom:9px;}
+  .msg.s{display:block;background:#d1e7dd;color:#0a3622;} .msg.e{display:block;background:#f8d7da;color:#58151c;}
+  .msg.w{display:block;background:#fff3cd;color:#664d03;}
+  .hint{font-size:12px;color:#6c757d;margin-top:4px;}
+  .lista div{padding:5px 0;border-bottom:1px solid #f1f3f5;font-size:13px;}
+  .sug{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #f1f3f5;}
+  .sug b{flex:1;font-size:13.5px;}
+</style>
+<link rel="stylesheet" href="hog-tema.css">
+</head>
+<body>
+<div class="top"><b>HOG Gestão</b> <span id="ctx">painel do contato</span><span class="tel" id="tel"></span></div>
+<div class="wrap">
+  <div class="msg" id="msg"></div>
+  <div id="conteudo"><div class="hint">carregando…</div></div>
+</div>
+
+<script>
+const SB='https://prztrrtwrunljapnyaci.supabase.co/rest/v1';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByenRycnR3cnVubGphcG55YWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyNzM4NDQsImV4cCI6MjEwMjg0OTg0NH0.oo0_6LTUFDSKgeclJSv5AJ7Ddk8BAzS18sQh4Fr9NLs';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const g=async p=>{const r=await fetch(SB+'/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+const po=async(t,o)=>{const r=await fetch(SB+'/'+t,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()};
+const pa=async(t,q,o)=>{const r=await fetch(SB+'/'+t+'?'+q,{method:'PATCH',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text())};
+const rpc=async(f,o)=>{const r=await fetch(SB+'/rpc/'+f,{method:'POST',headers:H,body:JSON.stringify(o)});if(!r.ok)throw new Error(await r.text());return r.json()};
+const E=s=>(s??'').toString().replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const V=i=>{const e=document.getElementById(i);return e?e.value.trim():''};
+const brd=s=>s?String(s).split('T')[0].split('-').reverse().join('/'):'';
+const say=(c,t)=>{const m=document.getElementById('msg');m.className='msg '+c;m.innerHTML=t};
+const digits=s=>String(s||'').replace(/\D/g,'');
+
+/* o DIGISAC abre a integração passando o contato na URL —
+   aceitamos os nomes mais comuns para não depender de um só formato */
+const Q=new URLSearchParams(location.search);
+const TEL=digits(Q.get('number')||Q.get('telefone')||Q.get('phone')||Q.get('contactNumber')||'');
+const NOME_CONTATO=Q.get('name')||Q.get('contactName')||'';
+const TICKET=Q.get('ticketId')||Q.get('ticket')||'';
+const DIGISAC_ID=Q.get('contactId')||Q.get('contact')||'';
+
+let CONTATO=null, PACIENTE=null;
+
+async function init(){
+  document.getElementById('tel').textContent=TEL?fmtTel(TEL):'sem telefone na URL';
+  if(!TEL){ document.getElementById('conteudo').innerHTML=
+    `<div class="card"><h3>Sem telefone</h3><div class="hint">Abra este painel pelo DIGISAC, ou acrescente <code>?number=5519999999999</code> na URL para testar.</div></div>`;
+    return }
+  try{
+    /* contato: acha ou cria */
+    const achados=await g(`contatos?telefone=eq.${TEL}`).catch(()=>[]);
+    CONTATO=achados[0]||null;
+    if(!CONTATO){
+      const c=await po('contatos',[{telefone:TEL,nome:NOME_CONTATO||null,digisac_contact_id:DIGISAC_ID||null,ultimo_contato:new Date().toISOString()}]);
+      CONTATO=c[0];
+    }else{
+      pa('contatos','id=eq.'+CONTATO.id,{ultimo_contato:new Date().toISOString(),
+        nome:CONTATO.nome||NOME_CONTATO||null,digisac_contact_id:CONTATO.digisac_contact_id||DIGISAC_ID||null}).catch(()=>{});
+    }
+    /* pacientes já ligados a este contato */
+    const lig=await g(`contato_paciente?select=*,pacientes(*)&contato_id=eq.${CONTATO.id}`).catch(()=>[]);
+    if(lig.length===1){ PACIENTE=lig[0].pacientes; await painelPaciente(lig[0].relacao) }
+    else if(lig.length>1){ escolhePaciente(lig) }
+    else { await identificar() }
+  }catch(e){ say('e','Erro: '+E(e.message)) }
+}
+const fmtTel=t=>t.length>=12?`(${t.slice(2,4)}) ${t.slice(4,-4)}-${t.slice(-4)}`:t;
+
+/* ---------- 1) conversa ainda não identificada ---------- */
+async function identificar(){
+  let sug=[];
+  try{ sug=await rpc('fn_sugere_pacientes',{p_telefone:TEL}) }catch(e){ sug=[] }
+  document.getElementById('ctx').textContent='identificar paciente';
+  document.getElementById('conteudo').innerHTML=`
+    <div class="card" style="border-color:#ffc107;background:#fffdf5">
+      <h3>🔎 De quem é essa conversa?</h3>
+      <div class="hint">${NOME_CONTATO?'WhatsApp de <b>'+E(NOME_CONTATO)+'</b>. ':''}Ligue uma vez — nas próximas conversas o sistema já reconhece.</div>
+      ${sug.length?`<div style="margin-top:8px">${sug.map(s=>`<div class="sug">
+          <b>${E(s.nome)}</b><span class="tag t-n">${E(s.motivo)}</span>
+          <button class="b b-g b-s" onclick="ligar('${s.paciente_id}','proprio')">é este</button></div>`).join('')}</div>`
+        :'<div class="hint" style="margin-top:6px">Nenhuma sugestão automática para este número.</div>'}
+      <label style="margin-top:9px">Buscar paciente pelo nome</label>
+      <input id="q" placeholder="digite 3 letras e aguarde" oninput="buscar()">
+      <div id="res"></div>
+    </div>`;
+}
+let tmr=null;
+function buscar(){ clearTimeout(tmr); tmr=setTimeout(async()=>{
+  const q=V('q'); const box=document.getElementById('res'); if(q.length<3){box.innerHTML='';return}
+  try{ const r=await g(`pacientes?select=id,nome,nascimento,cpf&nome=ilike.*${encodeURIComponent(q)}*&limit=8`);
+    box.innerHTML=r.length?r.map(p=>`<div class="sug"><b>${E(p.nome)}</b>
+      <span class="tag t-n">${p.nascimento?brd(p.nascimento):'—'}</span>
+      <select id="rel_${p.id}" style="width:auto">
+        <option value="proprio">é o próprio</option><option value="filho">filho(a)</option>
+        <option value="conjuge">cônjuge</option><option value="cuidador">cuidador(a)</option>
+        <option value="responsavel">responsável</option></select>
+      <button class="b b-g b-s" onclick="ligar('${p.id}',document.getElementById('rel_${p.id}').value)">ligar</button></div>`).join('')
+      :'<div class="hint">Nenhum paciente com esse nome.</div>';
+  }catch(e){ box.innerHTML='<div class="hint">Erro na busca.</div>' }
+},350)}
+async function ligar(pid,rel){
+  try{
+    await po('contato_paciente',[{contato_id:CONTATO.id,paciente_id:pid,relacao:rel||'responsavel',
+      confirmado_por:'atendente DIGISAC'}]).catch(()=>{});
+    const p=await g(`pacientes?id=eq.${pid}`); PACIENTE=p[0];
+    say('s','✅ Vínculo salvo. Este número já fica reconhecido nas próximas conversas.');
+    await painelPaciente(rel);
+  }catch(e){ say('e','Erro ao ligar: '+E(e.message)) }
+}
+function escolhePaciente(lig){
+  document.getElementById('ctx').textContent='qual paciente?';
+  document.getElementById('conteudo').innerHTML=`<div class="card"><h3>👥 Este contato cuida de mais de um paciente</h3>
+    ${lig.map(l=>`<div class="sug"><b>${E(l.pacientes.nome)}</b>
+      <span class="tag t-b">${E(l.relacao)}</span>
+      <button class="b b-p b-s" onclick="abrir('${l.paciente_id}','${E(l.relacao)}')">abrir</button></div>`).join('')}</div>`;
+}
+async function abrir(pid,rel){ const p=await g(`pacientes?id=eq.${pid}`); PACIENTE=p[0]; await painelPaciente(rel) }
+
+/* ---------- 2) painel do paciente ---------- */
+async function painelPaciente(rel){
+  const p=PACIENTE; document.getElementById('ctx').textContent='paciente identificado';
+  let pend=[],ags=[],vis=[],aut=[];
+  try{ pend=await g(`vw_pendencias_paciente?paciente_id=eq.${p.id}`) }catch(e){}
+  try{ ags=await g(`agendamentos?paciente_id=eq.${p.id}&status=in.(agendado,aguardando)&select=data,hora,tipo,status,agendas_logicas(nome),medicos(nome)&order=data&limit=6`) }catch(e){}
+  try{ vis=await g(`agendamentos?paciente_id=eq.${p.id}&status=in.(compareceu,realizado,faltou)&select=data,status,tipo,medicos(nome)&order=data.desc&limit=5`) }catch(e){}
+  try{ aut=await g(`vw_saldo_autorizacao?paciente_id=eq.${p.id}`) }catch(e){}
+  const faltas=vis.filter(v=>v.status==='faltou').length;
+  document.getElementById('conteudo').innerHTML=`
+  <div class="card">
+    <div class="pac">${E(p.nome)}</div>
+    <div class="sub">${p.nascimento?brd(p.nascimento)+' · ':''}${p.cpf?'CPF '+E(p.cpf):'<b style="color:#b02a37">sem CPF</b>'}
+      ${p.sobe_escada===false?' · <span class="tag t-a">não sobe escada</span>':''}
+      ${rel&&rel!=='proprio'?' · <span class="tag t-b">falando: '+E(rel)+'</span>':''}
+      ${faltas?' · <span class="tag t-r">'+faltas+' falta(s)</span>':''}</div>
+  </div>
+
+  <div class="card">
+    <h3>📋 Aguardando agendamento ${pend.length?'<span class="tag t-a">'+pend.length+'</span>':''}</h3>
+    ${pend.length?pend.map(x=>`<div class="it ${x.pode_agendar?'ok':(x.requisicao_vencida?'no':'al')}">
+        <b>${E(x.item||'—')}</b>${x.lateralidade?' ('+E(x.lateralidade)+')':''}
+        ${x.medico_solicitante?'<br><span class="hint">pedido por '+E(x.medico_solicitante)+'</span>':''}
+        <br>${x.numero_requisicao?'Requisição <b>'+E(x.numero_requisicao)+'</b>':'<b>sem requisição</b>'}
+        ${x.requisicao_validade?' · vale até '+brd(x.requisicao_validade):''}
+        ${x.observacao_proximo_agendamento?'<br><i>💬 '+E(x.observacao_proximo_agendamento)+'</i>':''}
+        <br><b>${x.pode_agendar?'✓ pode agendar':'⛔ '+E(x.impedimento||'')}</b>
+        ${!x.pode_agendar?`<button class="b b-w b-s" style="margin-left:6px" onclick="pedirGuia('${x.solicitacao_id}')">registrar requisição</button>`:''}
+      </div>`).join('')
+      :'<div class="hint">Nada pendente pedido pelo médico.</div>'}
+  </div>
+
+  ${aut.length?`<div class="card"><h3>🎫 Autorizações do convênio</h3>
+    ${aut.map(a=>`<div class="it ${a.saldo>0?'ok':'no'}">
+      <b>${E(a.item||'')}</b> · autorizado ${a.quantidade_autorizada}, usado ${a.quantidade_utilizada},
+      <b>saldo ${a.saldo}</b>${a.validade?' · vale até '+brd(a.validade):''}
+      ${a.numero_requisicao?'<br>Guia '+E(a.numero_requisicao):''}${a.senha_autorizacao?' · senha '+E(a.senha_autorizacao):''}
+      ${a.fotos?' · <span class="tag t-g">'+a.fotos+' foto(s)</span>':' · <span class="tag t-a">sem foto</span>'}</div>`).join('')}
+    </div>`:''}
+
+  <div class="card">
+    <h3>📅 Próximos agendamentos</h3>
+    <div class="lista">${ags.length?ags.map(a=>`<div>${brd(a.data)} ${String(a.hora||'').slice(0,5)} ·
+      ${E((a.agendas_logicas&&a.agendas_logicas.nome)||a.tipo||'')} ${a.medicos?'· '+E(a.medicos.nome):''}
+      <span class="tag t-b">${E(a.status)}</span></div>`).join(''):'<div class="hint">Nenhum agendamento futuro.</div>'}</div>
+  </div>
+
+  <div class="card">
+    <h3>🕘 Últimas visitas</h3>
+    <div class="lista">${vis.length?vis.map(v=>`<div>${brd(v.data)} · ${E(v.tipo||'')}
+      ${v.medicos?'· '+E(v.medicos.nome):''}
+      <span class="tag ${v.status==='faltou'?'t-r':'t-g'}">${v.status==='faltou'?'faltou':'compareceu'}</span></div>`).join('')
+      :'<div class="hint">Sem histórico.</div>'}</div>
+  </div>
+
+  <div class="card">
+    <h3>⚡ Ações</h3>
+    <button class="b b-p" onclick="window.open('hog-agenda-medica.html','_blank')">Agendar consulta</button>
+    <button class="b b-p" style="margin-left:6px" onclick="window.open('demo-agenda-exames.html#agendar','_blank')">Agendar exame</button>
+    <button class="b b-n" style="margin-left:6px" onclick="novaGuia()">+ Registrar guia recebida</button>
+  </div>`;
+}
+
+/* ---------- 3) registrar a guia que chegou em foto ---------- */
+function novaGuia(){ pedirGuia(null) }
+async function pedirGuia(solId){
+  const num=prompt('Número da requisição (o que está na guia):'); if(!num)return;
+  const item=prompt('Procedimento/exame autorizado (como está na guia):')||'';
+  const qtd=parseInt(prompt('Quantidade autorizada:','1'))||1;
+  const val=prompt('Validade (aaaa-mm-dd):','');
+  const foto=prompt('Link da foto recebida no WhatsApp (opcional):','');
+  try{
+    const a=await po('autorizacoes',[{paciente_id:PACIENTE.id,numero_requisicao:num,validade:val||null,
+      origem:'digisac',telefone_origem:TEL,observacao:'registrada pelo painel do DIGISAC'}]);
+    const it=await po('autorizacao_itens',[{autorizacao_id:a[0].id,descricao:item,quantidade_autorizada:qtd}]);
+    if(foto)await po('anexos',[{tipo:'requisicao',autorizacao_id:a[0].id,paciente_id:PACIENTE.id,
+      url:foto,origem:'digisac',recebido_por:'atendente'}]).catch(()=>{});
+    if(solId)await pa('solicitacoes','id=eq.'+solId,{numero_requisicao:num,requisicao_validade:val||null,
+      autorizacao_item_id:it[0].id,autorizacao_status:'autorizada'}).catch(()=>{});
+    say('s','✅ Guia registrada e ligada ao paciente.');
+    await painelPaciente();
+  }catch(e){ say('e','Erro: '+E(e.message)) }
+}
+
+init();
+</script>
+</body>
+</html>
